@@ -51,6 +51,8 @@ def timeStringParse(timestring):
 	if (not regexphell):
 		return(None)
 	year = int(regexphell.group(1))
+	if (len(str(year)) < 4): # its the Y2K problem all over again!
+		year = year + 2000
 	month= int(regexphell.group(2))
 	day = int(regexphell.group(3))
 	hours = int(regexphell.group(4))
@@ -104,9 +106,14 @@ for c in csvs:
 	## Now, we need to sort by time, get the time deltas, and add that to the summary:
 	
 	timesort = sorted(thistimes.keys())
-	
+	print(max(timesort))
+	print(min(timesort))
 	# This is going to lop off the last timepoint, but whatever?
 	for t in range(0,len(timesort)-1):
+	
+		## I am debating hard-coding 2015 as the year, but we will see...
+		if (timesort[t] < datetime.datetime(2015, 1,1,1,1,1)): # If the year isn't in 2015, something went wrong
+			continue
 		thisact = thistimes[timesort[t]][0]
 		if thisact != 0:
 			thisrecord[thisact] += (timesort[t+1] - timesort[t]).total_seconds()
