@@ -28,8 +28,8 @@ csvs = list()
 # Open up all the files
 try:
 	filelistfile = open(args.f, "r")
-	#if (args.t != ""):
-	#	timeout = open(args.t, "w")
+	if (args.t != ""):
+		timeout = open(args.t, "w")
 	if (args.o != ""):
 		indout = open(args.o, "w")
 except IOError as e:
@@ -64,6 +64,47 @@ def timeStringParse(timestring):
 	tzpm = regexphell.group(7)
 	return([thistime, tz, tzh, tzpm])
 	
+## Need a function to discretize the data by minute, and return that information
+## Rounds a datetime to a specific minute
+## Going to take the 'closest' activity for each minute in the data 
+def roundTime(dt=None, roundTo=60):
+   """Round a datetime object to any time laps in seconds
+   dt : datetime.datetime object, default now.
+   roundTo : Closest number of seconds to round to, default 1 minute.
+   Author: Thierry Husson 2012 - Use it as you want but don't blame me.
+   From: http://stackoverflow.com/questions/3463930/how-to-round-the-minute-of-a-datetime-object-python
+   """
+   if dt == None : dt = datetime.datetime.now()
+   seconds = (dt - dt.min).seconds
+   # // is a floor division, not a comment on following line:
+   rounding = (seconds+roundTo/2) // roundTo * roundTo
+   return dt + datetime.timedelta(0,rounding-seconds,-dt.microsecond)
+
+def buildTimeSeries(timesort, thistimes):
+	""" 
+	Function that takes a sorted list of times
+	rounds everything to the nearest minute, and then
+	it will assign the most common 'activity' to that minute
+	"""
+	timehash = dict()
+	for t in range(0,len(timesort)):
+	
+		## Remove the out of range times 
+		if (timesort[t] < datetime.datetime(2015, 3,1,1,1,1)): # If the year isn't in 2015, something went wrong
+			continue
+		
+		time_round = roundTime(timesort[t])
+		## Next, get the current activity
+		thisact = thistimes[timesort[t]][0]
+		if time_round in timehash and thisact != 0:
+			timehash[time_round].append(thisact)
+		else:
+			timehash[time_round] = [thisact]
+	return(timehash)
+
+def most_common(lst):
+    return max(set(lst), key=lst.count)
+
 
 # Now lets import and parse the individual data
 
@@ -71,6 +112,15 @@ def timeStringParse(timestring):
 # Let's make this a list of lists for each individual
 indList = list() 
 allrecords = dict()
+
+# This is a summary of the number of people doing a specific activity at any given
+# minutes throughout the day. It will be indexed by the 'minute' and return a 
+# vector containing the number of individuals walking, stationary, etc. 
+# The vector will be as follows:
+# [ missing, act1, act2, act3, act4, act5, total_nonMissing, total]
+time_summary = dict()
+
+## Let's loop through each individuals data
 for c in csvs:
 	print c
 	recordmatch = re.search(r'/(.+)\.data\.csv$', c)
@@ -114,16 +164,44 @@ for c in csvs:
 		## I am debating hard-coding 2015 as the year, but we will see...
 		if (timesort[t] < datetime.datetime(2015, 1,1,1,1,1)): # If the year isn't in 2015, something went wrong
 			continue
+		## Thisact = the activity number associated with the current entry
 		thisact = thistimes[timesort[t]][0]
-		if thisact != 0:
-			thisrecord[thisact] += (timesort[t+1] - timesort[t]).total_seconds()
-			thisrecord[6] += (timesort[t+1] - timesort[t]).total_seconds()
-			thisrecord[7] += (timesort[t+1] - timesort[t]).total_seconds()
+		second_diff = (timesort[t+1] - timesort[t]).total_seconds()
+		# This gets the total number of seconds that this activity is performed at
+
+		if thisact != 0: # If not unknown, add to summary counts
+		
+			thisrecord[thisact] +=  second_diff # This gets the seconds
+			thisrecord[6] += second_diff
+			thisrecord[7] += second_diff
 		else:
-			thisrecord[7] += (timesort[t+1] - timesort[t]).total_seconds()
-			thisrecord[8] += (timesort[t+1] - timesort[t]).total_seconds()
+			thisrecord[7] += second_diff
+			thisrecord[8] += second_diff
 	
+	## Add this record to the dictionary containing all the data for output
 	allrecords[thisrecord[0]] = thisrecord
+
+	## Now lets build the time series data:
+	thistimehash = buildTimeSeries(timesort, thistimes)
+	for th in thistimehash.keys():
+		if th in time_summary:
+			## Find the common activity for the individual at this minute:
+			thisact = most_common(thistimehash[th])
+		
+			## Increment the proper list indexes in the time summary hash
+			time_summary[th][thisact] += 1
+			time_summary[th][7] += 1
+			if thisact != 0:
+				time_summary[th][6] += 1
+		else:
+			# If not in the time summary hash, add it to the hash and do the same procedure
+			thisact = most_common(thistimehash[th])
+			time_summary[th] = [0]*8
+			time_summary[th][thisact] += 1
+			time_summary[th][7] += 1
+			if thisact != 0:
+				time_summary[th][6] += 1
+	
 
 
 
@@ -133,6 +211,22 @@ indout.write("\t".join(["recordId", "SecStationary", "SecWalking", "SecRunning",
 for r in allrecords.keys():
 	indout.write("\t".join(map(str, allrecords[r])) + "\n")
 
+## Write time series data to file
+timeout.write("\t".join(["timeID", "Year", "Month", "Day", "Hour", "Minute", "NumUnk", "NumStationary", "NumWalking", "NumRunning", "NumAutomotive", "NumCycling", "NumTotal", "NumTotalUnk"]) + "\n")
+times = time_summary.keys()
+times.sort()
+lastq = times[1]
+for q in times:
+
+	while ( (q - lastq).total_seconds() > 61 ):
+		new_time = lastq + datetime.timedelta(seconds=60)
+		time_list = [new_time.year, new_time.month, new_time.day, new_time.hour, new_time.minute]
+		timeout.write(str(new_time) + "\t" + "\t".join(map(str, time_list)) + "\t" + "\t".join(["NA"]*8) + "\n")
+		lastq=new_time
+
+	time_list = [q.year, q.month, q.day, q.hour, q.minute]
+	timeout.write(str(q) + "\t" + "\t".join(map(str, time_list)) + "\t" + "\t".join(map(str, time_summary[q])) + "\n")
+ 	lastq = q
 
 
 
