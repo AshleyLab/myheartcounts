@@ -65,8 +65,7 @@ dev.off()
 
 # Merge diet and satisfaction
 
-diet_satisfy <- merge(dietTable, satisfiedTable, by="healthCode")
-diet_satisfy_state <- merge(diet_satisfy, zip_codes, by.x="zip", by.y="prefix")
+
 
 plot.heat <- function(counties.map,state.map,z,title=NULL,breaks=NULL,reverse=FALSE,cex.legend=1,bw=.2,col.vec=NULL,plot.legend=TRUE) {
 	
@@ -113,21 +112,78 @@ county_fips <- map("county")$names
 # the county based on the 2010 census population data. 
 # 4. This means that we will use the POPPT column from the census zip code data for weighting (or 
 # equivalently the countyPopPercentage)
+census_table <- read.table("zcta_county_rel_10.txt", head=T)
+
 
 map3DigitZipToCounty <- function(zip_vec, value_vec, census_table) {
-	
-	
-	
-	
-	
-	
+  # Function to map zip code to county by the rules stated above
+  
+  zip_summary <- aggregate(value_vec, by=list(zip_vec), mean)
+	names(zip_summary) <- c("zip3", "value")
+  ## Now let's expand the zip code data 	
+	new_zips <- data.frame(zip5 = unique(census_table$ZCTA5), value=NA)
+  ## Loop through the whole data frame
+  for (i in 1:length(new_zips$zip5)) {
+    ## Loop over all unique zip codes in table
+    thiszip3 = floor(new_zips$zip5[i]/100)
+    thisvalue = zip_summary$value[zip_summary$zip3==thiszip3]
+    if (length(thisvalue)==1) {
+      new_zips$value[i] = thisvalue
+    } 
+   
+    #print(i)
+	}
+  county_frame <- data.frame(countyCode = unique(census_table$GEOID), totalvalue=0, totalweight=0)
+  for (j in 1:nrow(new_zips)) {
+    ## Get the county code for this zip code
+    counties = census_table$GEOID[census_table$ZCTA5==new_zips$zip5[j]]
+    weights = census_table$POPPT[census_table$ZCTA5==new_zips$zip5[j]]
+    if (is.na(new_zips$value[j]) | new_zips$value[j]==0) {
+      next
+    }
+    
+    for (a in 1:length(counties)) {
+      county_frame$totalvalue[county_frame$countyCode==counties[a]] = county_frame$totalvalue[county_frame$countyCode==counties[a]] + weights[a]*new_zips$value[j]
+      county_frame$totalweight[county_frame$countyCode==counties[a]] = county_frame$totalweight[county_frame$countyCode==counties[a]] + weights[a]
+    }
+    
+    if (j%%1000==0) {
+      print(j)
+    }
+  }
+  
+  county_frame$value = county_frame$totalvalue/county_frame$totalweight
+  county_frame$value[is.nan(county_frame$value)] = NA
+  return(county_frame)
 }
 
+county_satisfied <- map3DigitZipToCounty(satisfied_wState$zip, satisfied_wState$satisfiedwith_life, census_table)
 
- 
+countyColors6 = brewer.pal(6, "Blues")
 
 
+### Now, convert county codes to county, state for maps
+data(county.fips)
+county_average.fips = merge(county_frame, county.fips, by.x="countyCode", by.y="fips")
+county_average.fips$buckets = as.numeric(cut(county_average.fips$value, c(0,6,6.5,6.7,6.9,7,7.1,7.3,7.5,8,10)))
 
+rdbu_county = brewer.pal(10, "RdYlBu")
+county_colors_rdbu = data.frame(buckets=c(1:10, NA), color=c(rdbu_county, "grey" ))
+county_average.fips.color = merge(county_average.fips, county_colors_rdbu, by="buckets")
+county_order =data.frame(polyname=map('county', plot=F)$names, order=1:length(map('county', plot=F)$names) ) 
+county_average.fips.color_order = merge(county_average.fips.color, county_order, by="polyname")
+county_average.fips.color_order = county_average.fips.color_order[order(county_average.fips.color_order$order),]
+
+png("SatisfactionByCounty.png", width=2000, height=1600)
+map('county', fill=T, col=as.character(county_average.fips.color_order$color))
+legend('bottomright', legend = c("<6","6 - 6.5","6.5 - 6.7","6.7 - 6.9","6.9 - 7","7 - 7.1","7.2 - 7.3","7.3 - 7.5","7.5 - 8", ">8"), fill=as.character(rdbu_county), cex=3)
+title(main="Life Satisfaction by County", cex.main=5)
+dev.off()
+
+### Diet by County
+
+diet_satisfy <- merge(dietTable, satisfiedTable, by="healthCode")
+diet_satisfy_state <- merge(diet_satisfy, zip_codes, by.x="zip", by.y="prefix")
 
 
 
