@@ -209,28 +209,70 @@ glm(chestPain~fish+fruit+grains+sugar_drinks+vegetable,data=diet.parQ.risk, fami
 #library(glmnet)
 #glmnet(chestPainInLastMonth~fish+fruit+grains+sugar_drinks+vegetable,data=diet.parQ.risk, family=binomial)
 
-#do something with risk data. it is just really annoying to deal with. come back and parse it properly.
+###risk data & parQ
+glm(chestPainInLastMonth~family_history, data=diet.parQ.risk, family=binomial)
+glm(chestPainInLastMonth~heart_disease, data=diet.parQ.risk, family=binomial)
+glm(chestPainInLastMonth~medications_to_treat, data=diet.parQ.risk, family=binomial)
+glm(chestPainInLastMonth~vascular, data=diet.parQ.risk, family=binomial)
+
+#the risk data needs to be parsed better. ie: [1,2,3] ==[3,2,1]
 
 
 
 
 ###dailycheck: is amt of activity correlated with sleep time?
 
-dailyCheck.uniq = as.data.frame(distinct(as.data.frame(cbind(dailyCheck.table$createdOn, dailyCheck.table$healthCode, dailyCheck.table$activity1_time,dailyCheck.table$activity2_time, dailyCheck.table$sleep_time))))
-dailyCheck.uniq$V3=as.numeric(as.character(dailyCheck.uniq$V3))
-dailyCheck.uniq$V4=as.numeric(as.character(dailyCheck.uniq$V4))
+dailyCheck.uniq = as.data.frame(distinct(data.frame(createdOn=dailyCheck.table$createdOn, healthCode=dailyCheck.table$healthCode, activity1_time=dailyCheck.table$activity1_time,activity2_time=dailyCheck.table$activity2_time, sleep_time=dailyCheck.table$sleep_time)))
+dailyCheck.uniq$activity1_time=as.numeric(as.character(dailyCheck.uniq$activity1_time))
+dailyCheck.uniq$activity2_time=as.numeric(as.character(dailyCheck.uniq$activity2_time))
 dailyCheck.uniq[is.na(dailyCheck.uniq)] <-0
-dailyCheck.sm = data.frame(total_act = dailyCheck.uniq$V3 + dailyCheck.uniq$V4, sleep = dailyCheck.uniq$V5)
+dailyCheck.sm = data.frame(total_act = dailyCheck.uniq$activity1_time + dailyCheck.uniq$activity2_time, sleep = dailyCheck.uniq$sleep_time)
 
 #correlation between sleep and activity?
 cor(dailyCheck.sm$total_act, as.numeric(as.character(dailyCheck.sm$sleep)))
 hist(log(dailyCheck.sm$total_act))
 hist(as.numeric(as.character(dailyCheck.sm$sleep)))
 
-# i wonder if i should remove the 60s from the sleep? maybe that is the default (ie: 1 hr... meaning that nothing was actually selected?)
+# i wonder if i should remove the 60s from the sleep? maybe that is the default (ie: 1 meaning that nothing was actually selected?)
 dailyCheck.sm.no60 = dailyCheck.sm[!(dailyCheck.sm$sleep==60),]
 hist(log(dailyCheck.sm.no60$total_act))
-hist(as.numeric(as.character(dailyCheck.sm.no60$sleep)))
+hist(as.numeric(as.character(dailyCheck.sm.no60$sleep))/3600)
 cor(dailyCheck.sm.no60$total_act, as.numeric(as.character(dailyCheck.sm.no60$sleep)))
 
+#can i check that sleep they say they get lines up with what they actually get (from activity check)?
 
+
+#how many days do i have per person? can i check for sleep consistency?
+healthCode.ct = count(dailyCheck.uniq$healthCode)
+#par(mfrow=c(4, 2))
+
+sd_vec.act =c()
+mean_vec.act=c()
+sd_vec.sleep =c()
+mean_vec.sleep=c()
+for (i in 1:nrow(healthCode.ct)){
+  if(healthCode.ct$freq[i]>5){  #5 is arbitrary... could require only more than 1 record...
+  
+    a = subset(dailyCheck.uniq,dailyCheck.uniq$healthCode==healthCode.ct[i,1])
+    a$act_time = a$activity1_time+a$activity2_time
+    non0_act_time = a$act_time[a$act_time>0]
+    mean_vec.act = append(mean_vec.act, mean(non0_act_time))
+    sd_vec.act =append(sd_vec.act, sd(non0_act_time))
+
+    #a$sleep[a$sleep==60]<-0
+    
+    non0_sleep = a$sleep[a$sleep>60]
+    mean_vec.act = append(mean_vec.act, mean(non0_sleep))
+    sd_vec.act = append(sd_vec.act, sd(non0_sleep))
+    
+    
+
+    #make tons of plots!
+#     plot(a$sleep/3600, ylim=c(0,20),col="red")
+#     lines(a$sleep/3600, col="red")
+#     points(a$act_time/3600, col="blue")
+#     lines(a$act_time/3600, col="blue")
+
+
+  }
+}
