@@ -78,7 +78,10 @@ county_fips <- map("county")$names
 # the county based on the 2010 census population data. 
 # 4. This means that we will use the POPPT column from the census zip code data for weighting (or 
 # equivalently the countyPopPercentage)
-census_table <- read.table("zcta_county_rel_10.txt", head=T)
+census_table <- read.table("zcta_county_rel_10.txt", head=T, sep=",")
+census_table <- read.table("zcta_w_percents.txt", head=T, sep=",")
+
+
 # this table can be found at:
 # https://www.census.gov/geo/maps-data/data/relationship.html
 
@@ -106,11 +109,12 @@ map3DigitZipToCounty <- function(zip_vec, value_vec, census_table) {
    
     #print(i)
 	}
-  county_frame <- data.frame(countyCode = unique(census_table$GEOID), totalvalue=0, totalweight=0)
+  county_frame <- data.frame(countyCode = unique(census_table$GEOID), totalvalue=0, zipweight=0, zipvalue=0, totalweight=0)
   for (j in 1:nrow(new_zips)) {
     ## Get the county code for this zip code
     counties = census_table$GEOID[census_table$ZCTA5==new_zips$zip5[j]]
     weights = census_table$COPOPPCT[census_table$ZCTA5==new_zips$zip5[j]]
+    zipweight = census_table$ZPOPPCT[census_table$ZCTA5==new_zips$zip5[j]]
     if (is.na(new_zips$value[j]) | new_zips$value[j]==0) {
       next
     }
@@ -118,6 +122,65 @@ map3DigitZipToCounty <- function(zip_vec, value_vec, census_table) {
     for (a in 1:length(counties)) {
       county_frame$totalvalue[county_frame$countyCode==counties[a]] = county_frame$totalvalue[county_frame$countyCode==counties[a]] + weights[a]*new_zips$value[j]
       county_frame$totalweight[county_frame$countyCode==counties[a]] = county_frame$totalweight[county_frame$countyCode==counties[a]] + weights[a]
+      county_frame$zipweight[county_frame$countyCode==counties[a]] = county_frame$zipweight[county_frame$countyCode==counties[a]] + zipweight[a]
+      county_frame$zipvalue[county_frame$countyCode==counties[a]] = county_frame$zipvalue[county_frame$countyCode==counties[a]] + zipweight[a]*new_zips$value[j]
+      
+      
+    }
+    
+    if (j%%1000==0) {
+      print(j)
+    }
+  }
+  
+  county_frame$value = county_frame$totalvalue/county_frame$totalweight
+  county_frame$value[is.nan(county_frame$value)] = NA
+  return(county_frame)
+}
+
+countInds3DigitZipToCounty <- function(zip_vec, value_vec, census_table) {
+  # So counting is different than weighted averaging b/c we need to 
+  # account for the fact that different percentages of people live in
+  # each of the 5 digit zip codes of the 3 digit zip code areas
+  # However, we calculated these percentages in python, and now
+  # can weight by them when assigning "individuals" to regions
+  
+  # The output of this is very close to the total number of unique
+  # healthCodes, I assume the difference is due to rounding errors and
+  # some individuals being from Guam, Armed Forces, etc. 
+  
+  zip_summary <- aggregate(value_vec, by=list(zip_vec), mean)
+  names(zip_summary) <- c("zip3", "value")
+  ## Now let's expand the zip code data 	
+  new_zips <- data.frame(zip5 = unique(census_table$ZCTA5), value=NA)
+  ## Loop through the whole data frame
+  for (i in 1:length(new_zips$zip5)) {
+    ## Loop over all unique zip codes in table
+    thiszip3 = floor(new_zips$zip5[i]/100)
+    thisvalue = zip_summary$value[zip_summary$zip3==thiszip3]
+    if (length(thisvalue)==1) {
+      new_zips$value[i] = thisvalue
+    } 
+    
+    #print(i)
+  }
+  county_frame <- data.frame(countyCode = unique(census_table$GEOID), totalvalue=0, zipweight=0, zipvalue=0, totalweight=0)
+  for (j in 1:nrow(new_zips)) {
+    ## Get the county code for this zip code
+    counties = census_table$GEOID[census_table$ZCTA5==new_zips$zip5[j]]
+    weights = census_table$COPOPPCT[census_table$ZCTA5==new_zips$zip5[j]]
+    zipweight = census_table$Z3PCT[census_table$ZCTA5==new_zips$zip5[j]]
+    if (is.na(new_zips$value[j]) | new_zips$value[j]==0) {
+      next
+    }
+    
+    for (a in 1:length(counties)) {
+      county_frame$totalvalue[county_frame$countyCode==counties[a]] = county_frame$totalvalue[county_frame$countyCode==counties[a]] + new_zips$value[j]*zipweight[a]
+      county_frame$totalweight[county_frame$countyCode==counties[a]] = county_frame$totalweight[county_frame$countyCode==counties[a]] + weights[a]
+      county_frame$zipweight[county_frame$countyCode==counties[a]] = county_frame$zipweight[county_frame$countyCode==counties[a]] + zipweight[a]
+      county_frame$zipvalue[county_frame$countyCode==counties[a]] = county_frame$zipvalue[county_frame$countyCode==counties[a]] + zipweight[a]*new_zips$value[j]
+      
+      
     }
     
     if (j%%1000==0) {
@@ -292,18 +355,41 @@ plotMapCounty(countyRisk_wRate, "RdBu", "zdev4", levels)
 
 ## Let's get the total number of individuals per county:
 ## Aggregate by 3 digit zip
-people_per_code = data.frame(table(satisfied_wState$zip))
+
+unique_frame = unique(data.frame(zip=satisfied_wState$zip, healthCode=satisfied_wState$healthCode))
+people_per_code = data.frame(table(unique_frame$zip))
 names(people_per_code) = c("Zip3", "NumInds")
 ggplot(data=people_per_code) + geom_histogram(aes(x=NumInds), binwidth=2) + theme_bw() + labs(x="Number of Individuals", y="Numer of Zip Code Prefixes")
 ggsave("HistogramOfIndividualsPerZipCode.pdf", height=6, width=8)
 write.table(people_per_code[order(people_per_code$NumInds, decreasing=T),], "IndividualsPerZip3Code.txt", sep="\t", row.names=F, quote=F )
 
 countyInds = map3DigitZipToCounty(people_per_code$Zip3, people_per_code$NumInds, census_table)
-
-ind_levels <- c(0.5,10,25,50,100,200,1000)
-png("TotalIndsByCounty.png", height=1600, width=2000)
+countyInds$weightInds = countyInds$zipvalue/countyInds$zipweight
+ind_levels <- c(0.1,10,20,30,50,100,200,1000)
+png("TotalWeightedIndsByCounty.png", height=1600, width=2000)
 plotMapCounty(countyInds, "Blues", "value", ind_levels, nameCountyCode="countyCode")
-map('state',col="black", lwd=2,add=T, fill=F)
-title(main="Number of Individuals per County", cex.main=4)
-legend("bottomright", legend=c("None", "1 to 10", "10 to 25", "25 to 50", "50 to 100", "100 to 200", ">200"), fill=c("grey",brewer.pal(length(ind_levels)-1, "Blues")), cex=3, box.lwd=0)
+title(main="Number of Weighted Individuals per County", cex.main=4)
+legend("bottomright", legend=c("None", "1 to 10", "10 to 20", "20 to 30","30 to 50", "50 to 100", "100 to 200", ">200"), fill=c("grey",brewer.pal(length(ind_levels)-1, "Blues")), cex=3, box.lwd=0)
 dev.off()
+
+## Map weighted by ZCTA population percentage
+countyIndsTotal = countInds3DigitZipToCounty(people_per_code$Zip3, people_per_code$NumInds, census_table)
+countyIndsTotal$pop = countyIndsTotal$totalvalue/100
+
+
+pop_levels <- c(0,1,5,10,20,50,100,1000)
+png("TotalPopSamplesByCounty.png", height=1600, width=2000)
+plotMapCounty(countyIndsTotal, "Blues", "pop", pop_levels, nameCountyCode="countyCode")
+title(main="Estimated Number of Individuals per County", cex.main=4)
+legend("bottomright", legend=c("None", "<1", "1 to 5", "5 to 10","10 to 20", "20 to 50","50 to 100", ">100"), fill=c("grey",brewer.pal(length(ind_levels)-1, "Blues")), cex=3, box.lwd=0)
+dev.off()
+
+## Plot number of individuals by state
+
+unique_frame_state = unique(data.frame(state=satisfied_wState$state, healthCode=satisfied_wState$healthCode))
+indsPerState = data.frame(table(unique_frame_state$state))
+names(indsPerState) = c("State", "Number of Individuals")
+write.table()
+
+
+
