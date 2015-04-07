@@ -2,8 +2,8 @@
 
 ## Julian Homburger
 ## March 21, 2015
-#source("http://depot.sagebase.org/CRAN.R")
-#pkgInstall("synapseClient")
+source("http://depot.sagebase.org/CRAN.R")
+pkgInstall("synapseClient")
 
 # Log in to the client
 require(synapseClient)
@@ -74,7 +74,7 @@ motion_track_tables <- motion_track@values
 
 ## Going to try to download walk data
 
-tq <- synTableQuery('SELECT * FROM syn3420486 limit 2')
+tq <- synTableQuery('SELECT * FROM syn3420486')
 
 sc <- synapseClient:::synGetColumns(tq@schema)
 theseCols <- sapply(as.list(1:length(sc)), function(x){
@@ -88,8 +88,24 @@ theseCols <- unlist(theseCols)
 
 theseFiles <- lapply(as.list(theseCols), function(cc){
   sapply(as.list(rownames(tq@values)), function(rn){
-    synGet(tq, rn, cc)
+    synDownloadTableFile(tq, rn, cc)
   })
 })
 names(theseFiles) <- theseCols
+
+## Loop for download the files
+motion_frame = tq@values
+file_paths = rep(NA, nrow(motion_frame))
+my_row_names = rownames(motion_frame)
+for (i in 5000:nrow(motion_frame)) {
+  if (is.na(motion_frame$data.csv[i])) {
+    next
+  }
+  file_paths[i] = synDownloadTableFile(tq, my_row_names[i], theseCols)
+  print(i)
+  if (i %% 100 == 0) {
+    print(paste("Downloaded", i, "of", nrow(motion_frame), "total files"))
+  }
+}
+
 
