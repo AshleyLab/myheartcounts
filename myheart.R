@@ -341,3 +341,14 @@ demo.table.sm = distinct(data.frame(healthCode = demo.table$healthCode, birthday
 demo.table.sm.distinct = distinct(demo.table.sm, healthCode) # note, went from 12k records to 5067 records with distinct healthcodes
 
 
+# now that we've got demographics, lots of fun things to do!
+
+# 0.5) need to parse age
+# 1) use sex and age and race to look for chestPain vs diet separated by sex and age
+# 2) difference in age / sex / race of who isn't exercising at all? or who exercises the most?
+# 3) age / sex / race of sleep debt
+# 4) age / sex /race of sleep consistency and average amt
+# 5) age / sex /race satisfied with life
+
+
+
