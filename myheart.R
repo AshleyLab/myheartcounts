@@ -311,3 +311,44 @@ hist(mean_vec.act/60, main="Average exercise per day (on days you exercised)", x
 hist(sd_vec.act/60, main="Variation in exercise per day", xlab="Standard Deviation (Minutes)",col="skyblue4")
 
 mean(fraction.days.with.exercise) * 7
+
+
+
+
+
+
+
+
+
+
+
+
+
+###### April 8, 2015
+# want to find this table and use it for demographic info cardiovascular-2-APHHeartAge-7259AC18-D711-47A6-ADBD-6CFCECDED1DF-v1
+demographics <- synTableQuery("SELECT * FROM syn3458936")
+demo.table <- demographics@values
+
+#important fields: healthCode, heartAgeDataAge, bloodPressureInstruction, heartAgeDataBloodGlucose, heartAgeDataDiabetes, heartAgeDataGender
+# heartAgeDataEthnicity, heartAgeDataHdl, heartAgeDataHypertension, heartAgeDataLdl.unit, smokingHistory, heartAgeDataSystolicBloodPressure
+# heartAgeDataTotalCholesterol, 
+
+demo.table.sm = distinct(data.frame(healthCode = demo.table$healthCode, birthday = demo.table$heartAgeDataAge, bp = demo.table$bloodPressureInstruction, 
+                                    bloodGlucose = demo.table$heartAgeDataBloodGlucose, diabetes = demo.table$heartAgeDataDiabetes, sex = demo.table$heartAgeDataGender,
+                                    race = demo.table$heartAgeDataEthnicity, hdl = demo.table$heartAgeDataHdl, hypertension=demo.table$heartAgeDataHypertension, 
+                                    ldl = demo.table$heartAgeDataLdl, totalChol = demo.table$heartAgeDataTotalCholesterol, smoking = demo.table$smokingHistory, systolic = demo.table$heartAgeDataSystolicBloodPressure))
+
+demo.table.sm.distinct = distinct(demo.table.sm, healthCode) # note, went from 12k records to 5067 records with distinct healthcodes
+
+
+# now that we've got demographics, lots of fun things to do!
+
+# 0.5) need to parse age
+# 1) use sex and age and race to look for chestPain vs diet separated by sex and age
+# 2) difference in age / sex / race of who isn't exercising at all? or who exercises the most?
+# 3) age / sex / race of sleep debt
+# 4) age / sex /race of sleep consistency and average amt
+# 5) age / sex /race satisfied with life
+
+
+
