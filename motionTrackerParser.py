@@ -123,7 +123,7 @@ time_summary = dict()
 ## Let's loop through each individuals data
 for c in csvs:
 	print c
-	recordmatch = re.search(r'/(.+)\.data\.csv$', c)
+	recordmatch = re.search(r'/(.+)_motionTrackAll\.csv$', c)
 	#print recordmatch
 	recordID = recordmatch.group(1)
 	thisfile = open(c, "r")
@@ -168,6 +168,10 @@ for c in csvs:
 		thisact = thistimes[timesort[t]][0]
 		second_diff = (timesort[t+1] - timesort[t]).total_seconds()
 		# This gets the total number of seconds that this activity is performed at
+
+		# If it is longer then 30 minutes, I don't believe it:
+		if (second_diff > 1800):
+			continue
 
 		if thisact != 0: # If not unknown, add to summary counts
 		
@@ -228,6 +232,7 @@ for q in times:
 	timeout.write(str(q) + "\t" + "\t".join(map(str, time_list)) + "\t" + "\t".join(map(str, time_summary[q])) + "\n")
  	lastq = q
 
+	# Profit
 
 
 
