@@ -311,3 +311,28 @@ hist(mean_vec.act/60, main="Average exercise per day (on days you exercised)", x
 hist(sd_vec.act/60, main="Variation in exercise per day", xlab="Standard Deviation (Minutes)",col="skyblue4")
 
 mean(fraction.days.with.exercise) * 7
+
+
+
+
+
+
+
+
+
+
+
+
+
+###### April 8, 2015
+# want to find this table and use it for demographic info cardiovascular-2-APHHeartAge-7259AC18-D711-47A6-ADBD-6CFCECDED1DF-v1
+demographics <- synTableQuery("SELECT * FROM syn3458936")
+demo.table <- demographics@values
+
+#important fields: healthCode, heartAgeDataAge, bloodPressureInstruction, heartAgeDataBloodGlucose, heartAgeDataDiabetes, heartAgeDataGender
+# heartAgeDataEthnicity, heartAgeDataHdl, heartAgeDataHypertension, heartAgeDataLdl.unit, smokingHistory, heartAgeDataSystolicBloodPressure
+# heartAgeDataTotalCholesterol, 
+
+
+
+
