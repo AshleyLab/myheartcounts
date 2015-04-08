@@ -333,6 +333,11 @@ demo.table <- demographics@values
 # heartAgeDataEthnicity, heartAgeDataHdl, heartAgeDataHypertension, heartAgeDataLdl.unit, smokingHistory, heartAgeDataSystolicBloodPressure
 # heartAgeDataTotalCholesterol, 
 
+demo.table.sm = distinct(data.frame(healthCode = demo.table$healthCode, birthday = demo.table$heartAgeDataAge, bp = demo.table$bloodPressureInstruction, 
+                                    bloodGlucose = demo.table$heartAgeDataBloodGlucose, diabetes = demo.table$heartAgeDataDiabetes, sex = demo.table$heartAgeDataGender,
+                                    race = demo.table$heartAgeDataEthnicity, hdl = demo.table$heartAgeDataHdl, hypertension=demo.table$heartAgeDataHypertension, 
+                                    ldl = demo.table$heartAgeDataLdl, totalChol = demo.table$heartAgeDataTotalCholesterol, smoking = demo.table$smokingHistory, systolic = demo.table$heartAgeDataSystolicBloodPressure))
 
+demo.table.sm.distinct = distinct(demo.table.sm, healthCode) # note, went from 12k records to 5067 records with distinct healthcodes
 
 
