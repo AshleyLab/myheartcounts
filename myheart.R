@@ -194,6 +194,19 @@ diet.parQ.risk <- merge(dietparQ, riskFactors.distinct, by="healthCode")  #16339
 glm(chestPainInLastMonth~fish+fruit+grains+sugar_drinks+vegetable,data=diet.parQ.risk, family=binomial) #need family=binomial for logistic
 #kinda cool - fish, fruit, and veggies are neg and grains and sugar drinks are positive (all are TINY of course)
 
+glm(chestPainInLastMonth~fish,data=diet.parQ.risk, family=binomial) #need family=binomial for logistic
+glm(chestPainInLastMonth~fruit,data=diet.parQ.risk, family=binomial) #need family=binomial for logistic
+glm(chestPainInLastMonth~grains,data=diet.parQ.risk, family=binomial) #need family=binomial for logistic
+glm(chestPainInLastMonth~sugar_drinks,data=diet.parQ.risk, family=binomial) #need family=binomial for logistic
+glm(chestPainInLastMonth~vegetable,data=diet.parQ.risk, family=binomial) #need family=binomial for logistic
+
+
+
+
+
+
+
+
 glm(dizziness~fish+fruit+grains+sugar_drinks+vegetable,data=diet.parQ.risk, family=binomial)
 # fruit, grains, and sugar are now positive - maybe bc of the sugar in fruit?
 
@@ -233,14 +246,14 @@ cor(dailyCheck.sm$total_act, as.numeric(as.character(dailyCheck.sm$sleep)))
 hist(log(dailyCheck.sm$total_act))
 hist(as.numeric(as.character(dailyCheck.sm$sleep)))
 
-# i wonder if i should remove the 60s from the sleep? maybe that is the default (ie: 1 meaning that nothing was actually selected?)
+# i wonder if i should remove the 60s from the sleep? maybe that is the default (ie: meaning that nothing was actually selected?)
 dailyCheck.sm.no60 = dailyCheck.sm[!(dailyCheck.sm$sleep==60),]
 hist(log(dailyCheck.sm.no60$total_act))
 hist(as.numeric(as.character(dailyCheck.sm.no60$sleep))/3600)
 cor(dailyCheck.sm.no60$total_act, as.numeric(as.character(dailyCheck.sm.no60$sleep)))
 
 #can i check that sleep they say they get lines up with what they actually get (from activity check)?
-
+##TODO
 
 #how many days do i have per person? can i check for sleep consistency?
 healthCode.ct = count(dailyCheck.uniq$healthCode)
@@ -250,6 +263,9 @@ sd_vec.act =c()
 mean_vec.act=c()
 sd_vec.sleep =c()
 mean_vec.sleep=c()
+people.who.never.exercise=0
+people.who.exercise=0
+fraction.days.with.exercise=c()
 for (i in 1:nrow(healthCode.ct)){
   if(healthCode.ct$freq[i]>5){  #5 is arbitrary... could require only more than 1 record...
   
@@ -258,12 +274,19 @@ for (i in 1:nrow(healthCode.ct)){
     non0_act_time = a$act_time[a$act_time>0]
     mean_vec.act = append(mean_vec.act, mean(non0_act_time))
     sd_vec.act =append(sd_vec.act, sd(non0_act_time))
-
+    if (length(non0_act_time)>0){
+      people.who.exercise = people.who.exercise+1
+      fraction.days.with.exercise =append(fraction.days.with.exercise, length(non0_act_time)/healthCode.ct$freq[i])
+    }
+    else{
+      people.who.never.exercise = people.who.never.exercise+1
+    }
+    
     #a$sleep[a$sleep==60]<-0
     
     non0_sleep = a$sleep[a$sleep>60]
-    mean_vec.act = append(mean_vec.act, mean(non0_sleep))
-    sd_vec.act = append(sd_vec.act, sd(non0_sleep))
+    mean_vec.sleep = append(mean_vec.sleep, mean(non0_sleep))
+    sd_vec.sleep = append(sd_vec.sleep, sd(non0_sleep))
     
     
 
@@ -276,3 +299,15 @@ for (i in 1:nrow(healthCode.ct)){
 
   }
 }
+average.act = mean(mean_vec.act, na.rm=T) # on days where you did activity -- overall is ~1hr per day
+std.dev.act = mean(sd_vec.act,na.rm=T)
+average.sleep = mean(mean_vec.sleep, na.rm=T) # average night sleep 7.11
+std.dev.sleep = mean(sd_vec.sleep, na.rm=T)
+
+par(mfrow=c(2,1))
+hist(mean_vec.sleep/3600, main="Average sleep per night", xlab="Average # Hours Sleep", col="skyblue1")
+hist(sd_vec.sleep/3600, main="Variation in sleep per night", xlab="Standard Deviation (Hours)", col="skyblue4")
+hist(mean_vec.act/60, main="Average exercise per day (on days you exercised)", xlab="Average Minutes Excercised",breaks=20,col="skyblue1")
+hist(sd_vec.act/60, main="Variation in exercise per day", xlab="Standard Deviation (Minutes)",col="skyblue4")
+
+mean(fraction.days.with.exercise) * 7
