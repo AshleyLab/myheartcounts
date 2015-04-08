@@ -17,16 +17,16 @@ synapseLogin()
 sync.survey <- function() {
     # query your project for all of the tables
     projectId <- "syn3270436"
-    q <- synQuery(paste("SELECT id, name FROM table WHERE parentId=='", projectId, "'", sep=""))
+    pq <- synQuery(paste("SELECT id, name FROM table WHERE parentId=='", projectId, "'", sep=""))
 
     # download survey function
-    download.survey <- function(i,q) {
-        cat(paste0("* DOWNLOAD TABLE: ", q[i,"table.name"],"\n"))
-        sq <- synTableQuery(paste('SELECT * FROM ', q[i,"table.id"]), filePath = paste0(data.path,"/tables/",q[i,'table.name'],".csv"))
+    download.survey <- function(i,pq) {
+        cat(paste0("* DOWNLOAD TABLE: ", pq[i,"table.name"],"\n"))
+        sq <- synTableQuery(paste('SELECT * FROM ', pq[i,"table.id"]), filePath = paste0(data.path,"/tables/",pq[i,'table.name'],".csv"))
         }
 
     # download all surveys
-    sq.all <- mclapply(as.list(1:nrow(q)), download.survey, q, mc.cores=5)
+    sq.all <- mclapply(as.list(1:nrow(pq)), download.survey, pq, mc.cores=5)
     }
 
 sync.survey()
