@@ -1,6 +1,7 @@
 ### PREAMBLE ######################################################################################
 
 require(RSQLite)
+require(parallel)
 require(synapseClient)
 
 data.path <- "/home/common/myhealth/data/"
@@ -21,7 +22,7 @@ sync.survey <- function() {
     # download survey function
     download.survey <- function(i,q) {
         cat(paste0("* DOWNLOAD TABLE: ", q[i,"table.name"],"\n"))
-        sq <- synTableQuery(paste('SELECT * FROM ', q[i,"table.id"]), filePath = paste0(data.path,"/tables/",[i,"table.name"],".csv"))
+        sq <- synTableQuery(paste('SELECT * FROM ', q[i,"table.id"]), filePath = paste0(data.path,"/tables/",q[i,'table.name'],".csv"))
         }
 
     # download all surveys
@@ -66,5 +67,5 @@ sync.blob <- function(x) {
         }
     }
 
-sync.blob()
+#sync.blob()
 
