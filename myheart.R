@@ -354,10 +354,53 @@ demo.table.sm.distinct$age[demo.table.sm.distinct$age<0] <- NA
 #plot age
 par(mfrow=c(1,1))
 hist(demo.table.sm.distinct$age, main = "Age distribution", xlab="Age", col = "#e5f5f9")
-
-
+ggplot(demo.table.sm.distinct, aes(age, fill=race)) + geom_bar() +theme_bw(20)
+ggplot(demo.table.sm.distinct, aes(age, fill=sex)) + geom_bar() +theme_bw(20)
 
 # 1) use sex and age and race to look for chestPain vs diet separated by sex and age
+
+#join demo data with diet/parQ data
+dietparQ.demo.merge <- merge(dietparQ, demo.table.sm.distinct, by="healthCode") #leaves us with 4953 people
+
+#same glms as before, but with age
+glm(chestPainInLastMonth~fish+fruit+grains+sugar_drinks+vegetable+age,data=dietparQ.demo.merge, family=binomial) 
+glm(chestPainInLastMonth~fish+age,data=dietparQ.demo.merge, family=binomial) 
+glm(chestPainInLastMonth~fruit+age,data=dietparQ.demo.merge, family=binomial) 
+glm(chestPainInLastMonth~grains+age,data=dietparQ.demo.merge, family=binomial) 
+glm(chestPainInLastMonth~sugar_drinks+age,data=dietparQ.demo.merge, family=binomial) 
+glm(chestPainInLastMonth~vegetable+age,data=dietparQ.demo.merge, family=binomial) 
+glm(chestPainInLastMonth~age,data=dietparQ.demo.merge, family=binomial)
+
+#same glms as before, but with sex
+glm(chestPainInLastMonth~fish+fruit+grains+sugar_drinks+vegetable+sex,data=dietparQ.demo.merge, family=binomial) 
+glm(chestPainInLastMonth~fish+sex,data=dietparQ.demo.merge, family=binomial) 
+glm(chestPainInLastMonth~fruit+sex,data=dietparQ.demo.merge, family=binomial) 
+glm(chestPainInLastMonth~grains+sex,data=dietparQ.demo.merge, family=binomial) 
+glm(chestPainInLastMonth~sugar_drinks+sex,data=dietparQ.demo.merge, family=binomial) 
+glm(chestPainInLastMonth~vegetable+sex,data=dietparQ.demo.merge, family=binomial) 
+glm(chestPainInLastMonth~sex,data=dietparQ.demo.merge, family=binomial) 
+
+#same glms as before, but with race
+glm(chestPainInLastMonth~fish+fruit+grains+sugar_drinks+vegetable+race,data=dietparQ.demo.merge, family=binomial) 
+glm(chestPainInLastMonth~fish+race,data=dietparQ.demo.merge, family=binomial) 
+glm(chestPainInLastMonth~fruit+race,data=dietparQ.demo.merge, family=binomial) 
+glm(chestPainInLastMonth~grains+race,data=dietparQ.demo.merge, family=binomial) 
+glm(chestPainInLastMonth~sugar_drinks+race,data=dietparQ.demo.merge, family=binomial) 
+glm(chestPainInLastMonth~vegetable+race,data=dietparQ.demo.merge, family=binomial) 
+glm(chestPainInLastMonth~race,data=dietparQ.demo.merge, family=binomial) 
+
+# race+age+sex combos
+glm(chestPainInLastMonth~race+sex,data=dietparQ.demo.merge, family=binomial) 
+glm(chestPainInLastMonth~race+age,data=dietparQ.demo.merge, family=binomial) 
+glm(chestPainInLastMonth~sex+age,data=dietparQ.demo.merge, family=binomial) 
+glm(chestPainInLastMonth~sex+age+race,data=dietparQ.demo.merge, family=binomial) 
+
+#NONE of these are significant at all.. 
+
+
+
+
+
 # 2) difference in age / sex / race of who isn't exercising at all? or who exercises the most?
 # 3) age / sex / race of sleep debt
 # 4) age / sex /race of sleep consistency and average amt
