@@ -21,7 +21,6 @@ parser=argparse.ArgumentParser()
 parser.add_argument("-f", help="List of Motion Tracker .csv files to parse")
 parser.add_argument("-o", default="", help="Output table of individual delimited data")
 parser.add_argument("-t", default="", help="Output table of time delimited data")
-
 args = parser.parse_args()
 csvs = list()
 
@@ -123,18 +122,19 @@ time_summary = dict()
 ## Let's loop through each individuals data
 for c in csvs:
 	print c
-	recordmatch = re.search(r'/(.+)_motionTrackAll\.csv$', c)
-	#print recordmatch
+	recordmatch = re.search(r'(.+)_motionTrackAll.csv$', c)
+	print recordmatch
 	recordID = recordmatch.group(1)
 	thisfile = open(c, "r")
 	# Initialize data, we will record times in seconds for ease:
 	# first element is ID, second through sixth will be times in each activity, 7th: high conf time, 8: total time, 9: unknown time
-	thisrecord = [recordID, 0, 0,0,0,0, 0, 0, 0]
+	thisrecord = [recordID, 0, 0,0,0,0, 0, 0, 0, "", ""]
 	head = thisfile.readline()
 	thistimes = dict()
 	for line in thisfile:
 		splits = line.strip().split(",")
-		
+		if not line.startswith("2015"):
+			continue	
 		# Some lines were weird and contained only a 0, so skip those
 		if len(splits) < 5:
 			continue
@@ -156,8 +156,12 @@ for c in csvs:
 	## Now, we need to sort by time, get the time deltas, and add that to the summary:
 	
 	timesort = sorted(thistimes.keys())
+	if (len(timesort) < 2):
+		continue
 	print(max(timesort))
+	thisrecord[9] = max(timesort)
 	print(min(timesort))
+	thisrecord[10] = min(timesort)
 	# This is going to lop off the last timepoint, but whatever?
 	for t in range(0,len(timesort)-1):
 	
@@ -210,8 +214,8 @@ for c in csvs:
 
 
 ### Write output to file
-indout.write("\t".join(["recordId", "SecStationary", "SecWalking", "SecRunning", "SecAutomotive", 
-"SecCycling", "SecTotal", "SecTotUnk", "SecUnk"]) + "\n") 
+indout.write("\t".join(["healthCode", "SecStationary", "SecWalking", "SecRunning", "SecAutomotive", 
+"SecCycling", "SecTotal", "SecTotUnk", "SecUnk", "MaxTime", "MinTime"]) + "\n") 
 for r in allrecords.keys():
 	indout.write("\t".join(map(str, allrecords[r])) + "\n")
 
