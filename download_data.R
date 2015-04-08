@@ -4,8 +4,8 @@ require(RSQLite)
 require(parallel)
 require(synapseClient)
 
-data.path <- "/home/common/myhealth/data/"
-cache.path <- "/home/common/myhealth/data/synapseCache"
+data.path <- "/home/common/myheart/data/"
+cache.path <- "/home/common/myheart/data/synapseCache"
 
 synapseCacheDir(cache.path) 
 synapseLogin()
@@ -22,14 +22,17 @@ sync.survey <- function() {
     # download survey function
     download.survey <- function(i,pq) {
         cat(paste0("* DOWNLOAD TABLE: ", pq[i,"table.name"],"\n"))
-        sq <- synTableQuery(paste('SELECT * FROM ', pq[i,"table.id"]), filePath = paste0(data.path,"/tables/",pq[i,'table.name'],".csv"))
+        #sq <- synTableQuery(paste('SELECT * FROM ', pq[i,"table.id"]), filePath = file.path(paste0(data.path, "tables"),paste0(pq[i,'table.name'],".csv")))
+        sq <- synTableQuery(paste('SELECT * FROM ', pq[i,"table.id"]), filePath = file.path(tempdir(), paste0(i,".csv")))
+        write.table(sq@values, file.path(paste0(data.path, "tables"),paste0(pq[i,'table.name'],".tsv")), quote=F,sep="\t",row.names=T)
         }
 
     # download all surveys
     sq.all <- mclapply(as.list(1:nrow(pq)), download.survey, pq, mc.cores=5)
+    #sq.all <- lapply(as.list(1:nrow(pq)), download.survey)
     }
 
-sync.survey()
+#sync.survey()
 
 ### blob / accelerometer data
 
@@ -58,7 +61,8 @@ sync.blob <- function(x) {
         theseCols <- sapply(as.list(1:length(sc)), is.filehandle.col,sc)
         theseCols <- unlist(theseCols)
 
-        # download 
+        # download
+        theseFiles <- list()
         for (col in theseCols) {
             cat(paste0("* DOWNLOAD BLOB: ", col,"\n"))
             theseFiles[[col]] <-  mclapply(as.list(rownames(tq@values)), function(rn,col,tq) {tryCatch(synDownloadTableFile(tq, rn, col), error=function(e) NA)}, col,tq,mc.cores=20)
@@ -67,5 +71,5 @@ sync.blob <- function(x) {
         }
     }
 
-#sync.blob()
+sync.blob()
 
