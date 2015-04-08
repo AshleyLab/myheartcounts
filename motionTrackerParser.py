@@ -120,12 +120,15 @@ allrecords = dict()
 time_summary = dict()
 
 ## Let's loop through each individuals data
+i = 0
 for c in csvs:
-	print c
+	#print c
 	recordmatch = re.search(r'(.+)_motionTrackAll.csv$', c)
-	print recordmatch
+	#print recordmatch
 	recordID = recordmatch.group(1)
 	thisfile = open(c, "r")
+	if (i %% 100 == 0):
+		print "Analyzing record number: " + str(i) + " out of " + str(len(csvs))
 	# Initialize data, we will record times in seconds for ease:
 	# first element is ID, second through sixth will be times in each activity, 7th: high conf time, 8: total time, 9: unknown time
 	thisrecord = [recordID, 0, 0,0,0,0, 0, 0, 0, "", ""]
@@ -158,9 +161,9 @@ for c in csvs:
 	timesort = sorted(thistimes.keys())
 	if (len(timesort) < 2):
 		continue
-	print(max(timesort))
+	#print(max(timesort))
 	thisrecord[9] = max(timesort)
-	print(min(timesort))
+	#print(min(timesort))
 	thisrecord[10] = min(timesort)
 	# This is going to lop off the last timepoint, but whatever?
 	for t in range(0,len(timesort)-1):
