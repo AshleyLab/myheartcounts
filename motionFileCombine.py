@@ -33,9 +33,9 @@ for mline in motion_table:
 	msplits = mline.strip().split()
 	
 	## Get hcode:
-	thishcode = msplit[hcode]
-	thisid = msplit[fileid]
-	if thishcode in heatlh_codes_names:
+	thishcode = msplits[hcode]
+	thisid = msplits[fileid]
+	if thishcode in health_codes_names:
 		health_codes_names[thishcode].append(thisid)
 	else:
 		health_codes_names[thishcode]= [thisid]
@@ -51,7 +51,13 @@ for mycode in health_codes_names.keys():
 		## It seems that it is first the last 3 digits of the 'number', then the folder of the 'number'
 		
 		last3 = q[-3:]
-		filepath = args.f + "/" last3 + "/" + q + "/"
+		if (last3 == "NA"):
+			continue
+		if (int(last3) < 10):
+			last3 = last3[-1:]
+		if (int(last3) < 100 and int(last3) > 9):
+			last3 = last3[-2:]
+		filepath = args.f + "/" + last3 + "/" + q + "/"
 		# now need to get the filename there
 		files_in_here = os.listdir(filepath)
 		
