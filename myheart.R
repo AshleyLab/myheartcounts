@@ -660,17 +660,37 @@ grid.arrange(p2,p4,p5)
 
 
 
+#exercise vs no exercise & satisfied with life
 
+exercise.satisfied = merge(exercise, distinct(satisfied.table, healthCode), by="healthCode")
+no.exercise.satisfied = merge(no.exercise, distinct(satisfied.table, healthCode), by="healthCode")
 
+thing1<-cbind(exercise.satisfied, rep("Exercise",nrow(exercise.satisfied)))
+thing2<-cbind(no.exercise.satisfied,rep("No Exercise",nrow(no.exercise.satisfied)))
+colnames(thing1)[32]=c("ex")
+colnames(thing2)[32]=c("ex")
+all<-rbind(thing1,thing2 )
 
+ggplot(all, aes(ex, satisfiedwith_life)) + geom_boxplot() +theme_bw(20) +ylab("Satisfied with life") + xlab("")
+ggplot(all, aes(ex, satisfiedwith_life)) + geom_violin() +theme_bw(20) +ylab("Satisfied with life")
 
 
 # 3) age / sex / race of sleep debt
+#later.
 
 # 4) age / sex /race of sleep consistency and average amt 
 #done above
 
 # 5) age / sex /race satisfied with life
+
+satisfied.demo = merge(distinct(satisfied.table, healthCode), demo.table.sm.distinct, by="healthCode")
+satisfied.demo$age<-round(satisfied.demo$age/10)*10
+satisfied.demo<-satisfied.demo[!is.na(satisfied.demo$age),]
+ggplot(satisfied.demo, aes(as.factor(age), satisfiedwith_life)) + geom_boxplot() +theme_bw(20) +ylab("Satisfied with life") + xlab("")
+
+ggplot(satisfied.demo, aes(race, satisfiedwith_life)) + geom_boxplot() +theme_bw(20) +ylab("Satisfied with life") + xlab("")
+
+ggplot(satisfied.demo, aes(sex, satisfiedwith_life)) + geom_boxplot() +theme_bw(20) +ylab("Satisfied with life") + xlab("")
 
 
 
