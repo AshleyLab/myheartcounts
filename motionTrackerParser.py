@@ -26,10 +26,14 @@ parser.add_argument("-test", default=0, help="Should I only do the first 100 as 
 
 args = parser.parse_args()
 csvs = list()
-
+big=0
 test = int(args.test)
 if (test):
 	print "Test mode active, will only output first 100 records"
+if (args.b != ""):
+	print "Will output the BIG TABLE, this takes increase memory and runtime"
+	big = 1
+	
 
 # Open up all the files
 try:
@@ -211,7 +215,8 @@ for c in csvs:
 
 	## Now lets build the time series data:
 	thistimehash = buildTimeSeries(timesort, thistimes)
-	all_inds[thisrecord[0]] = thistimehash
+	if (big == 1):
+		all_inds[thisrecord[0]] = thistimehash
 	for th in thistimehash.keys():
 		all_times.add(th)
 		if th in time_summary:
@@ -262,6 +267,9 @@ for q in times:
 
 	# Profit
 
+# Quit if we aren't outputting the big table
+if (big != 1):
+	sys.exit()
 
 ## Ok, now we need to output the table
 
