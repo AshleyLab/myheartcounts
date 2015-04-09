@@ -769,19 +769,25 @@ for (person in 1:ncol(test.people)){
 }
 
 # 2 is walking, 3 is exercise. I want to know per day HOW MANY TIMES you did a 2 or a 3 per day
-for (a in unique(test.people$date)){  
-  index =1
-  for (person in 1:(ncol(test.people)-1)){
-  blocks.per.day=matrix(ncol=length(unique(test.people$date)), nrow=(ncol(test.people)-1))
-    test.people.date = subset(test.people, date==a ) 
-  num.blocks=0
-  for (i in 1:(nrow(test.people.date)-1)){
-    if(test.people.date[(i+1), person]==3 & test.people.date[(i+1), person] - test.people.date[i, person] != 0){
-      num.blocks=num.blocks+1
-    }
-  }
+blocks.per.day=matrix(ncol=length(unique(test.people$date)), nrow=(ncol(test.people)-1))
+index = 1 # date number
 
+for (a in unique(test.people$date)){  
+  test.people.date = subset(test.people, date==a ) # all the data for all the people on day a.
+  
+  for (person in 1:(ncol(test.people)-1)){ # person number
+    num.blocks=0 #count number of blocks
+    for (i in 1:(nrow(test.people.date)-1)){ # i just indexes the rows from each person for day a
+     if(test.people.date[(i+1), person]==3 & test.people.date[(i+1), person] - test.people.date[i, person] != 0){
+       num.blocks=num.blocks+1
+      }
+     
+    }
+    blocks.per.day[person,index]=num.blocks
+       
   }
-  blocks.per.day[person,index]=num.blocks
   index=index+1
 }
+
+
+#now that we've filled in blocks per day, calculate mean and stdev across rows with apply
