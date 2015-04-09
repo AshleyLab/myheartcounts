@@ -69,8 +69,7 @@ sync.blob <- function(x) {
                 ped.cache.dir <-  paste0(cache.path, "/", as.numeric(substr(file.code, 5,8)),"/", as.numeric(file.code))
                 return(ped.cache.dir)
                 }
-            #theseFiles[[col]] <-  mclapply(as.list(rownames(tq@values)), function(rn,col,tq) {browser();file.code <- tq[rn,col]; if(!file.exists(get_blob_filename(file.code))){return(NA)}else{tryCatch(synDownloadTableFile(tq, rn, col), error=function(e) NA)}}, col,tq,mc.cores=20)
-            theseFiles[[col]] <-  lapply(as.list(rownames(tq@values)), function(rn,col,tq) {file.code <- tq@values[rn,col];if(file.exists(get_blob_filename(file.code))){return(NA)}else{cat(paste0("* DOWNLOADING BLOB ROW: ", rn,"\n"));tryCatch(synDownloadTableFile(tq, rn, col), error=function(e) NA)}}, col,tq)
+            theseFiles[[col]] <-  mclapply(as.list(rownames(tq@values)), function(rn,col,tq) {file.code <- tq@values[rn,col];if(file.exists(get_blob_filename(file.code))){return(NA)}else{cat(paste0("* DOWNLOADING BLOB ROW: ", rn,"\n"));tryCatch(synDownloadTableFile(tq, rn, col), error=function(e) NA)}}, col,tq, mc.cores=20)
             }
 
         }
