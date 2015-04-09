@@ -22,11 +22,14 @@ parser.add_argument("-f", help="List of Motion Tracker .csv files to parse")
 parser.add_argument("-o", default="", help="Output table of individual delimited data")
 parser.add_argument("-t", default="", help="Output table of time delimited data")
 parser.add_argument("-b", default="", help="Output the BIG table of minute delimited data")
+parser.add_argument("-test", default=0, help="Should I only do the first 100 as a test")
 
 args = parser.parse_args()
 csvs = list()
 
-test = 0
+test = int(args.test)
+if (test):
+	print "Test mode active, will only output first 100 records"
 
 # Open up all the files
 try:
@@ -132,7 +135,7 @@ for c in csvs:
 	## Make sure this is set to the correct REGEX
 	recordmatch = re.search(r'(.+)_motionTrackAll.csv$', c)
 	
-	recordmatch = re.search(r'/(.+)\.data.csv$', c)
+#	recordmatch = re.search(r'/(.+)\.data.csv$', c)
 
 	
 	#print recordmatch
@@ -233,6 +236,7 @@ for c in csvs:
 
 
 ### Write output to file
+print "Writing Individual Summary data..."
 indout.write("\t".join(["healthCode", "SecStationary", "SecWalking", "SecRunning", "SecAutomotive", 
 "SecCycling", "SecTotal", "SecTotUnk", "SecUnk", "MaxTime", "MinTime"]) + "\n") 
 for r in allrecords.keys():
@@ -243,6 +247,7 @@ timeout.write("\t".join(["timeID", "Year", "Month", "Day", "Hour", "Minute", "Nu
 times = time_summary.keys()
 times.sort()
 lastq = times[1]
+print "Writing time summary data..."
 for q in times:
 
 	while ( (q - lastq).total_seconds() > 61 ):
@@ -272,6 +277,8 @@ inds_in_order = list()
 for thisperson in all_inds.keys():
 	big_header.append(thisperson)
 	inds_in_order.append(thisperson)
+
+print "Writing the big table..."
 
 # Write header row
 big_table.write("\t".join(map(str, big_header)) + "\n")
