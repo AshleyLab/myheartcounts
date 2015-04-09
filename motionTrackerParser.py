@@ -24,6 +24,8 @@ parser.add_argument("-t", default="", help="Output table of time delimited data"
 args = parser.parse_args()
 csvs = list()
 
+test = 0
+
 # Open up all the files
 try:
 	filelistfile = open(args.f, "r")
@@ -127,8 +129,11 @@ for c in csvs:
 	#print recordmatch
 	recordID = recordmatch.group(1)
 	thisfile = open(c, "r")
-	if (i %% 100 == 0):
+	if (i % 100 == 0):
 		print "Analyzing record number: " + str(i) + " out of " + str(len(csvs))
+	i +=1
+	if (test == 1 and i > 100):
+		break
 	# Initialize data, we will record times in seconds for ease:
 	# first element is ID, second through sixth will be times in each activity, 7th: high conf time, 8: total time, 9: unknown time
 	thisrecord = [recordID, 0, 0,0,0,0, 0, 0, 0, "", ""]
