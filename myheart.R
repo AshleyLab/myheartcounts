@@ -402,6 +402,187 @@ glm(chestPainInLastMonth~sex+age+race,data=dietparQ.demo.merge, family=binomial)
 
 
 # 2) difference in age / sex / race of who isn't exercising at all? or who exercises the most?
+
+## Note, this code is basically redundant with above. Just copying and pasting for easier manipulation.
+healthCode.ct = count(dailyCheck.uniq$healthCode)
+
+sd_vec.act =c()
+mean_vec.act=c()
+sd_vec.sleep =c()
+mean_vec.sleep=c()
+people.who.never.exercise=0
+people.who.exercise=0
+fraction.days.with.exercise=c()
+people.hCode=c()
+people.who.never.exercise.hCode=c()
+people.who.exercise.hCode=c()
+for (i in 1:nrow(healthCode.ct)){
+  if (i%%500==0){
+    print(i)
+  }
+  if(healthCode.ct$freq[i]>5){  #5 is arbitrary... could require only more than 1 record...
+    
+    a = subset(dailyCheck.uniq,dailyCheck.uniq$healthCode==healthCode.ct[i,1])
+    a$act_time = a$activity1_time+a$activity2_time
+    non0_act_time = a$act_time[a$act_time>0]
+    mean_vec.act = append(mean_vec.act, mean(non0_act_time))
+    sd_vec.act =append(sd_vec.act, sd(non0_act_time))
+    people.hCode = append( people.hCode, as.character(healthCode.ct$x[i]))
+    if (length(non0_act_time)>0){
+      people.who.exercise = people.who.exercise+1
+      fraction.days.with.exercise =append(fraction.days.with.exercise, length(non0_act_time)/healthCode.ct$freq[i])
+      people.who.exercise.hCode = append( people.who.exercise.hCode, as.character(healthCode.ct$x[i]))
+    }
+    else{
+      people.who.never.exercise = people.who.never.exercise+1
+      people.who.never.exercise.hCode = append( people.who.never.exercise.hCode, as.character(healthCode.ct$x[i]))
+    }
+      
+    non0_sleep = a$sleep[a$sleep>60]
+    mean_vec.sleep = append(mean_vec.sleep, mean(non0_sleep))
+    sd_vec.sleep = append(sd_vec.sleep, sd(non0_sleep))
+
+    
+  }
+}
+
+
+# Now, I want to calculate all of these things, but use health code info to break down by race, gender, and age.
+
+# Average sleep per night, next to health code, age, gender, race
+# Notes:
+# demo.table.sm.distinct has healthcode, age, race, sex
+# people.hCode has order of people
+# mean_vec.act has mean activity
+
+#merge all that together
+hCode.activity = data.frame(mean.act = mean_vec.act, sd.act=sd_vec.act, mean.sleep = mean_vec.sleep, sd.sleep=sd_vec.sleep, healthCode = people.hCode )
+hCode.activity.demo = merge(hCode.activity, demo.table.sm.distinct, by = "healthCode")
+
+
+#### SEX #####
+
+sex.act = matrix(nrow=length(unique(hCode.activity.demo$sex)),ncol=3)
+sex.sleep = matrix(nrow=length(unique(hCode.activity.demo$sex)),ncol=3)
+ct=1
+for (g in unique(hCode.activity.demo$sex)){
+  s = subset(hCode.activity.demo, sex == g)
+
+  #activity
+  s.avg = mean(s$mean.act,na.rm=T)
+  s.stdev = mean(s$sd.act, na.rm=T)
+  sex.act[ct,1]=g
+  sex.act[ct,2]=s.avg
+  sex.act[ct,3]=s.stdev
+  
+  #sleep
+  s.avg = mean(s$mean.sleep,na.rm=T)
+  s.stdev = mean(s$sd.sleep, na.rm=T)
+  sex.sleep[ct,1]=g
+  sex.sleep[ct,2]=s.avg
+  sex.sleep[ct,3]=s.stdev
+  ct=ct+1
+}
+
+#ladies
+s = subset(hCode.activity.demo, sex == "[\"HKBiologicalSexFemale\"]" )
+sd(s$mean.sleep, na.rm=T)/3600
+
+#gents
+s = subset(hCode.activity.demo, sex == "[\"HKBiologicalSexMale\"]" )
+sd(s$mean.sleep, na.rm=T)/3600
+
+#put those numbers here: gender, avg, std dev)
+#note each data point is an average for an individual
+
+sex_sleep =read.table(text = "Male 7.314076 .924 
+           Female 7.086004 1.045")
+limits <- aes(ymax = sex_sleep$V2 + sex_sleep$V3, ymin=sex_sleep$V2 - sex_sleep$V3)
+ggplot(sex_sleep, aes(V1, V2)) +geom_bar(identity="stat", fill="skyblue3") + theme_bw(20) + xlab("") +ylab("Hours Sleep") + geom_errorbar(limits, width = .25)
+
+#### RACE #####
+
+race.act = matrix(nrow=length(unique(hCode.activity.demo$race)),ncol=3)
+race.sleep = matrix(nrow=length(unique(hCode.activity.demo$race)),ncol=3)
+ct=1
+for (r in unique(hCode.activity.demo$race)){
+  s = subset(hCode.activity.demo, race == r)
+  
+  #activity
+  s.avg = mean(s$mean.act,na.rm=T)
+  s.stdev = mean(s$sd.act, na.rm=T)
+  race.act[ct,1]=r
+  race.act[ct,2]=s.avg
+  race.act[ct,3]=s.stdev
+  
+  #sleep
+  s.avg = mean(s$mean.sleep,na.rm=T)
+  s.stdev = mean(s$sd.sleep, na.rm=T)
+  race.sleep[ct,1]=r
+  race.sleep[ct,2]=s.avg
+  race.sleep[ct,3]=s.stdev
+  ct=ct+1
+}
+
+race.sleep.df = as.data.frame(race.sleep)
+race.sleep.df$hrs = as.numeric(as.character(race.sleep.df$V2))/3600
+ggplot(race.sleep.df, aes(x=V1,y=hrs)) +geom_bar(col="black") +theme_bw(20) +ylab("Average Hours of Sleep per Night") +xlab("Race") 
+
+
+race.act.df = as.data.frame(race.act)
+race.act.df$hrs = as.numeric(as.character(race.act.df$V2))/3600
+ggplot(race.act.df, aes(x=V1,y=hrs)) +geom_bar(identity="stat") +theme_bw(20) +ylab("Average Hours of Activity per Day") +xlab("Race") 
+
+
+
+#### AGE #####
+
+age.act = matrix(nrow=length(unique(round(hCode.activity.demo$age))),ncol=3)
+age.sleep = matrix(nrow=length(unique(round(hCode.activity.demo$age))),ncol=3)
+ct=1
+for (a in unique(round(hCode.activity.demo$age))){
+  s = subset(hCode.activity.demo, round(age) == a)
+  
+  #activity
+  s.avg = mean(s$mean.act,na.rm=T)
+  s.stdev = mean(s$sd.act, na.rm=T)
+  age.act[ct,1]=a
+  age.act[ct,2]=s.avg
+  age.act[ct,3]=s.stdev
+  
+  #sleep
+  s.avg = mean(s$mean.sleep,na.rm=T)
+  s.stdev = mean(s$sd.sleep, na.rm=T)
+  age.sleep[ct,1]=a
+  age.sleep[ct,2]=s.avg
+  age.sleep[ct,3]=s.stdev
+  ct=ct+1
+}
+
+age.sleep.df=as.data.frame(age.sleep)
+age.sleep.df$hrs = age.sleep.df$V2/3600
+age_counts = count(round(hCode.activity.demo$age))
+age = merge(age.sleep.df, age_counts, by.x="V1", by.y="x")
+ggplot(age, aes(x=V1,y=hrs)) +geom_point(col="black") +theme_bw(20) +ylab("Average Hours of Sleep per Night") +xlab("Age") + geom_smooth(lwd=2,se=FALSE)
+
+age.act.df = as.data.frame(age.act)
+ggplot(age.act.df, aes(x=V1,y=V2)) +geom_point(col="black") +theme_bw(20) +ylab("Average Hours of Activity") +xlab("Age") + geom_smooth(lwd=2,se=FALSE)
+
+
+
+# par(mfrow=c(2,1))
+# hist(mean_vec.sleep/3600, main="Average sleep per night", xlab="Average # Hours Sleep", col="skyblue1")
+# hist(sd_vec.sleep/3600, main="Variation in sleep per night", xlab="Standard Deviation (Hours)", col="skyblue4")
+# hist(mean_vec.act/60, main="Average exercise per day (on days you exercised)", xlab="Average Minutes Excercised",breaks=20,col="skyblue1")
+# hist(sd_vec.act/60, main="Variation in exercise per day", xlab="Standard Deviation (Minutes)",col="skyblue4")
+# 
+# mean(fraction.days.with.exercise) * 7
+
+
+########NOTE TO SELF. MAKE SURE YOU WERE USING SUBSET RIGHT YESTERDAY!#############
+
+
+
 # 3) age / sex / race of sleep debt
 # 4) age / sex /race of sleep consistency and average amt
 # 5) age / sex /race satisfied with life
