@@ -344,11 +344,450 @@ demo.table.sm.distinct = distinct(demo.table.sm, healthCode) # note, went from 1
 # now that we've got demographics, lots of fun things to do!
 
 # 0.5) need to parse age
+
+demo.table.sm.distinct$age = as.numeric(difftime("2015-04-08",strptime(demo.table.sm.distinct$birthday,"%Y-%m-%d"), units="weeks"))/52 #divide by 52 to get years
+
+#clean age
+demo.table.sm.distinct$age[demo.table.sm.distinct$age>120] <- NA
+demo.table.sm.distinct$age[demo.table.sm.distinct$age<0] <- NA
+
+#plot age
+par(mfrow=c(1,1))
+hist(demo.table.sm.distinct$age, main = "Age distribution", xlab="Age", col = "#e5f5f9")
+ggplot(demo.table.sm.distinct, aes(age, fill=race)) + geom_bar() +theme_bw(20)
+ggplot(demo.table.sm.distinct, aes(age, fill=sex)) + geom_bar() +theme_bw(20)
+
 # 1) use sex and age and race to look for chestPain vs diet separated by sex and age
+
+#join demo data with diet/parQ data
+dietparQ.demo.merge <- merge(dietparQ, demo.table.sm.distinct, by="healthCode") #leaves us with 4953 people
+
+#same glms as before, but with age
+glm(chestPainInLastMonth~fish+fruit+grains+sugar_drinks+vegetable+age,data=dietparQ.demo.merge, family=binomial) 
+glm(chestPainInLastMonth~fish+age,data=dietparQ.demo.merge, family=binomial) 
+glm(chestPainInLastMonth~fruit+age,data=dietparQ.demo.merge, family=binomial) 
+glm(chestPainInLastMonth~grains+age,data=dietparQ.demo.merge, family=binomial) 
+glm(chestPainInLastMonth~sugar_drinks+age,data=dietparQ.demo.merge, family=binomial) 
+glm(chestPainInLastMonth~vegetable+age,data=dietparQ.demo.merge, family=binomial) 
+glm(chestPainInLastMonth~age,data=dietparQ.demo.merge, family=binomial)
+
+#same glms as before, but with sex
+glm(chestPainInLastMonth~fish+fruit+grains+sugar_drinks+vegetable+sex,data=dietparQ.demo.merge, family=binomial) 
+glm(chestPainInLastMonth~fish+sex,data=dietparQ.demo.merge, family=binomial) 
+glm(chestPainInLastMonth~fruit+sex,data=dietparQ.demo.merge, family=binomial) 
+glm(chestPainInLastMonth~grains+sex,data=dietparQ.demo.merge, family=binomial) 
+glm(chestPainInLastMonth~sugar_drinks+sex,data=dietparQ.demo.merge, family=binomial) 
+glm(chestPainInLastMonth~vegetable+sex,data=dietparQ.demo.merge, family=binomial) 
+glm(chestPainInLastMonth~sex,data=dietparQ.demo.merge, family=binomial) 
+
+#same glms as before, but with race
+glm(chestPainInLastMonth~fish+fruit+grains+sugar_drinks+vegetable+race,data=dietparQ.demo.merge, family=binomial) 
+glm(chestPainInLastMonth~fish+race,data=dietparQ.demo.merge, family=binomial) 
+glm(chestPainInLastMonth~fruit+race,data=dietparQ.demo.merge, family=binomial) 
+glm(chestPainInLastMonth~grains+race,data=dietparQ.demo.merge, family=binomial) 
+glm(chestPainInLastMonth~sugar_drinks+race,data=dietparQ.demo.merge, family=binomial) 
+glm(chestPainInLastMonth~vegetable+race,data=dietparQ.demo.merge, family=binomial) 
+glm(chestPainInLastMonth~race,data=dietparQ.demo.merge, family=binomial) 
+
+# race+age+sex combos
+glm(chestPainInLastMonth~race+sex,data=dietparQ.demo.merge, family=binomial) 
+glm(chestPainInLastMonth~race+age,data=dietparQ.demo.merge, family=binomial) 
+glm(chestPainInLastMonth~sex+age,data=dietparQ.demo.merge, family=binomial) 
+glm(chestPainInLastMonth~sex+age+race,data=dietparQ.demo.merge, family=binomial) 
+
+#NONE of these are significant at all.. 
+
+
+
+
+
 # 2) difference in age / sex / race of who isn't exercising at all? or who exercises the most?
+
+## Note, this code is basically redundant with above. Just copying and pasting for easier manipulation.
+healthCode.ct = count(dailyCheck.uniq$healthCode)
+
+sd_vec.act =c()
+mean_vec.act=c()
+sd_vec.sleep =c()
+mean_vec.sleep=c()
+people.who.never.exercise=0
+people.who.exercise=0
+fraction.days.with.exercise=c()
+people.hCode=c()
+people.who.never.exercise.hCode=c()
+people.who.exercise.hCode=c()
+for (i in 1:nrow(healthCode.ct)){
+  if (i%%500==0){
+    print(i)
+  }
+  if(healthCode.ct$freq[i]>5){  #5 is arbitrary... could require only more than 1 record...
+    
+    a = subset(dailyCheck.uniq,dailyCheck.uniq$healthCode==healthCode.ct[i,1])
+    a$act_time = a$activity1_time+a$activity2_time
+    non0_act_time = a$act_time[a$act_time>0]
+    mean_vec.act = append(mean_vec.act, mean(non0_act_time))
+    sd_vec.act =append(sd_vec.act, sd(non0_act_time))
+    people.hCode = append( people.hCode, as.character(healthCode.ct$x[i]))
+    if (length(non0_act_time)>0){
+      people.who.exercise = people.who.exercise+1
+      fraction.days.with.exercise =append(fraction.days.with.exercise, length(non0_act_time)/healthCode.ct$freq[i])
+      people.who.exercise.hCode = append( people.who.exercise.hCode, as.character(healthCode.ct$x[i]))
+    }
+    else{
+      people.who.never.exercise = people.who.never.exercise+1
+      people.who.never.exercise.hCode = append( people.who.never.exercise.hCode, as.character(healthCode.ct$x[i]))
+    }
+      
+    non0_sleep = a$sleep[a$sleep>60]
+    mean_vec.sleep = append(mean_vec.sleep, mean(non0_sleep))
+    sd_vec.sleep = append(sd_vec.sleep, sd(non0_sleep))
+
+    
+  }
+}
+
+
+# Now, I want to calculate all of these things, but use health code info to break down by race, gender, and age.
+
+# Average sleep per night, next to health code, age, gender, race
+# Notes:
+# demo.table.sm.distinct has healthcode, age, race, sex
+# people.hCode has order of people
+# mean_vec.act has mean activity
+
+#merge all that together
+hCode.activity = data.frame(mean.act = mean_vec.act, sd.act=sd_vec.act, mean.sleep = mean_vec.sleep, sd.sleep=sd_vec.sleep, healthCode = people.hCode )
+hCode.activity.demo = merge(hCode.activity, demo.table.sm.distinct, by = "healthCode")
+
+
+#### SEX #####
+
+sex.act = matrix(nrow=length(unique(hCode.activity.demo$sex)),ncol=3)
+sex.sleep = matrix(nrow=length(unique(hCode.activity.demo$sex)),ncol=3)
+ct=1
+for (g in unique(hCode.activity.demo$sex)){
+  s = subset(hCode.activity.demo, sex == g)
+
+  #activity
+  s.avg = mean(s$mean.act,na.rm=T)
+  s.stdev = mean(s$sd.act, na.rm=T)
+  sex.act[ct,1]=g
+  sex.act[ct,2]=s.avg
+  sex.act[ct,3]=s.stdev
+  
+  #sleep
+  s.avg = mean(s$mean.sleep,na.rm=T)
+  s.stdev = mean(s$sd.sleep, na.rm=T)
+  sex.sleep[ct,1]=g
+  sex.sleep[ct,2]=s.avg
+  sex.sleep[ct,3]=s.stdev
+  ct=ct+1
+}
+
+#ladies
+s = subset(hCode.activity.demo, sex == "[\"HKBiologicalSexFemale\"]" )
+sd(s$mean.sleep, na.rm=T)/3600
+
+#gents
+s = subset(hCode.activity.demo, sex == "[\"HKBiologicalSexMale\"]" )
+sd(s$mean.sleep, na.rm=T)/3600
+
+#put those numbers here: gender, avg, std dev)
+#note each data point is an average for an individual
+
+sex_sleep =read.table(text = "Male 7.06 .928 
+           Female 7.27 1.015")
+limits <- aes(ymax = sex_sleep$V2 + sex_sleep$V3, ymin=sex_sleep$V2 - sex_sleep$V3)
+ggplot(sex_sleep, aes(V1, V2)) +geom_bar(identity="stat", fill="skyblue3") + theme_bw(20) + xlab("") +ylab("Hours Sleep") + geom_errorbar(limits, width = .25)
+
+#### RACE #####
+
+race.act = matrix(nrow=length(unique(hCode.activity.demo$race)),ncol=3)
+race.sleep = matrix(nrow=length(unique(hCode.activity.demo$race)),ncol=3)
+ct=1
+for (r in unique(hCode.activity.demo$race)){
+  s = subset(hCode.activity.demo, race == r)
+  
+  #activity
+  s.avg = mean(s$mean.act,na.rm=T)
+  s.stdev = mean(s$sd.act, na.rm=T)
+  race.act[ct,1]=r
+  race.act[ct,2]=s.avg
+  race.act[ct,3]=s.stdev
+  
+  #sleep
+  s.avg = mean(s$mean.sleep,na.rm=T)
+  s.stdev = mean(s$sd.sleep, na.rm=T)
+  race.sleep[ct,1]=r
+  race.sleep[ct,2]=s.avg
+  race.sleep[ct,3]=s.stdev
+  ct=ct+1
+}
+
+race.sleep.df = as.data.frame(race.sleep)
+race.sleep.df$hrs = as.numeric(as.character(race.sleep.df$V2))/3600
+ggplot(race.sleep.df, aes(x=V1,y=hrs)) +geom_bar(col="black") +theme_bw(20) +ylab("Average Hours of Sleep per Night") +xlab("Race") 
+
+
+race.act.df = as.data.frame(race.act)
+race.act.df$hrs = as.numeric(as.character(race.act.df$V2))/3600
+ggplot(race.act.df, aes(x=V1,y=hrs)) +geom_bar(identity="stat") +theme_bw(20) +ylab("Average Hours of Activity per Day") +xlab("Race") 
+
+
+
+#### AGE #####
+
+age.act = matrix(nrow=length(unique(round(hCode.activity.demo$age))),ncol=3)
+age.sleep = matrix(nrow=length(unique(round(hCode.activity.demo$age))),ncol=3)
+ct=1
+for (a in unique(round(hCode.activity.demo$age))){
+  s = subset(hCode.activity.demo, round(age) == a)
+  
+  #activity
+  s.avg = mean(s$mean.act,na.rm=T)
+  s.stdev = mean(s$sd.act, na.rm=T)
+  age.act[ct,1]=a
+  age.act[ct,2]=s.avg
+  age.act[ct,3]=s.stdev
+  
+  #sleep
+  s.avg = mean(s$mean.sleep,na.rm=T)
+  s.stdev = mean(s$sd.sleep, na.rm=T)
+  age.sleep[ct,1]=a
+  age.sleep[ct,2]=s.avg
+  age.sleep[ct,3]=s.stdev
+  ct=ct+1
+}
+
+age.sleep.df=as.data.frame(age.sleep)
+age.sleep.df$hrs = age.sleep.df$V2/3600
+age_counts = count(round(hCode.activity.demo$age))
+age = merge(age.sleep.df, age_counts, by.x="V1", by.y="x")
+ggplot(age, aes(x=V1,y=hrs)) +geom_point(col="black") +theme_bw(20) +ylab("Average Hours of Sleep per Night") +xlab("Age") + geom_smooth(lwd=2,se=FALSE)
+
+age.act.df = as.data.frame(age.act)
+age.act.df$hrs = age.act.df$V2/3600
+
+
+ggplot(age.act.df, aes(x=V1,y=hrs)) +geom_point(col="black") +theme_bw(20) +ylab("Average Hours of Activity") +xlab("Age") + geom_smooth(lwd=2,se=FALSE)
+
+
+
+# par(mfrow=c(2,1))
+# hist(mean_vec.sleep/3600, main="Average sleep per night", xlab="Average # Hours Sleep", col="skyblue1")
+# hist(sd_vec.sleep/3600, main="Variation in sleep per night", xlab="Standard Deviation (Hours)", col="skyblue4")
+# hist(mean_vec.act/60, main="Average exercise per day (on days you exercised)", xlab="Average Minutes Excercised",breaks=20,col="skyblue1")
+# hist(sd_vec.act/60, main="Variation in exercise per day", xlab="Standard Deviation (Minutes)",col="skyblue4")
+# 
+# mean(fraction.days.with.exercise) * 7
+
+
+
+# now let's look at who did vs didn't exercise by race, gender, and age
+
+exercise = subset(demo.table.sm.distinct, healthCode %in% people.who.exercise.hCode) # dim = 2815 (who have demo data and exercise)
+no.exercise = subset(demo.table.sm.distinct, healthCode %in% people.who.never.exercise.hCode) # dim = 1223 (who have demo data and no exercise)
+
+all = subset(demo.table.sm.distinct, healthCode %in% people.who.never.exercise.hCode | healthCode %in% people.who.exercise.hCode)
+
+exercise.rd.age=data.frame(age= round(exercise$age))
+no.exercise.rd.age=data.frame(age =round(no.exercise$age))
+
+
+age.count.exercise = count(exercise.rd.age, "age")
+age.count.no.exercise = count(no.exercise.rd.age, "age")
+
+age.ex.noEx = merge(age.count.exercise, age.count.no.exercise, by ="age")
+
+age.ex.noEx$tot = age.ex.noEx$freq.x + age.ex.noEx$freq.y
+colnames(age.ex.noEx) = c("age", "ex","no.ex","tot")
+
+par(mfrow=c(1,1))
+plot(age.ex.noEx$age, age.ex.noEx$ex/age.ex.noEx$tot, xlim=c(0,100), ylim=c(0,1), main = "Exercise by age", ylab="Fraction of people at a given age", xlab="Age",col="red")
+points(age.ex.noEx$age, age.ex.noEx$no.ex/age.ex.noEx$tot, xlim=c(0,100), ylim=c(0,1), main="no exercise",col="blue")
+legend("topright",col=c("red", "blue"), c("Exercise", "No Exercise"),pch=1)
+
+ex.df = data.frame(ct = c(536,2261,122,1092),sex=c("F","M","F","M"),ex=c("Y","Y","N","N"))
+
+require(gridExtra)
+
+
+#gender
+p1<-ggplot(ex.df[ex.df$ex=="N",],aes(ex, ct,fill=sex)) + geom_bar()+ coord_polar(theta="y") +
+  theme_bw() +xlab("") + ylab("") +labs(fill='sex') + theme(axis.ticks=element_blank()) + ggtitle("No Exercise")
+
+p2<-ggplot(ex.df[ex.df$ex=="Y",],aes(ex, ct,fill=sex)) + geom_bar()+ coord_polar(theta="y") +
+  theme_bw() +xlab("") + ylab("") +labs(fill='sex') + theme(axis.ticks=element_blank()) + ggtitle("Exercise")
+
+grid.arrange(p1, p2, ncol=2)
+
+#bp
+p1 = ggplot(exercise, aes(bp)) + geom_bar() +theme_bw() + ggtitle("Exercise - BP")
+p2 = ggplot(no.exercise, aes(bp)) + geom_bar() +theme_bw()+ ggtitle("No Exercise - BP")
+
+grid.arrange(p1, p2)
+
+#bloodGlucose
+
+p1 = ggplot(exercise, aes(bloodGlucose)) + geom_bar() +theme_bw() + ggtitle("Exercise - blood glucose")
+p2 = ggplot(no.exercise, aes(bloodGlucose)) + geom_bar() +theme_bw()+ ggtitle("No Exercise - blood glucose")
+
+grid.arrange(p1, p2)
+
+
+
+
+
+#race
+
+p1 = ggplot(exercise, aes(race)) + geom_bar() +theme_bw() + ggtitle("Exercise - BP")
+p2 = ggplot(no.exercise, aes(race)) + geom_bar() +theme_bw()+ ggtitle("No Exercise - BP")
+
+grid.arrange(p1, p2)
+thing1<-cbind(exercise, rep("Exercise",nrow(exercise)))
+thing2<-cbind(no.exercise,rep("No Exercise",nrow(no.exercise)))
+colnames(thing1)[15]=c("ex")
+colnames(thing2)[15]=c("ex")
+all<-rbind(thing1,thing2 )
+ggplot(all, aes(ex, fill=race)) + geom_bar() +xlab("")
+
+p2<-ggplot(all, aes(ex, fill=diabetes)) + geom_bar()+xlab("")
+
+p4<- ggplot(all, aes(ex, fill=hypertension)) + geom_bar()+xlab("")
+
+p5<- ggplot(all, aes(ex, fill=smoking)) + geom_bar()+xlab("")
+grid.arrange(p2,p4,p5)
+
+
+
+#exercise vs no exercise & satisfied with life
+
+exercise.satisfied = merge(exercise, distinct(satisfied.table, healthCode), by="healthCode")
+no.exercise.satisfied = merge(no.exercise, distinct(satisfied.table, healthCode), by="healthCode")
+
+thing1<-cbind(exercise.satisfied, rep("Exercise",nrow(exercise.satisfied)))
+thing2<-cbind(no.exercise.satisfied,rep("No Exercise",nrow(no.exercise.satisfied)))
+colnames(thing1)[32]=c("ex")
+colnames(thing2)[32]=c("ex")
+all<-rbind(thing1,thing2 )
+
+ggplot(all, aes(ex, satisfiedwith_life)) + geom_boxplot() +theme_bw(20) +ylab("Satisfied with life") + xlab("")
+ggplot(all, aes(ex, satisfiedwith_life)) + geom_violin() +theme_bw(20) +ylab("Satisfied with life")
+
+
 # 3) age / sex / race of sleep debt
-# 4) age / sex /race of sleep consistency and average amt
+#later.
+
+# 4) age / sex /race of sleep consistency and average amt 
+#done above
+
 # 5) age / sex /race satisfied with life
 
+satisfied.demo = merge(distinct(satisfied.table, healthCode), demo.table.sm.distinct, by="healthCode")
+satisfied.demo$age<-round(satisfied.demo$age/10)*10
+satisfied.demo<-satisfied.demo[!is.na(satisfied.demo$age),]
+ggplot(satisfied.demo, aes(as.factor(age), satisfiedwith_life)) + geom_boxplot() +theme_bw(20) +ylab("Satisfied with life") + xlab("")
+
+ggplot(satisfied.demo, aes(race, satisfiedwith_life)) + geom_boxplot() +theme_bw(20) +ylab("Satisfied with life") + xlab("")
+
+ggplot(satisfied.demo, aes(sex, satisfiedwith_life)) + geom_boxplot() +theme_bw(20) +ylab("Satisfied with life") + xlab("")
 
 
+
+
+
+
+#Motion Data
+
+#walking correlated with running? running correlated with cycling?
+motion<-read.table("mFileIndParse.txt", as.is=T, sep="\t", header=T)
+plot(motion$SecWalking/motion$SecTotal, motion$SecRunning/motion$SecTotal)
+plot(motion$SecWalking/motion$SecTotal, motion$SecCycling/motion$SecTotal)
+plot(motion$SecRunning/motion$SecTotal, motion$SecCycling/motion$SecTotal)
+# meh, not really.
+
+#any extreme athletes in there?
+extreme.motion =motion[motion$SecRunning/motion$SecTotal> 0.02 & motion$SecCycling/motion$SecTotal > .02,]
+plot(extreme.motion$SecRunning/extreme.motion$SecTotal, extreme.motion$SecCycling/extreme.motion$SecTotal)
+# this is really uninteresting.
+
+
+# Now I want to know if consistency is better or worse for you!
+# unknown = 0
+# stationary = 1
+# walking = 2
+# running = 3
+# car = 4
+# cycling = 5
+
+# so, let's collapse stationary and car => stationary
+# walking stays by itself as mild exercise?
+# cycling & running collapses to real exercise
+# have lots of NAs/unknown, so need to toss those out.
+
+test.data<-read.table("testBigTable.txt", as.is=T, sep="\t", header=T)
+
+#View(test.data)
+#cols are individuals, rows are seconds
+
+#define consistent exercise as more than 5 {2,3, or 5} in a row.
+test.people = test.data[,7:ncol(test.data)]
+test.people[is.na(test.people)]<-0 #NAs are annoying. make them 0s
+test.people[test.people==4]<-1 # collapse all sitting behavior
+test.people[test.people==5]<-3 # collapse all exercising behavior
+test.people$date=paste(test.data$Month, test.data$Day, sep=".")
+#just testing things to see what i might expect.
+# par(mfrow=c(3,2))
+# plot(test.people[,1])
+# plot(test.people[,2])
+# plot(test.people[,3])
+# plot(test.people[,4])
+# plot(test.people[,5])
+# plot(test.people[,6])
+
+
+# lets try some smoothing. 
+# turn all 3's within 5 of each other into 3's
+
+for (person in 1:ncol(test.people)){
+  for (i in 1:nrow(test.people)){
+   if(test.people[i,person]==3){
+     if(test.people[(i+2), person]==3){
+       test.people[(i+1), person]=3
+     }
+     if(test.people[(i+3), person]==3){
+       test.people[(i+1), person]=3
+       test.people[(i+2), person]=3       
+     }
+     if(test.people[(i+4), person]==3){
+       test.people[(i+1), person]=3
+       test.people[(i+2), person]=3       
+       test.people[(i+3), person]=3  
+     }
+   }
+  }
+}
+
+# 2 is walking, 3 is exercise. I want to know per day HOW MANY TIMES you did a 2 or a 3 per day
+blocks.per.day=matrix(ncol=length(unique(test.people$date)), nrow=(ncol(test.people)-1))
+index = 1 # date number
+
+for (a in unique(test.people$date)){  
+  test.people.date = subset(test.people, date==a ) # all the data for all the people on day a.
+  
+  for (person in 1:(ncol(test.people)-1)){ # person number
+    num.blocks=0 #count number of blocks
+    for (i in 1:(nrow(test.people.date)-1)){ # i just indexes the rows from each person for day a
+     if(test.people.date[(i+1), person]==3 & test.people.date[(i+1), person] - test.people.date[i, person] != 0){
+       num.blocks=num.blocks+1
+      }
+     
+    }
+    blocks.per.day[person,index]=num.blocks
+       
+  }
+  index=index+1
+}
+
+
+#now that we've filled in blocks per day, calculate mean and stdev across rows with apply

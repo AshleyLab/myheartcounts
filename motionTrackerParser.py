@@ -21,9 +21,19 @@ parser=argparse.ArgumentParser()
 parser.add_argument("-f", help="List of Motion Tracker .csv files to parse")
 parser.add_argument("-o", default="", help="Output table of individual delimited data")
 parser.add_argument("-t", default="", help="Output table of time delimited data")
+parser.add_argument("-b", default="", help="Output the BIG table of minute delimited data")
+parser.add_argument("-test", default=0, help="Should I only do the first 100 as a test")
 
 args = parser.parse_args()
 csvs = list()
+big=0
+test = int(args.test)
+if (test):
+	print "Test mode active, will only output first 100 records"
+if (args.b != ""):
+	print "Will output the BIG TABLE, this takes increase memory and runtime"
+	big = 1
+	
 
 # Open up all the files
 try:
@@ -112,7 +122,7 @@ def most_common(lst):
 # Let's make this a list of lists for each individual
 indList = list() 
 allrecords = dict()
-
+all_times = set()
 # This is a summary of the number of people doing a specific activity at any given
 # minutes throughout the day. It will be indexed by the 'minute' and return a 
 # vector containing the number of individuals walking, stationary, etc. 
@@ -120,21 +130,35 @@ allrecords = dict()
 # [ missing, act1, act2, act3, act4, act5, total_nonMissing, total]
 time_summary = dict()
 
+all_inds = dict()
 ## Let's loop through each individuals data
+i = 0
 for c in csvs:
-	print c
-	recordmatch = re.search(r'/(.+)\.data\.csv$', c)
+	#print c
+	
+	## Make sure this is set to the correct REGEX
+	recordmatch = re.search(r'(.+)_motionTrackAll.csv$', c)
+	
+#	recordmatch = re.search(r'/(.+)\.data.csv$', c)
+
+	
 	#print recordmatch
 	recordID = recordmatch.group(1)
 	thisfile = open(c, "r")
+	if (i % 100 == 0):
+		print "Analyzing record number: " + str(i) + " out of " + str(len(csvs))
+	i +=1
+	if (test == 1 and i > 100):
+		break
 	# Initialize data, we will record times in seconds for ease:
 	# first element is ID, second through sixth will be times in each activity, 7th: high conf time, 8: total time, 9: unknown time
-	thisrecord = [recordID, 0, 0,0,0,0, 0, 0, 0]
+	thisrecord = [recordID, 0, 0,0,0,0, 0, 0, 0, "", ""]
 	head = thisfile.readline()
 	thistimes = dict()
 	for line in thisfile:
 		splits = line.strip().split(",")
-		
+		if not line.startswith("2015"):
+			continue	
 		# Some lines were weird and contained only a 0, so skip those
 		if len(splits) < 5:
 			continue
@@ -156,8 +180,12 @@ for c in csvs:
 	## Now, we need to sort by time, get the time deltas, and add that to the summary:
 	
 	timesort = sorted(thistimes.keys())
-	print(max(timesort))
-	print(min(timesort))
+	if (len(timesort) < 2):
+		continue
+	#print(max(timesort))
+	thisrecord[9] = max(timesort)
+	#print(min(timesort))
+	thisrecord[10] = min(timesort)
 	# This is going to lop off the last timepoint, but whatever?
 	for t in range(0,len(timesort)-1):
 	
@@ -168,6 +196,10 @@ for c in csvs:
 		thisact = thistimes[timesort[t]][0]
 		second_diff = (timesort[t+1] - timesort[t]).total_seconds()
 		# This gets the total number of seconds that this activity is performed at
+
+		# If it is longer then 30 minutes, I don't believe it:
+		if (second_diff > 1800):
+			continue
 
 		if thisact != 0: # If not unknown, add to summary counts
 		
@@ -183,7 +215,10 @@ for c in csvs:
 
 	## Now lets build the time series data:
 	thistimehash = buildTimeSeries(timesort, thistimes)
+	if (big == 1):
+		all_inds[thisrecord[0]] = thistimehash
 	for th in thistimehash.keys():
+		all_times.add(th)
 		if th in time_summary:
 			## Find the common activity for the individual at this minute:
 			thisact = most_common(thistimehash[th])
@@ -206,8 +241,9 @@ for c in csvs:
 
 
 ### Write output to file
-indout.write("\t".join(["recordId", "SecStationary", "SecWalking", "SecRunning", "SecAutomotive", 
-"SecCycling", "SecTotal", "SecTotUnk", "SecUnk"]) + "\n") 
+print "Writing Individual Summary data..."
+indout.write("\t".join(["healthCode", "SecStationary", "SecWalking", "SecRunning", "SecAutomotive", 
+"SecCycling", "SecTotal", "SecTotUnk", "SecUnk", "MaxTime", "MinTime"]) + "\n") 
 for r in allrecords.keys():
 	indout.write("\t".join(map(str, allrecords[r])) + "\n")
 
@@ -216,6 +252,7 @@ timeout.write("\t".join(["timeID", "Year", "Month", "Day", "Hour", "Minute", "Nu
 times = time_summary.keys()
 times.sort()
 lastq = times[1]
+print "Writing time summary data..."
 for q in times:
 
 	while ( (q - lastq).total_seconds() > 61 ):
@@ -228,6 +265,56 @@ for q in times:
 	timeout.write(str(q) + "\t" + "\t".join(map(str, time_list)) + "\t" + "\t".join(map(str, time_summary[q])) + "\n")
  	lastq = q
 
+	# Profit
+
+# Quit if we aren't outputting the big table
+if (big != 1):
+	sys.exit()
+
+## Ok, now we need to output the table
+
+big_table = open(args.b, "w")
+# Loop through all the possible times:
+
+timelist = list(all_times)
+timelist.sort()
+
+## What is the header line for this file?
+big_header = ["timeID", "Year", "Month", "Day", "Hour", "Minute"]
+inds_in_order = list()
+for thisperson in all_inds.keys():
+	big_header.append(thisperson)
+	inds_in_order.append(thisperson)
+
+print "Writing the big table..."
+
+# Write header row
+big_table.write("\t".join(map(str, big_header)) + "\n")
+
+# Each subsequent row represents a time
+for t in timelist:
+	# For each time:
+	bigLineOut = [t, t.year, t.month, t.day, t.hour, t.minute]
+	
+	for happyperson in inds_in_order:
+	# For each individual:
+	# Also don't worry about my new variable names
+	
+		if t in all_inds[happyperson]:
+			bigLineOut.append(most_common(all_inds[happyperson][t]))
+		# Does this time exist in hash? 
+		# Yes: write activity at this time
+		# No: write NA
+		else:
+			bigLineOut.append("NA")
+	
+	big_table.write("\t".join(map(str,bigLineOut)) + "\n")
+	
+
+			
+			
+	
+	
 
 
 

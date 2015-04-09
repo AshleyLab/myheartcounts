@@ -357,7 +357,10 @@ plotMapCounty(countyRisk_wRate, "RdBu", "zdev4", levels)
 ## Aggregate by 3 digit zip
 
 unique_frame = unique(data.frame(zip=satisfied_wState$zip, healthCode=satisfied_wState$healthCode))
-people_per_code = data.frame(table(unique_frame$zip))
+num_in_unique = data.frame(table(unique_frame$healthCode))
+unique_frame_wCode = merge(unique_frame, num_in_unique, by.x="healthCode", by.y="Var1")
+unique_frame_wCode$weight = 1/unique_frame_wCode$Freq
+people_per_code = aggregate(unique_frame_wCode$weight, list(unique_frame$zip), sum)
 names(people_per_code) = c("Zip3", "NumInds")
 ggplot(data=people_per_code) + geom_histogram(aes(x=NumInds), binwidth=2) + theme_bw() + labs(x="Number of Individuals", y="Numer of Zip Code Prefixes")
 ggsave("HistogramOfIndividualsPerZipCode.pdf", height=6, width=8)
@@ -380,16 +383,47 @@ countyIndsTotal$pop = countyIndsTotal$totalvalue/100
 pop_levels <- c(0,1,5,10,20,50,100,1000)
 png("TotalPopSamplesByCounty.png", height=1600, width=2000)
 plotMapCounty(countyIndsTotal, "Blues", "pop", pop_levels, nameCountyCode="countyCode")
-title(main="Estimated Number of Individuals per County", cex.main=4)
+title(main="Estimated Number of Stanford MHealth Participants per County", cex.main=4)
 legend("bottomright", legend=c("None", "<1", "1 to 5", "5 to 10","10 to 20", "20 to 50","50 to 100", ">100"), fill=c("grey",brewer.pal(length(ind_levels)-1, "Blues")), cex=3, box.lwd=0)
 dev.off()
 
 ## Plot number of individuals by state
 
 unique_frame_state = unique(data.frame(state=satisfied_wState$state, healthCode=satisfied_wState$healthCode))
-indsPerState = data.frame(table(unique_frame_state$state))
+# Weight individuals with multiple states... (really?) 
+numInState = data.frame(table(unique_frame_state$healthCode))
+unique_frame_state_wCode = merge(unique_frame_state, numInState, by.x="healthCode", by.y="Var1")
+unique_frame_state_wCode$weight = 1/unique_frame_state_wCode$Freq
+indsPerState = aggregate(unique_frame_state_wCode$weight, list(unique_frame_state$state), sum)
 names(indsPerState) = c("State", "Number of Individuals")
-write.table()
+write.table(indsPerState, "numberIndsPerState.txt", row.names=F, quote=F, sep="\t")
+state_levels = c(10,100,200,300,400,500,10000)
+stateMapPlot <- function(stateData, color_scheme, valueToPlot, levels, nameStateColumn="state", na.color="grey", state_lwd=2) {
+  mycolors = brewer.pal(length(levels) - 1, color_scheme)
+  stateData$colors = mycolors[as.numeric(cut(stateData[[valueToPlot]], levels))]
+  stateData$colors[is.na(stateData$colors)] = na.color
+  state_order =data.frame(polyname=gsub(":.+", "", map("state", plot=F)$names), order=1:length(map('state', plot=F)$names) ) 
+  stateData[[nameStateColumn]] = tolower(as.character(stateData[[nameStateColumn]]))
+  state_merge = merge(stateData, state_order, by.x=nameStateColumn, by.y="polyname", all.y=TRUE)
+  state_merge = state_merge[order(state_merge$order),]
+  map("state", fill=T, col=as.character(state_merge$color), lwd=state_lwd)
+}
+png("IndsPerState.png", height=1600, width=2000)
+stateMapPlot(indsPerState, "Blues", "Number of Individuals", state_levels, nameStateColumn="State")
+title(main="Estimated Number of Stanford MHealth Participants per State", cex.main=4)
+legend("bottomright", legend=c("10 to 100", "100 to 200","200 to 300", "300 to 400","400 to 500", ">500"), fill=c(brewer.pal(length(state_levels)-1, "Blues")), cex=3, box.lwd=0)
+dev.off()
+
+### Ok - what is the next thing to analyze? Sleep by State? Sleep by County?
+
+sleep = synTableQuery('SELECT * FROM syn3420264')
+sleepTable = sleep@values
+sleep_satisfy = merge(sleepTable, satisfied_wState, by="healthCode")
+## Lss than 14 hours of sleep on average
+sleep_satisfy = subset(sleep_satisfy, sleep_time < 14)
+ind_sleep = aggregate(sleep_satisfy$sleep_time, list(sleep_satisfy$healthCode), mean)
+names(ind_sleep) = c("healthCode", "sleep_time")
+ind_sleep_zip = merge(ind_sleep, )
 
 
 
