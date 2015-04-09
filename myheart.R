@@ -725,7 +725,12 @@ plot(extreme.motion$SecRunning/extreme.motion$SecTotal, extreme.motion$SecCyclin
 # cycling & running collapses to real exercise
 # have lots of NAs/unknown, so need to toss those out.
 
-test.data<-read.table("testBigTable.txt", as.is=T, sep="\t", header=T)
+#test.data<-read.table("testBigTable.txt", as.is=T, sep="\t", header=T)
+
+test.data<-read.table("bigTable.txt", as.is=T, sep="\t", header=T)
+
+
+
 
 #View(test.data)
 #cols are individuals, rows are seconds
@@ -791,3 +796,14 @@ for (a in unique(test.people$date)){
 
 
 #now that we've filled in blocks per day, calculate mean and stdev across rows with apply
+
+
+standard.dev = apply(blocks.per.day,1,sd)
+mean = apply(blocks.per.day,1,mean)
+#[probably important to know the length of the blocks too.... ], the above is just the NUMBER of blocks.
+
+#maybe remove people who are mean AND standard dev of 0.
+
+individual.healthCode = colnames(test.data)[7:ncol(test.data)]
+
+#now the question would be weather low standard dev is better than high mean. 
