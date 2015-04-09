@@ -21,6 +21,8 @@ parser=argparse.ArgumentParser()
 parser.add_argument("-f", help="List of Motion Tracker .csv files to parse")
 parser.add_argument("-o", default="", help="Output table of individual delimited data")
 parser.add_argument("-t", default="", help="Output table of time delimited data")
+parser.add_argument("-b", default="", help="Output the BIG table of minute delimited data")
+
 args = parser.parse_args()
 csvs = list()
 
@@ -113,7 +115,7 @@ def most_common(lst):
 # Let's make this a list of lists for each individual
 indList = list() 
 allrecords = dict()
-
+all_times = set()
 # This is a summary of the number of people doing a specific activity at any given
 # minutes throughout the day. It will be indexed by the 'minute' and return a 
 # vector containing the number of individuals walking, stationary, etc. 
@@ -121,11 +123,18 @@ allrecords = dict()
 # [ missing, act1, act2, act3, act4, act5, total_nonMissing, total]
 time_summary = dict()
 
+all_inds = dict()
 ## Let's loop through each individuals data
 i = 0
 for c in csvs:
 	#print c
+	
+	## Make sure this is set to the correct REGEX
 	recordmatch = re.search(r'(.+)_motionTrackAll.csv$', c)
+	
+	recordmatch = re.search(r'/(.+)\.data.csv$', c)
+
+	
 	#print recordmatch
 	recordID = recordmatch.group(1)
 	thisfile = open(c, "r")
@@ -199,7 +208,9 @@ for c in csvs:
 
 	## Now lets build the time series data:
 	thistimehash = buildTimeSeries(timesort, thistimes)
+	all_inds[thisrecord[0]] = thistimehash
 	for th in thistimehash.keys():
+		all_times.add(th)
 		if th in time_summary:
 			## Find the common activity for the individual at this minute:
 			thisact = most_common(thistimehash[th])
@@ -245,6 +256,50 @@ for q in times:
  	lastq = q
 
 	# Profit
+
+
+## Ok, now we need to output the table
+
+big_table = open(args.b, "w")
+# Loop through all the possible times:
+
+timelist = list(all_times)
+timelist.sort()
+
+## What is the header line for this file?
+big_header = ["timeID", "Year", "Month", "Day", "Hour", "Minute"]
+inds_in_order = list()
+for thisperson in all_inds.keys():
+	big_header.append(thisperson)
+	inds_in_order.append(thisperson)
+
+# Write header row
+big_table.write("\t".join(map(str, big_header)) + "\n")
+
+# Each subsequent row represents a time
+for t in timelist:
+	# For each time:
+	bigLineOut = [t, t.year, t.month, t.day, t.hour, t.minute]
+	
+	for happyperson in inds_in_order:
+	# For each individual:
+	# Also don't worry about my new variable names
+	
+		if t in all_inds[happyperson]:
+			bigLineOut.append(most_common(all_inds[happyperson][t]))
+		# Does this time exist in hash? 
+		# Yes: write activity at this time
+		# No: write NA
+		else:
+			bigLineOut.append("NA")
+	
+	big_table.write("\t".join(map(str,bigLineOut)) + "\n")
+	
+
+			
+			
+	
+	
 
 
 
