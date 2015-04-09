@@ -495,8 +495,8 @@ sd(s$mean.sleep, na.rm=T)/3600
 #put those numbers here: gender, avg, std dev)
 #note each data point is an average for an individual
 
-sex_sleep =read.table(text = "Male 7.314076 .924 
-           Female 7.086004 1.045")
+sex_sleep =read.table(text = "Male 7.06 .928 
+           Female 7.27 1.015")
 limits <- aes(ymax = sex_sleep$V2 + sex_sleep$V3, ymin=sex_sleep$V2 - sex_sleep$V3)
 ggplot(sex_sleep, aes(V1, V2)) +geom_bar(identity="stat", fill="skyblue3") + theme_bw(20) + xlab("") +ylab("Hours Sleep") + geom_errorbar(limits, width = .25)
 
@@ -566,7 +566,10 @@ age = merge(age.sleep.df, age_counts, by.x="V1", by.y="x")
 ggplot(age, aes(x=V1,y=hrs)) +geom_point(col="black") +theme_bw(20) +ylab("Average Hours of Sleep per Night") +xlab("Age") + geom_smooth(lwd=2,se=FALSE)
 
 age.act.df = as.data.frame(age.act)
-ggplot(age.act.df, aes(x=V1,y=V2)) +geom_point(col="black") +theme_bw(20) +ylab("Average Hours of Activity") +xlab("Age") + geom_smooth(lwd=2,se=FALSE)
+age.act.df$hrs = age.act.df$V2/3600
+
+
+ggplot(age.act.df, aes(x=V1,y=hrs)) +geom_point(col="black") +theme_bw(20) +ylab("Average Hours of Activity") +xlab("Age") + geom_smooth(lwd=2,se=FALSE)
 
 
 
@@ -579,12 +582,94 @@ ggplot(age.act.df, aes(x=V1,y=V2)) +geom_point(col="black") +theme_bw(20) +ylab(
 # mean(fraction.days.with.exercise) * 7
 
 
-########NOTE TO SELF. MAKE SURE YOU WERE USING SUBSET RIGHT YESTERDAY!#############
+
+# now let's look at who did vs didn't exercise by race, gender, and age
+
+exercise = subset(demo.table.sm.distinct, healthCode %in% people.who.exercise.hCode) # dim = 2815 (who have demo data and exercise)
+no.exercise = subset(demo.table.sm.distinct, healthCode %in% people.who.never.exercise.hCode) # dim = 1223 (who have demo data and no exercise)
+
+all = subset(demo.table.sm.distinct, healthCode %in% people.who.never.exercise.hCode | healthCode %in% people.who.exercise.hCode)
+
+exercise.rd.age=data.frame(age= round(exercise$age))
+no.exercise.rd.age=data.frame(age =round(no.exercise$age))
+
+
+age.count.exercise = count(exercise.rd.age, "age")
+age.count.no.exercise = count(no.exercise.rd.age, "age")
+
+age.ex.noEx = merge(age.count.exercise, age.count.no.exercise, by ="age")
+
+age.ex.noEx$tot = age.ex.noEx$freq.x + age.ex.noEx$freq.y
+colnames(age.ex.noEx) = c("age", "ex","no.ex","tot")
+
+par(mfrow=c(1,1))
+plot(age.ex.noEx$age, age.ex.noEx$ex/age.ex.noEx$tot, xlim=c(0,100), ylim=c(0,1), main = "Exercise by age", ylab="Fraction of people at a given age", xlab="Age",col="red")
+points(age.ex.noEx$age, age.ex.noEx$no.ex/age.ex.noEx$tot, xlim=c(0,100), ylim=c(0,1), main="no exercise",col="blue")
+legend("topright",col=c("red", "blue"), c("Exercise", "No Exercise"),pch=1)
+
+ex.df = data.frame(ct = c(536,2261,122,1092),sex=c("F","M","F","M"),ex=c("Y","Y","N","N"))
+
+require(gridExtra)
+
+
+#gender
+p1<-ggplot(ex.df[ex.df$ex=="N",],aes(ex, ct,fill=sex)) + geom_bar()+ coord_polar(theta="y") +
+  theme_bw() +xlab("") + ylab("") +labs(fill='sex') + theme(axis.ticks=element_blank()) + ggtitle("No Exercise")
+
+p2<-ggplot(ex.df[ex.df$ex=="Y",],aes(ex, ct,fill=sex)) + geom_bar()+ coord_polar(theta="y") +
+  theme_bw() +xlab("") + ylab("") +labs(fill='sex') + theme(axis.ticks=element_blank()) + ggtitle("Exercise")
+
+grid.arrange(p1, p2, ncol=2)
+
+#bp
+p1 = ggplot(exercise, aes(bp)) + geom_bar() +theme_bw() + ggtitle("Exercise - BP")
+p2 = ggplot(no.exercise, aes(bp)) + geom_bar() +theme_bw()+ ggtitle("No Exercise - BP")
+
+grid.arrange(p1, p2)
+
+#bloodGlucose
+
+p1 = ggplot(exercise, aes(bloodGlucose)) + geom_bar() +theme_bw() + ggtitle("Exercise - blood glucose")
+p2 = ggplot(no.exercise, aes(bloodGlucose)) + geom_bar() +theme_bw()+ ggtitle("No Exercise - blood glucose")
+
+grid.arrange(p1, p2)
+
+
+
+
+
+#race
+
+p1 = ggplot(exercise, aes(race)) + geom_bar() +theme_bw() + ggtitle("Exercise - BP")
+p2 = ggplot(no.exercise, aes(race)) + geom_bar() +theme_bw()+ ggtitle("No Exercise - BP")
+
+grid.arrange(p1, p2)
+thing1<-cbind(exercise, rep("Exercise",nrow(exercise)))
+thing2<-cbind(no.exercise,rep("No Exercise",nrow(no.exercise)))
+colnames(thing1)[15]=c("ex")
+colnames(thing2)[15]=c("ex")
+all<-rbind(thing1,thing2 )
+ggplot(all, aes(ex, fill=race)) + geom_bar() +xlab("")
+
+p2<-ggplot(all, aes(ex, fill=diabetes)) + geom_bar()+xlab("")
+
+p4<- ggplot(all, aes(ex, fill=hypertension)) + geom_bar()+xlab("")
+
+p5<- ggplot(all, aes(ex, fill=smoking)) + geom_bar()+xlab("")
+grid.arrange(p2,p4,p5)
+
+
+
+
+
 
 
 
 # 3) age / sex / race of sleep debt
-# 4) age / sex /race of sleep consistency and average amt
+
+# 4) age / sex /race of sleep consistency and average amt 
+#done above
+
 # 5) age / sex /race satisfied with life
 
 
