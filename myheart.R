@@ -694,3 +694,87 @@ ggplot(satisfied.demo, aes(sex, satisfiedwith_life)) + geom_boxplot() +theme_bw(
 
 
 
+
+
+
+#Motion Data
+
+#walking correlated with running? running correlated with cycling?
+motion<-read.table("mFileIndParse.txt", as.is=T, sep="\t", header=T)
+plot(motion$SecWalking/motion$SecTotal, motion$SecRunning/motion$SecTotal)
+plot(motion$SecWalking/motion$SecTotal, motion$SecCycling/motion$SecTotal)
+plot(motion$SecRunning/motion$SecTotal, motion$SecCycling/motion$SecTotal)
+# meh, not really.
+
+#any extreme athletes in there?
+extreme.motion =motion[motion$SecRunning/motion$SecTotal> 0.02 & motion$SecCycling/motion$SecTotal > .02,]
+plot(extreme.motion$SecRunning/extreme.motion$SecTotal, extreme.motion$SecCycling/extreme.motion$SecTotal)
+# this is really uninteresting.
+
+
+# Now I want to know if consistency is better or worse for you!
+# unknown = 0
+# stationary = 1
+# walking = 2
+# running = 3
+# car = 4
+# cycling = 5
+
+# so, let's collapse stationary and car => stationary
+# walking stays by itself as mild exercise?
+# cycling & running collapses to real exercise
+# have lots of NAs/unknown, so need to toss those out.
+
+test.data<-read.table("testBigTable.txt", as.is=T, sep="\t", header=T)
+
+#View(test.data)
+#cols are individuals, rows are seconds
+
+#define consistent exercise as more than 5 {2,3, or 5} in a row.
+test.people = test.data[,7:ncol(test.data)]
+test.people[is.na(test.people)]<-0 #NAs are annoying. make them 0s
+test.people[test.people==4]<-1 # collapse all sitting behavior
+test.people[test.people==5]<-3 # collapse all exercising behavior
+
+#just testing things to see what i might expect.
+# par(mfrow=c(3,2))
+# plot(test.people[,1])
+# plot(test.people[,2])
+# plot(test.people[,3])
+# plot(test.people[,4])
+# plot(test.people[,5])
+# plot(test.people[,6])
+
+
+# lets try some smoothing. 
+# turn all 3's within 5 of each other into 3's
+
+for (person in 1:ncol(test.people)){
+  for (i in 1:nrow(test.people)){
+   if(test.people[i,person]==3){
+     if(test.people[(i+2), person]==3){
+       test.people[(i+1), person]=3
+     }
+     if(test.people[(i+3), person]==3){
+       test.people[(i+1), person]=3
+       test.people[(i+2), person]=3       
+     }
+     if(test.people[(i+4), person]==3){
+       test.people[(i+1), person]=3
+       test.people[(i+2), person]=3       
+       test.people[(i+3), person]=3  
+     }
+   }
+  }
+}
+
+# 2 is walking, 3 is exercise. I want to know per day HOW MANY TIMES you did a 2 or a 3 per day
+
+for (person in 1:ncol(test.people)){
+  num.blocks=0
+  for (i in 1:(nrow(test.people)-1)){
+    if(test.people[(i+1), person]==3 & test.people[(i+1), person] - test.people[i, person] != 0){
+      num.blocks=num.blocks+1
+    }
+  }
+}
