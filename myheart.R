@@ -735,7 +735,7 @@ test.people = test.data[,7:ncol(test.data)]
 test.people[is.na(test.people)]<-0 #NAs are annoying. make them 0s
 test.people[test.people==4]<-1 # collapse all sitting behavior
 test.people[test.people==5]<-3 # collapse all exercising behavior
-
+test.people$date=paste(test.data$Month, test.data$Day, sep=".")
 #just testing things to see what i might expect.
 # par(mfrow=c(3,2))
 # plot(test.people[,1])
@@ -769,12 +769,19 @@ for (person in 1:ncol(test.people)){
 }
 
 # 2 is walking, 3 is exercise. I want to know per day HOW MANY TIMES you did a 2 or a 3 per day
-
-for (person in 1:ncol(test.people)){
+for (a in unique(test.people$date)){  
+  index =1
+  for (person in 1:(ncol(test.people)-1)){
+  blocks.per.day=matrix(ncol=length(unique(test.people$date)), nrow=(ncol(test.people)-1))
+    test.people.date = subset(test.people, date==a ) 
   num.blocks=0
-  for (i in 1:(nrow(test.people)-1)){
-    if(test.people[(i+1), person]==3 & test.people[(i+1), person] - test.people[i, person] != 0){
+  for (i in 1:(nrow(test.people.date)-1)){
+    if(test.people.date[(i+1), person]==3 & test.people.date[(i+1), person] - test.people.date[i, person] != 0){
       num.blocks=num.blocks+1
     }
   }
+
+  }
+  blocks.per.day[person,index]=num.blocks
+  index=index+1
 }
