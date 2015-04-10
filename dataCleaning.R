@@ -1,15 +1,57 @@
-### Data cleaning for riskFactors.table
+### Data cleaning for riskFactors.distinct
 ### Rachel Goldfeder
 
 
-riskFactors <- synTableQuery("SELECT * FROM syn3420385")
-riskFactors.table <- riskFactors@values
+
+#######  RULES  ########
+
+# things I'm okay with: 
+# any number individually
+# 1, 2 == 2 ,1  == mult == 11
+
+#things I'm not okay with
+# 3 + (1 || 2) => trash.
+#[] => trash
+
+
+
+
+for (var in c("vascular","family_history", "medications_to_treat","heart_disease")){ 
+  # summarize the column
+  opts = unique(riskFactors.distinct[,colnames(riskFactors.distinct)==var])
+  
+  # find max single number
+  singles = opts[-grep(",",opts)]
+  highest_val = sort(singles)[length(singles)] # this is going to be the one that cant be seen with othres -- or the "none"
+  t = strsplit(highest_val,"\\[")
+  highest.num = strsplit(t[[1]][2],"\\]")[[1]]
+  
+  # toss things with that single number and a comma
+  mults = opts[grep(",",opts)]
+  trash = mults[grep(highest.num,mults)]
+  trash = append(trash,"[]")
+  
+  # then collapse anything else with a comman into "mult"
+  mults.to.keep = mults[!(mults %in% trash)]
+
+  
+  riskFactors.distinct[riskFactors.distinct[,colnames(riskFactors.distinct)==var]%in%trash,colnames(riskFactors.distinct)==var ] <- NA
+  riskFactors.distinct[riskFactors.distinct[,colnames(riskFactors.distinct)==var]%in%mults.to.keep,colnames(riskFactors.distinct)==var ] <- "mult"
+  
+}
+
+
+
+
+
 
 
 #family_history 
 # 1 = father
 # 2 = mother
 # 3 = none
+
+
 
 
 
