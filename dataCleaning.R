@@ -7,7 +7,7 @@
 
 # things I'm okay with: 
 # any number individually
-# 1, 2 == 2 ,1  == mult == 11
+# 1, 2 == 2 ,1  == mult 
 
 #things I'm not okay with
 # 3 + (1 || 2) => trash.
