@@ -725,7 +725,12 @@ plot(extreme.motion$SecRunning/extreme.motion$SecTotal, extreme.motion$SecCyclin
 # cycling & running collapses to real exercise
 # have lots of NAs/unknown, so need to toss those out.
 
-test.data<-read.table("testBigTable.txt", as.is=T, sep="\t", header=T)
+#test.data<-read.table("testBigTable.txt", as.is=T, sep="\t", header=T)
+
+data<-read.table("bigTable.txt", as.is=T, sep="\t", header=T)
+test.data = data
+
+
 
 #View(test.data)
 #cols are individuals, rows are seconds
@@ -736,6 +741,9 @@ test.people[is.na(test.people)]<-0 #NAs are annoying. make them 0s
 test.people[test.people==4]<-1 # collapse all sitting behavior
 test.people[test.people==5]<-3 # collapse all exercising behavior
 test.people$date=paste(test.data$Month, test.data$Day, sep=".")
+
+test.people.save.for.later <- test.people
+
 #just testing things to see what i might expect.
 # par(mfrow=c(3,2))
 # plot(test.people[,1])
@@ -744,10 +752,14 @@ test.people$date=paste(test.data$Month, test.data$Day, sep=".")
 # plot(test.people[,4])
 # plot(test.people[,5])
 # plot(test.people[,6])
+# plot(test.people[,95])
 
 
 # lets try some smoothing. 
 # turn all 3's within 5 of each other into 3's
+
+#this is more important for the within day thing. if i dont do this, i can just count minutes exercised per day. so total per day consistency.
+#need to figure out when recordigs start and stop for and individual. I think I can do this by just not making a recording on any day with only 0's.
 
 for (person in 1:ncol(test.people)){
   for (i in 1:nrow(test.people)){
@@ -769,6 +781,8 @@ for (person in 1:ncol(test.people)){
 }
 
 # 2 is walking, 3 is exercise. I want to know per day HOW MANY TIMES you did a 2 or a 3 per day
+
+# need to somehow keep track of the lengths of each block, too. #TODO.
 blocks.per.day=matrix(ncol=length(unique(test.people$date)), nrow=(ncol(test.people)-1))
 index = 1 # date number
 
@@ -791,3 +805,23 @@ for (a in unique(test.people$date)){
 
 
 #now that we've filled in blocks per day, calculate mean and stdev across rows with apply
+
+
+standard.dev = apply(blocks.per.day,1,sd)
+mean = apply(blocks.per.day,1,mean)
+
+
+#[probably important to know the length of the blocks too.... ], the above is just the NUMBER of blocks.
+
+#grab healthcodes for these people
+individual.healthCode = colnames(test.data)[7:ncol(test.data)]
+
+#now the question would be weather low standard dev is better than high mean. 
+df<-data.frame(std.dev = standard.dev, healthCode = individual.healthCode, mean = mean)
+df.satisfied <- join (df, satisfied.table, by="healthCode")
+
+
+#maybe remove people who are mean AND standard dev of 0.
+# figure out when to stop doing the analysis (ie if at the end they dont have recordings) TODO.
+
+
