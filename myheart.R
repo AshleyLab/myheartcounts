@@ -841,3 +841,241 @@ df.6min <- join (df, sixMin.table, by="healthCode")
 # figure out when to stop doing the analysis (ie if at the end they dont have recordings) TODO.
 
 
+
+
+
+
+
+
+
+
+
+
+###### APRIL 11
+
+
+# waking times
+wake <- read.table("wake_times_summary.txt")
+
+hist(wake$V2/60,xlab="(24-Hour Clock) Time", main="First non-stationary recording of the day")
+#mean wake time is 536
+
+#lets call early risers the mean minus 1 SD TILL 3 SD and late risers the mean plus 1 SD to 3 SD
+
+early <- data.frame(healthCode = wake[wake[,2]<437 &wake[,2]>238.4 ,1])
+#2032 people
+# ~4am - 7:20
+
+
+late<- data.frame(healthCode =wake[wake[,2]<834.2 & wake[,2]>635.6 ,1])
+#1983 people
+# ~10:30am - 2pm
+
+
+#age
+demo.late <-merge(demo.table.sm.distinct, late, by="healthCode")
+demo.early <-merge(demo.table.sm.distinct, early, by="healthCode")
+
+
+demo.late = cbind(demo.late, rep("late",nrow(demo.late)))
+colnames(demo.late)[length(demo.late)]="status"
+demo.early = cbind(demo.early, rep("early",nrow(demo.early)))
+colnames(demo.early)[length(demo.early)]="status"
+
+demo.tot =rbind(demo.late, demo.early)
+
+ggplot(demo.tot, aes(age, fill=status)) +geom_density(alpha=.3) + theme_bw(17)
+
+#blood pressure:
+ggplot(demo.tot, aes(systolic, fill=status)) +geom_density(alpha=.3) + theme_bw(17)
+
+#totalChol
+ggplot(demo.tot, aes(totalChol, fill=status)) +geom_density(alpha=.3) + theme_bw(17)
+
+#6min data
+demo.tot.6min = merge(demo.tot, sixMin.table, by="healthCode")
+ggplot(demo.tot.6min, aes(numberOfSteps, fill=status)) +geom_density(alpha=.3) + theme_bw(17)
+ggplot(demo.tot.6min, aes(distance, fill=status)) +geom_density(alpha=.3) + theme_bw(17)
+
+#satisfied
+demo.exerciseSleep = merge(demo.tot, exerciseSleep.satisfied.clean , by="healthCode")
+ggplot(demo.exerciseSleep, aes(satisfiedwith_life ,fill=status))+geom_density(alpha=.3) + theme_bw(17)
+
+ggplot(demo.exerciseSleep, aes(status,satisfiedwith_life))+geom_boxplot() + theme_bw(17)
+ggplot(demo.exerciseSleep, aes(status,feel_worthwhile2))+geom_boxplot() + theme_bw(17) # we think this is the happy question?
+
+#self reported avg sleep
+ggplot(demo.exerciseSleep, aes(sleep_time1 ,fill=status))+geom_density(alpha=.3) + theme_bw(17) +xlab ("self reported sleep needed")#need
+ggplot(demo.exerciseSleep, aes(sleep_time ,fill=status))+geom_density(alpha=.3) + theme_bw(17) #get
+
+
+
+
+#activity data
+
+
+dailyCheck.uniq = as.data.frame(distinct(data.frame(createdOn=dailyCheck.table$createdOn, healthCode=dailyCheck.table$healthCode, activity1_time=dailyCheck.table$activity1_time,activity2_time=dailyCheck.table$activity2_time, sleep_time=dailyCheck.table$sleep_time)))
+dailyCheck.uniq$activity1_time=as.numeric(as.character(dailyCheck.uniq$activity1_time))
+dailyCheck.uniq$activity2_time=as.numeric(as.character(dailyCheck.uniq$activity2_time))
+dailyCheck.uniq[is.na(dailyCheck.uniq)] <-0
+dailyCheck.sm = data.frame(total_act = dailyCheck.uniq$activity1_time + dailyCheck.uniq$activity2_time, sleep = dailyCheck.uniq$sleep_time, healthCode=dailyCheck.uniq$healthCode)
+
+dailyCheck.sm.no60 = dailyCheck.sm[!(dailyCheck.sm$sleep==60),]
+dailyCheck.demo = merge(dailyCheck.sm.no60, demo.tot, by="healthCode")
+
+
+
+ggplot(dailyCheck.demo, aes(total_act ,fill=status))+geom_density(alpha=.3) + theme_bw(17) +xlim(0,500)
+
+#daily check sleep data
+ggplot(dailyCheck.demo, aes(sleep,fill=status))+geom_density(alpha=.3) + theme_bw(17) +xlab("sleep amount from Daily Check")
+
+
+# what about riskFactors
+
+riskFactors.demo = merge(riskFactors.distinct, demo.tot, by="healthCode")
+ggplot(riskFactors.demo, aes(bloodGlucose,fill=status))+geom_density(alpha=.3) + theme_bw(17) 
+
+
+#veggies?
+
+#sex
+
+table(riskFactors.demo$sex,riskFactors.demo$status )
+chisq.test(matrix(c(150,69,392,617),nrow=2))
+ggplot(riskFactors.demo, aes(sex,fill=status))+geom_bar() + theme_bw(17) 
+
+
+
+#ethnicity
+table(riskFactors.demo$race,riskFactors.demo$status )
+
+
+
+
+
+#Fitness 6MW & activity (combined metric of accelerometer plus questionnaire)
+#vs 
+#satisfaction/happiness, MAP/SBP, age, diabetes, Total cholesterol
+
+
+
+#activity = 
+
+
+
+sixMin.demo.exSleep  = merge(sixMin.table, demo.exerciseSleep, by= "healthCode")
+ggplot(sixMin.demo.exSleep, aes(age,numberOfSteps))+geom_point() +theme_bw(18) + geom_smooth(lwd=2,se=FALSE)
+ggplot(sixMin.demo.exSleep, aes(satisfiedwith_life, numberOfSteps))+geom_point() +theme_bw(18) + geom_smooth(lwd=2,se=FALSE)
+ggplot(sixMin.demo.exSleep, aes(numberOfSteps, fill=diabetes))+geom_bar() +theme_bw(18) 
+ggplot(sixMin.demo.exSleep, aes(numberOfSteps, fill=hypertension))+geom_bar() +theme_bw(18) 
+
+
+
+# waking times
+sleep <- read.table("sleep_times_summary.txt")
+
+hist(sleep$V2/60,xlab="(24-Hour Clock) Time", main="Last non-stationary recording of the day")
+#mean sleep time is 8:45pm (20.8), sd=85.37823
+
+
+early.sleep <- data.frame(healthCode = sleep[sleep[,2]<1162.6 &sleep[,2]>1077.2 ,1])
+#6pm - 7:30p
+#1900
+
+
+#1 SD to top
+late.sleep<- data.frame(healthCode =sleep[sleep[,2]<1440 & sleep[,2]>1333.4 ,1])
+#10:15 -12pm
+#1619
+
+
+
+demo.late <-merge(demo.table.sm.distinct, late.sleep, by="healthCode")
+demo.early <-merge(demo.table.sm.distinct, early.sleep, by="healthCode")
+
+
+demo.late = cbind(demo.late, rep("late",nrow(demo.late)))
+colnames(demo.late)[length(demo.late)]="status"
+demo.early = cbind(demo.early, rep("early",nrow(demo.early)))
+colnames(demo.early)[length(demo.early)]="status"
+
+demo.tot =rbind(demo.late, demo.early)
+
+ggplot(demo.tot, aes(age, fill=status)) +geom_density(alpha=.3) + theme_bw(17) + ggtitle("Bed Time")
+
+#blood pressure:
+ggplot(demo.tot, aes(systolic, fill=status)) +geom_density(alpha=.3) + theme_bw(17)
+
+#totalChol
+ggplot(demo.tot, aes(totalChol, fill=status)) +geom_density(alpha=.3) + theme_bw(17)
+
+#6min data
+demo.tot.6min = merge(demo.tot, sixMin.table, by="healthCode")
+ggplot(demo.tot.6min, aes(numberOfSteps, fill=status)) +geom_density(alpha=.3) + theme_bw(17)
+ggplot(demo.tot.6min, aes(distance, fill=status)) +geom_density(alpha=.3) + theme_bw(17)
+
+#satisfied
+demo.exerciseSleep = merge(demo.tot, exerciseSleep.satisfied.clean , by="healthCode")
+ggplot(demo.exerciseSleep, aes(satisfiedwith_life ,fill=status))+geom_density(alpha=.3) + theme_bw(17)
+
+ggplot(demo.exerciseSleep, aes(status,satisfiedwith_life))+geom_boxplot() + theme_bw(17)
+ggplot(demo.exerciseSleep, aes(status,feel_worthwhile2))+geom_boxplot() + theme_bw(17) # we think this is the happy question?
+
+#self reported avg sleep
+ggplot(demo.exerciseSleep, aes(sleep_time1 ,fill=status))+geom_density(alpha=.3) + theme_bw(17) +xlab ("self reported sleep needed")#need
+ggplot(demo.exerciseSleep, aes(sleep_time ,fill=status))+geom_density(alpha=.3) + theme_bw(17) #get
+
+riskFactors.demo = merge(riskFactors.distinct, demo.tot, by="healthCode")
+table(riskFactors.demo$sex, riskFactors.demo$status)
+
+
+# are early to bed also early to rise?
+lateSleep.lateWake =merge(late.sleep, late, by="healthCode")
+earlySleep.earlyWake =merge(early.sleep, early, by="healthCode")
+lateSleep.earlyWake =merge(late.sleep, early, by="healthCode")
+earlySleep.lateWake =merge(early.sleep, late, by="healthCode")
+df2 = merge(demo.exerciseSleep, earlySleep.lateWake, by="healthCode")
+df3 = merge(demo.exerciseSleep, lateSleep.earlyWake, by="healthCode")
+df4 = merge(demo.exerciseSleep, earlySleep.earlyWake, by="healthCode")
+df5 = merge(demo.exerciseSleep, lateSleep.lateWake, by="healthCode")
+
+
+df2= cbind(df2, rep("earlySleep.lateWake",nrow(df2)))
+df3= cbind(df3, rep("lateSleep.earlyWake",nrow(df3)))
+df4= cbind(df4, rep("earlySleep.earlyWake",nrow(df4)))
+df5= cbind(df5, rep("lateSleep.lateWake",nrow(df5)))
+colnames(df2)[length(df2)]="sleep"
+colnames(df3)[length(df3)]="sleep"
+colnames(df4)[length(df4)]="sleep"
+colnames(df5)[length(df5)]="sleep"
+
+
+
+df.all<-rbind(rbind(rbind(df2,df3),df4),df5)
+
+ggplot(df.all, aes(age, fill=sleep)) +geom_density(alpha=.5) + theme_bw(17)
+ggplot(df.all, aes (sleep, satisfiedwith_life)) +geom_boxplot() + theme_bw(17)
+ggplot(df.all, aes (sleep, satisfiedwith_life)) +geom_boxplot() + theme_bw(17)
+ggplot(df.all, aes (sleep, sugar_drinks)) +geom_boxplot() + theme_bw(17)
+
+
+
+
+# maybe something unhealthy about people who go to bed early, and wake up late
+
+
+
+
+
+#Sleep (debt, early riser vs late coder
+
+#sleep amount vs activity [anything i calculated with debt, do with total amt]
+
+#something for chunks vs spread out.
+
+
+
+
+
+
