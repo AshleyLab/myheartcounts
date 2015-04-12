@@ -954,13 +954,7 @@ table(riskFactors.demo$race,riskFactors.demo$status )
 
 
 
-#Fitness 6MW & activity (combined metric of accelerometer plus questionnaire)
-#vs 
-#satisfaction/happiness, MAP/SBP, age, diabetes, Total cholesterol
 
-
-
-#activity = 
 
 
 
@@ -1059,6 +1053,10 @@ ggplot(df.all, aes (sleep, satisfiedwith_life)) +geom_boxplot() + theme_bw(17)
 ggplot(df.all, aes (sleep, satisfiedwith_life)) +geom_boxplot() + theme_bw(17)
 ggplot(df.all, aes (sleep, sugar_drinks)) +geom_boxplot() + theme_bw(17)
 
+df.6min <- merge(df.all, sixMin.table, by="healthCode")
+ggplot(df.6min, aes (numberOfSteps, fill=sleep)) +geom_density(alpha=.2) + theme_bw(17)
+ggplot(df.6min, aes (sleep, numberOfSteps)) +geom_boxplot() + theme_bw(17)
+
 
 
 
@@ -1068,14 +1066,51 @@ ggplot(df.all, aes (sleep, sugar_drinks)) +geom_boxplot() + theme_bw(17)
 
 
 
-#Sleep (debt, early riser vs late coder
+
+
+
+
+
+#Fitness 6MW & activity (combined metric of accelerometer plus questionnaire)
+#vs 
+#satisfaction/happiness, MAP/SBP, age, diabetes, Total cholesterol, sleep.
+
+
+
 
 #sleep amount vs activity [anything i calculated with debt, do with total amt]
 
-#something for chunks vs spread out.
+#activity - self reported from dailyCheck:
+# dim(dailyCheck.sm.no60)
+# 
+# dailyCheck.summary = data.frame(createdOn=dailyCheck.table$createdOn, healthCode=dailyCheck.table$healthCode, activity1_time=dailyCheck.table$activity1_time,activity2_time=dailyCheck.table$activity2_time, sleep_time=dailyCheck.table$sleep_time)
+# dailyCheck.summary$activity1_time=as.numeric(as.character(dailyCheck.summary$activity1_time))
+# dailyCheck.summary$activity2_time=as.numeric(as.character(dailyCheck.summary$activity2_time))
+# dailyCheck.summary[is.na(dailyCheck.summary)] <-0
+# dailyCheck.sm = data.frame(total_act = dailyCheck.uniq$activity1_time + dailyCheck.uniq$activity2_time, sleep = dailyCheck.uniq$sleep_time)
+
+
+#remove the 60s from the sleep
+# dailyCheck.sm.no60 = dailyCheck.sm[!(dailyCheck.sm$sleep==60),]
+
+#activity - recorded from motion data:
+motion<-read.table("mFileIndParse.txt", header=T,sep="\t")
+
+motion.Ind.Frac<-motion
+motion.Ind.Frac$active=motion$SecCycling+motion$SecWalking+motion$SecRunning
+motion.Ind.Frac$active_frac = motion.Ind.Frac$active / (motion.Ind.Frac$SecTotal)
+
+satisfied.sm = distinct(data.frame(healthCode = satisfied.table$healthCode, satisfied = satisfied.table$satisfiedwith_life), healthCode)
+motion.satisfied = merge(motion.Ind.Frac, satisfied.sm) #13272 people
+
+motion.satisfied<-motion.satisfied[!is.na(motion.satisfied$satisfied),]
+ggplot(motion.satisfied, aes(as.factor(satisfied), active_frac))+ geom_boxplot() + theme_bw(17) + xlab ("satisfaction_with_life") + ggtitle("Fraction of time Active vs Satisfaction with Life")
 
 
 
 
+motion.demo = merge(motion.Ind.Frac, demo.table.sm.distinct, by="healthCode") 
+motion.demo$age<-round(motion.demo$age/10)*10
+ggplot(motion.demo, aes(as.factor(age), active_frac))+ geom_boxplot() + theme_bw(17) +xlab("Decade") + ylab("Fraction of time active")+ ggtitle("Active time vs age")
 
 
