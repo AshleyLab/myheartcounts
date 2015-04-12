@@ -780,9 +780,12 @@ for (person in 1:ncol(test.people)){
   }
 }
 
+#forTesting only
+test.people = test.people[1:30000,c(500:1000,14995)]
+
 # 2 is walking, 3 is exercise. I want to know per day HOW MANY TIMES you did a 2 or a 3 per day
 
-# need to somehow keep track of the lengths of each block, too. #TODO.
+# need to somehow keep track of the lengths of each block, too. #TODO. Currently these really aren't blocks at all, just counts of minutes.
 blocks.per.day=matrix(ncol=length(unique(test.people$date)), nrow=(ncol(test.people)-1))
 index = 1 # date number
 
@@ -801,25 +804,38 @@ for (a in unique(test.people$date)){
        
   }
   index=index+1
+  print(index)
 }
 
 
 #now that we've filled in blocks per day, calculate mean and stdev across rows with apply
 
+#turn 0s into NAs and then rm.na in calcs
+#probably should collapse in the walking data...#TODO
+blocks.per.day[blocks.per.day==0]<-NA
+standard.dev = apply(blocks.per.day,1,sd, na.rm=TRUE)
+mean = apply(blocks.per.day,1,mean, na.rm=TRUE)
 
-standard.dev = apply(blocks.per.day,1,sd)
-mean = apply(blocks.per.day,1,mean)
 
-
-#[probably important to know the length of the blocks too.... ], the above is just the NUMBER of blocks.
 
 #grab healthcodes for these people
-individual.healthCode = colnames(test.data)[7:ncol(test.data)]
+#individual.healthCode = colnames(test.data)[7:ncol(test.data)]
+individual.healthCode = colnames(test.people)[1:(ncol(test.people)-1)]
 
-#now the question would be weather low standard dev is better than high mean. 
+#issue! column names turn dashes to dots and anything that starts with a number now starts with an X
+individual.healthCode = gsub("\\.","-", individual.healthCode)
+individual.healthCode = gsub("^X","", individual.healthCode)
+
+
+
+#now the question would be whether low standard dev is better than high mean. 
 df<-data.frame(std.dev = standard.dev, healthCode = individual.healthCode, mean = mean)
 df.satisfied <- join (df, satisfied.table, by="healthCode")
 
+
+sixMin.table <-read.table("6minWalk_healthCode_steps.tsv", sep="\t", header=T)
+
+df.6min <- join (df, sixMin.table, by="healthCode")
 
 #maybe remove people who are mean AND standard dev of 0.
 # figure out when to stop doing the analysis (ie if at the end they dont have recordings) TODO.
