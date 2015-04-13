@@ -32,7 +32,7 @@ sync.survey <- function() {
     #sq.all <- lapply(as.list(1:nrow(pq)), download.survey)
     }
 
-#sync.survey()
+sync.survey()
 
 ### blob / accelerometer data
 
