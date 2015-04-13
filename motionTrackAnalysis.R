@@ -60,6 +60,20 @@ hist(time_use$pStat)
 ggplot(aes(x=Hour), data=time_use) + geom_histogram(binwidth=1, fill="grey55", col="white") + xlim(c(0,23)) + theme_bw() + labs(y="Count of Times with >100 Observations", x="Hour of the Day", title="Hours of Day with >100 Motion Tracker Observations")
 ggsave("HoursOfDay_hist.pdf", height=6, width=8)
 
+time_to_plot = data.frame(pActive =time_use$pActive, pInactive=time_use$pInactive, Hour = time_use$Hour, HourMinute=time_use$Hour*60+ time_use$Minute)
+time_melt = melt(time_to_plot, id.vars=c("Hour", "HourMinute"))
+levels(time_melt$variable) = c("Active", "Inactive")
+ggplot(aes(x=as.factor(Hour), y=value), data=time_melt) + facet_grid(~variable) + geom_boxplot() + theme_bw() + labs(x="Hour of the Day", y="Proportion of Individuals in Given State Each Minute") 
+ggsave("DayActiveVsInactive.pdf", height=7, width=12)
+
+
+ggplot(aes(x=as.factor(HourMinute), y=value), data=time_melt) + facet_grid(~variable) + geom_point(alpha=0.05) + theme_bw() + labs(x="Minute of the Day", y="Proportion of Individuals in Given State Each Minute") + theme(panel.grid=element_blank(), axis.text.x=element_blank(), axis.ticks.x=element_blank())
+ggsave("DayActiveVsInactive_Minute.pdf", height=7, width=12)
+
+
+ggplot(aes(x=as.factor(Hour), y=pActive), data=time_use) + geom_boxplot() + theme_bw() + labs(x="Hour of the Day", y="Proportion Active", title="Active")
+
+ggplot(aes(x=as.factor(Hour), y=pInactive), data=time_use) + geom_boxplot() + theme_bw() + labs(x="Hour of the Day", y="Proportion Individuals Inactive", title="Inactive")
 
 ggplot(aes(x=as.factor(Hour), y=pAuto), data=time_use) + geom_boxplot() + theme_bw() + labs(x="Hour of the Day", y="Proportion Automotive", title="Automotive")
 ggsave("pAuto_Hour.pdf", height=6, width=8)
@@ -80,6 +94,13 @@ ggsave("pCycle_Hour.pdf", height=6, width=8)
 
 time_use$dayminute = time_use$Hour*60 + time_use$Minute 
 time_use$pActive = time_use$pRun + time_use$pWalk + time_use$pCycle
+time_use$pInactive = time_use$pStat + time_use$pAuto
+
+ggplot(aes(x=dayminute, y=pActive), data=time_use) + geom_point(alpha=0.07) + theme_bw() + labs(x="Hour of the Day", y="Proportion Walking", title="Walking")
+
+
+
+
 ggplot(aes(x=dayminute, y=pWalk), data=time_use) + geom_point(alpha=0.07) + theme_bw() + labs(x="Hour of the Day", y="Proportion Walking", title="Walking")
 ggsave("pWalk_minute.png", height=6, width=8)
 
@@ -90,6 +111,9 @@ ggplot(aes(x=dayminute, y=pRun), data=time_use) + geom_point(alpha=0.07) + theme
 ggsave("pRun_minute.pdf", height=6, width=8)
 
 ggplot(aes(x=dayminute, y=pAuto), data=time_use) + geom_point(alpha=0.07) + theme_bw() + labs(x="Minute of the Day", y="Proportion Automotive", title="Automotive")
+
+
+
 
 
 ## Time melt:
@@ -155,24 +179,69 @@ hearttable_motion$age[hearttable_motion$age>120] =NA
 hearttable_motion$heartAgeDataGender[hearttable_motion$heartAgeDataGender=="[]"] = NA 
 hearttable_motion$heartAgeDataGender[hearttable_motion$heartAgeDataGender=="[\"HKBiologicalSexOther\"]"] = NA 
 
+# lets fix hearttable age:
+age_estimate = aggregate(hearttable_motion$age, list(hearttable_motion$healthCode), mean)
+names(age_estimate) = c("healthCode", "age_e")
+hearttable_age = merge(hearttable_motion, age_estimate, by.x="healthCode", by.y="healthCode")
 
 ## Now, lets analyze Blood Pressure:
 
 # Get a subset of the data with reasonable ranges
-bp_use = subset(hearttable_motion, bloodPressureInstruction>=60 & bloodPressureInstruction<220 & pWalk+pRun>0.001)
-summary(bp_runwalk.lm <- lm(bloodPressureInstruction~ pWalk + pRun + age + heartAgeDataGender, bp_use))
+bp_use = subset(hearttable_age, bloodPressureInstruction>=60 & bloodPressureInstruction<220 & pWalk+pRun>0.001)
+bp_use$MAP = bp_use$heartAgeDataSystolicBloodPressure + (1/3)*(bp_use$bloodPressureInstruction - bp_use$heartAgeDataSystolicBloodPressure)
+map_use = subset(bp_use, heartAgeDataSystolicBloodPressure>=20, heartAgeDataSystolicBloodPressure<180 )
+
+bp_use_unique = unique(data.frame(bp = bp_use$bloodPressureInstruction, healthcode=bp_use$healthCode, MAP=bp_use$MAP))
+bp_estim = aggregate(bp_use_unique$bp, list(bp_use_unique$healthcode), mean)
+map_estim =aggregate(map_use$MAP, list(map_use$healthCode), mean)
+names(bp_estim) = c("healthCode", "bp_estim")
+names(map_estim) = c("healthCode", "MAP_estim")
+bp_use_estim = merge(bp_use, bp_estim, by="healthCode")
+bp_use_estim_u = unique(data.frame(bp_estim = bp_use_estim$bp_estim, age = bp_use_estim$age_e, pRun = bp_use_estim$pRun, pWalk = bp_use_estim$pWalk, pActive =  bp_use_estim$pWalk +  bp_use_estim$pRun +  bp_use_estim$pCycle, gender = bp_use_estim$heartAgeDataGender, healthCode=bp_use_estim$healthCode))
+plot( bp_use_estim_u$bp_estim ~ (bp_use_estim_u$pWalk +  bp_use_estim_u$pRun))
+summary(bp_runwalk.lm <- lm(bp_estim ~ pActive + age + gender, bp_use_estim_u))
 
 plot(bp_runwalk.lm)
-bp_runwalk_log.lm = lm(bloodPressureInstruction~ log(pWalk+pRun, 10) + age + heartAgeDataGender, data=bp_use)
+bp_runwalk_log.lm = lm(bp_estim ~ log(pActive) + age + gender, data=bp_use_estim_u)
 summary(bp_runwalk_log.lm)
 plot(bp_runwalk_log.lm)
-summary(bp_runwalk.rlm <-rlm(bloodPressureInstruction~log(pWalk + pRun, 10) + heartAgeDataGender + age, data=bp_use))
+summary(bp_runwalk.rlm <-rlm(bp_estim ~ log(pActive) + age + gender, data=bp_use_estim_u))
+
+smoothScatter(bp_use$bloodPressureInstruction~ bp_use$pWalk+ bp_use$pRun)
 
 ggplot(data=bp_use, aes(x=log(pWalk+pRun), y=bloodPressureInstruction, col=heartAgeDataGender)) + geom_point(alpha=0.7) + theme_bw() + labs(x="Log(Proportion of Time Running + Walking)", y="Systolic Blood Pressure (<220, >60)", title="BP vs. Time Active")
 ggsave("BP_vsLogRunWalk.pdf", width=8, height=5)
 
 ggplot(data=bp_use, aes(x=pWalk+pRun, y=bloodPressureInstruction, col=heartAgeDataGender)) + geom_point(alpha=0.7) + theme_bw() + labs(x="Proportion of Time Running + Walking", y="Systolic Blood Pressure (<220, >60)", title="BP vs. Time Active")
 ggsave("BP_vsRunWalk.pdf", width=8, height=5)
+
+#3 Lets add six minute data
+
+sixmin = read.table("../SixMinute/cardiovascular-6MinuteWalkTest-v2_withSteps_filtered.tsv", head=T, sep="\t")
+bp_use_estim_six = merge(bp_use_estim_u, sixmin, by="healthCode")
+summary(bp_sixmin.lm <- lm(bp_estim ~ distance + pActive + age + gender, data=bp_use_estim_six))
+
+summary(bp_sixmin_log.lm <- lm(bp_estim ~ distance + log(pActive) + age + gender, data=bp_use_estim_six))
+
+
+
+## Mean Arterial PRessure
+map_use_estim = subset(merge(bp_use, map_estim, by="healthCode"), MAP_estim < 200)
+map_use_estim_u = unique(data.frame(MAP_estim = map_use_estim$MAP_estim, age = map_use_estim$age_e, pRun = map_use_estim$pRun, pWalk = map_use_estim$pWalk, pActive =  map_use_estim$pWalk +  map_use_estim$pRun +  map_use_estim$pCycle, gender = map_use_estim$heartAgeDataGender, healthCode=map_use_estim$healthCode))
+hist(map_use_estim_u$MAP_estim)
+summary(map_runwalk.lm <- lm(MAP_estim ~ pActive + age + gender, map_use_estim_u))
+
+plot(map_runwalk.lm)
+map_runwalk_log.lm = lm(MAP_estim ~ log(pActive) + age + gender, data=map_use_estim_u)
+summary(map_runwalk_log.lm)
+
+map_estim_six = merge(map_use_estim_u, sixmin, by="healthCode")
+map_six.lm <- lm(MAP_estim ~ distance + pActive + age +gender, data=map_estim_six)
+summary(map_six.lm)
+
+map_six_log.lm <- lm(MAP_estim ~ distance + age + log(pActive)+gender, data=map_estim_six)
+summary(map_six_log.lm)
+
 
 ## Let's look at total cholesterol
 
@@ -198,17 +267,49 @@ summary(ldl_runwalk.lm <- lm(heartAgeDataLdl~ log(pWalk + pRun) + age + heartAge
 
 
 
+### Get the day one table
 
-### Old things:
-hearttable_motion$bpGood = hearttable_motion$bloodPressureInstruction <120
-chol = subset(hearttable_motion, heartAgeDataTotalCholesterol<300 & heartAgeDataTotalCholesterol > 100)
-plot(heartAgeDataTotalCholesterol ~ pWalk, data=chol)
-chol$lessthan180 = chol$heartAgeDataTotalCholesterol < 180
-summary(lm(heartAgeDataTotalCholesterol ~ pWalk + pRun + age, data=chol))
-ggplot(data=chol, aes(x=))
+dayone = synTableQuery("SELECT * FROM syn3420238")
 
-summary(lm(heartAgeDataHdl ~ pWalk + age, data=chol))
-summary(lm(heartAgeDataSystolicBloodPressure~pActive, data=subset(hearttable_motion, heartAgeDataSystolicBloodPressure>50 & heartAgeDataSystolicBloodPressure<300)))
-summary(glm(lessthan180~pWalk + age, data=chol))
-# Min fitted values: 9164, 9078
+
+### Merge Indiv Table and Zip Codes
+
+indiv_zip = merge(indiv, diet_satisfy_state, by="healthCode")
+
+pWalk_state = aggregate(indiv_zip$pWalk, list(indiv_zip$state), mean)
+names(pWalk_state) = c( "State", "pWalk")
+
+stateMapPlot(pWalk_state, "Blues", "pWalk", c(0,0.03,0.04,0.05,0.06,0.07,1), nameStateColumn="State")
+mean(indiv$pWalk)
+
+pStat_state = aggregate(indiv_zip$pStat, list(indiv_zip$state), mean)
+names(pStat_state)=c("State", "pStat")
+
+stateMapPlot(pStat_state, "Reds", "pStat", c(0, 0.7, 0.72, 0.73, 0.74, 0.75, 0.76, 0.77, 0.78, 1), nameStateColumn="State")
+
+indiv_zip$pActive = indiv_zip$pWalk + indiv_zip$pRun + indiv_zip$pCycle
+summary(active_state.lm <- lm(pActive ~ state, data=indiv_zip))
+pActive_state = aggregate(indiv_zip$pActive, list(indiv_zip$state), mean)
+names(pActive_state)=c("State", "pActive")
+pdf("ProportionActivityByState.pdf", height=6, width=10)
+stateMapPlot(pActive_state, "Blues", "pActive", c(0,0.06,0.07,0.08,0.09,0.10,1), nameStateColumn="State")
+legend("bottomright", legend=c("<6%", "6%-7%", "7%-8%", "8%-9%", "9%-10%", ">10%"), fill=brewer.pal(6, "Blues"), box.lty=0, bg=NULL)
+dev.off()
+
+pAuto_state = aggregate(indiv_zip$pAuto, list(indiv_zip$state), mean)
+names(pAuto_state) = c("State", "pAuto")
+stateMapPlot(pAuto_state, "Purples", "pAuto", c(0,0.1,0.12,0.14,0.16,0.18,0.2,1), nameStateColumn="State")
+
+## Blood Pressure by State
+
+heartzip = merge(bp_use, diet_satisfy_state, by="healthCode" )
+summary(bpstate.lm <- lm(bloodPressureInstruction~ state, data=heartzip))
+bp_state = aggregate(heartzip$bloodPressureInstruction, c(list(heartzip$state),list(heartzip$healthCode)) , mean)
+names(bp_state) = c("state", "healthCode", "bp")
+bp_state_u = aggregate(bp_state$bp, list(bp_state$state), mean)
+names(bp_state_u) = c("state", "bp")
+pdf("BP_byState.pdf", height=6, width=10)
+stateMapPlot(bp_state_u, "Reds", "bp", c(100,120,121,122,123,124,150), nameStateColumn="state")
+legend("bottomright", legend=c("<120", "120 - 121", "122 - 123", "123 - 124",">124"), fill=brewer.pal(5,"Reds"), box.lty=0, bg=NULL)
+dev.off()
 
