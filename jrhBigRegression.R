@@ -6,7 +6,7 @@ require(MASS)
 # Diet, Satisfaction, HeartAge, etc. 
 
 cv_health = read.table("../2015-04-12/cardiovascular-risk_factors-v1.tsv", sep="\t", head=T)
-zip_codes = read.table("zips_expanded.txt", sep="\t")
+zip_codes = read.table("../zips_expanded.txt", sep="\t")
 names(zip_codes) = c("prefix", "state_code", "state")
 satisfiedTable = read.table("/Users/Julian/Documents/AshleyLab/MHealth/2015-04-12/cardiovascular-satisfied-v1.tsv", head=T, sep="\t")
 dietTable = read.table("/Users/Julian/Documents/AshleyLab/MHealth/2015-04-12/cardiovascular-Diet_survey_cardio-v1.tsv", head=T, sep="\t")
@@ -22,19 +22,25 @@ sixmin = read.table("../2015-04-12/6minWalk_healthCode_steps.tsv", head=T, sep="
 # Remove people with less than 12 hours of data:
 indiv = subset(indiv_all, SecTotal > 3600*12)
 
+indiv$pWalk = indiv$SecWalking/indiv$SecTotal
+indiv$pStat = indiv$SecStationary/indiv$SecTotal
+indiv$pRun = indiv$SecRunning/indiv$SecTotal
+indiv$pCycle = indiv$SecCycling/indiv$SecTotal
+indiv$pAuto = indiv$SecAutomotive/indiv$SecTotal
+
 # Merge everything - wow lol
-diet_satisfy <- merge(dietTable, satisfiedTable, by="healthCode")
-diet_satisfy_state <- merge(diet_satisfy, zip_codes, by.x="zip", by.y="prefix")
-diet_sat_age = merge(diet_satisfy_state, hearttable, by="healthCode")
-diet_sat_age_motion = merge(diet_sat_age, indiv, by="healthCode")
-diet_sat_age_motion_six = merge(diet_sat_age_motion, sixmin, by="healthCode")
+diet_satisfy <- merge(dietTable, satisfiedTable, by="healthCode", all=T)
+diet_satisfy_state <- merge(diet_satisfy, zip_codes, by.x="zip", by.y="prefix", all=T)
+diet_sat_age = merge(diet_satisfy_state, hearttable, by="healthCode", all.y=T)
+diet_sat_age_motion = merge(diet_sat_age, indiv, by="healthCode", all.x=T)
+diet_sat_age_motion_six = merge(diet_sat_age_motion, sixmin, by="healthCode", all.x=T)
 diet_sat_age_motion_six$pActive = diet_sat_age_motion_six$pWalk + diet_sat_age_motion_six$pRun + diet_sat_age_motion_six$pCycle
-lots_of_merge = merge(diet_sat_age_motion_six, cv_health, by="healthCode")
+lots_of_merge = merge(diet_sat_age_motion_six, cv_health, by="healthCode", all.x=T)
 # do they have heart disease?
 lots_of_merge$hasDisease = lots_of_merge$heart_disease != "[10]" 
 lots_of_merge$age = as.numeric(difftime("2015-04-08",strptime(lots_of_merge$heartAgeDataAge,"%Y-%m-%d"), units="weeks"))/52
 
-dsams_collapse = ddply(lots_of_merge, .(healthCode), summarize, sys.bp=mean(bloodPressureInstruction), ethnicity = heartAgeDataGender[1], gender = heartAgeDataGender[1], hdl = mean(heartAgeDataHdl), ldl=mean(heartAgeDataLdl),chol=mean(heartAgeDataTotalCholesterol), age = mean(age), diabetes=heartAgeDataDiabetes[1], vegetable = mean(vegetable,na.rm=T), fruit=mean(fruit,na.rm=T), smokingHistory=smokingHistory[1], pActive=mean(pActive), sugar_drinks = mean(sugar_drinks, na.rm=T), satisfaction = mean(satisfiedwith_life, na.rm=T), worthwhile = mean(feel_worthwhile1), happy=mean(feel_worthwhile2,na.rm=T), worry = mean(feel_worthwhile3,na.rm=T), depress=mean(feel_worthwhile4, na.rm=T), zip=zip[1], state=state[1], numberOfSteps = mean(numberOfSteps, na.rm=T), distance = mean(distance, na.rm=T), hasDisease=max(hasDisease))
+dsams_collapse = ddply(lots_of_merge, .(healthCode), summarize, sys.bp=mean(bloodPressureInstruction, na.rm=T), ethnicity = heartAgeDataGender[1], gender = heartAgeDataGender[1], hdl = mean(heartAgeDataHdl,na.rm=T), ldl=mean(heartAgeDataLdl,na.rm=T),chol=mean(heartAgeDataTotalCholesterol,na.rm=T), age = mean(age), diabetes=heartAgeDataDiabetes[1], vegetable = mean(vegetable,na.rm=T), fruit=mean(fruit,na.rm=T), smokingHistory=smokingHistory[1], pActive=mean(pActive), sugar_drinks = mean(sugar_drinks, na.rm=T), satisfaction = mean(satisfiedwith_life, na.rm=T), worthwhile = mean(feel_worthwhile1,na.rm=T), happy=mean(feel_worthwhile2,na.rm=T), worry = mean(feel_worthwhile3,na.rm=T), depress=mean(feel_worthwhile4, na.rm=T), zip=zip[1], state=state[1], numberOfSteps = mean(numberOfSteps, na.rm=T), distance = mean(distance, na.rm=T), hasDisease=max(hasDisease, na.rm=T))
 
 write.table(dsams_collapse, file="dsams_collapse.tsv", sep="\t", row.names=F)
 
