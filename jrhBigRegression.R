@@ -37,12 +37,37 @@ diet_sat_age_motion_six = merge(diet_sat_age_motion, sixmin, by="healthCode", al
 diet_sat_age_motion_six$pActive = diet_sat_age_motion_six$pWalk + diet_sat_age_motion_six$pRun + diet_sat_age_motion_six$pCycle
 lots_of_merge = merge(diet_sat_age_motion_six, cv_health, by="healthCode", all.x=T)
 # do they have heart disease?
-lots_of_merge$hasDisease = lots_of_merge$heart_disease != "[10]" 
+lots_of_merge$hasDisease = lots_of_merge$heart_disease != "[10]" & lots_of_merge$heart_disease != "[]"
+lots_of_merge$hasDisease[lots_of_merge$heart_disease == "[]"] = NA
 lots_of_merge$age = as.numeric(difftime("2015-04-08",strptime(lots_of_merge$heartAgeDataAge,"%Y-%m-%d"), units="weeks"))/52
 
-dsams_collapse = ddply(lots_of_merge, .(healthCode), summarize, sys.bp=mean(bloodPressureInstruction, na.rm=T), ethnicity = heartAgeDataGender[1], gender = heartAgeDataGender[1], hdl = mean(heartAgeDataHdl,na.rm=T), ldl=mean(heartAgeDataLdl,na.rm=T),chol=mean(heartAgeDataTotalCholesterol,na.rm=T), age = mean(age), diabetes=heartAgeDataDiabetes[1], vegetable = mean(vegetable,na.rm=T), fruit=mean(fruit,na.rm=T), smokingHistory=smokingHistory[1], pActive=mean(pActive), sugar_drinks = mean(sugar_drinks, na.rm=T), satisfaction = mean(satisfiedwith_life, na.rm=T), worthwhile = mean(feel_worthwhile1,na.rm=T), happy=mean(feel_worthwhile2,na.rm=T), worry = mean(feel_worthwhile3,na.rm=T), depress=mean(feel_worthwhile4, na.rm=T), zip=zip[1], state=state[1], numberOfSteps = mean(numberOfSteps, na.rm=T), distance = mean(distance, na.rm=T), hasDisease=max(hasDisease, na.rm=T))
+# Filter age to reasonable values
+lots_of_merge$age[lots_of_merge$age > 120]= NA
+lots_of_merge$age[lots_of_merge$age < 18] = NA
 
-write.table(dsams_collapse, file="dsams_collapse.tsv", sep="\t", row.names=F)
+# Filter BP
+lots_of_merge$bloodPressureInstruction[lots_of_merge$bloodPressureInstruction>220] = NA
+lots_of_merge$bloodPressureInstruction[lots_of_merge$bloodPressureInstruction<60] = NA
+
+# Filter chol
+lots_of_merge$heartAgeDataTotalCholesterol[lots_of_merge$heartAgeDataTotalCholesterol>400] = NA
+lots_of_merge$heartAgeDataTotalCholesterol[lots_of_merge$heartAgeDataTotalCholesterol<50] = NA
+
+# Filter LDL
+lots_of_merge$heartAgeDataLdl[lots_of_merge$heartAgeDataLdl<10] = NA
+lots_of_merge$heartAgeDataLdl[lots_of_merge$heartAgeDataLdl>360] = NA
+
+# Filter Hdl
+lots_of_merge$heartAgeDataHdl[lots_of_merge$heartAgeDataHdl<10] = NA
+lots_of_merge$heartAgeDataHdl[lots_of_merge$heartAgeDataHdl>120] = NA
+
+# Filter gender
+lots_of_merge$heartAgeDataGender[!lots_of_merge$heartAgeDataGender%in%c("[HKBiologicalSexMale]", "[HKBiologicalSexFemale]")] = NA
+
+dsams_collapse = ddply(lots_of_merge, .(healthCode), summarize, sys.bp=mean(bloodPressureInstruction, na.rm=T), ethnicity = heartAgeDataEthnicity[1], gender = heartAgeDataGender[1], hdl = mean(heartAgeDataHdl,na.rm=T), ldl=mean(heartAgeDataLdl,na.rm=T),chol=mean(heartAgeDataTotalCholesterol,na.rm=T), age = mean(age), diabetes=heartAgeDataDiabetes[1], vegetable = mean(vegetable,na.rm=T), fruit=mean(fruit,na.rm=T), smokingHistory=smokingHistory[1], pActive=mean(pActive), sugar_drinks = mean(sugar_drinks, na.rm=T), satisfaction = mean(satisfiedwith_life, na.rm=T), worthwhile = mean(feel_worthwhile1,na.rm=T), happy=mean(feel_worthwhile2,na.rm=T), worry = mean(feel_worthwhile3,na.rm=T), depress=mean(feel_worthwhile4, na.rm=T), zip=zip[1], state=state[1], numberOfSteps = mean(numberOfSteps, na.rm=T), distance = mean(distance, na.rm=T), hasDisease=max(hasDisease, na.rm=T))
+dsams_collapse$hasDisease[dsams_collapse$hasDisease=="-Inf"] = NA
+
+# Missing sleep
 
 ## Filters:
 
@@ -56,7 +81,7 @@ dsams_collapse$sys.bp[dsams_collapse$sys.bp<60] = NA
 
 # Filter chol
 dsams_collapse$chol[dsams_collapse$chol>400] = NA
-dsams_collapse$chol[dsams_collapse$chol<100] = NA
+dsams_collapse$chol[dsams_collapse$chol<50] = NA
 
 # Filter LDL
 dsams_collapse$ldl[dsams_collapse$ldl<10] = NA
@@ -67,22 +92,51 @@ dsams_collapse$hdl[dsams_collapse$hdl<10] = NA
 dsams_collapse$hdl[dsams_collapse$hdl>120] = NA
 
 # Filter gender
-dsams_collapse$gender[!dsams_collapse$gender%in%c("[\"HKBiologicalSexMale\"]", "[\"HKBiologicalSexFemale\"]")] = NA
+dsams_collapse$gender[!dsams_collapse$gender%in%c("[HKBiologicalSexMale]", "[HKBiologicalSexFemale]")] = NA
+write.table(dsams_collapse, file="dsams_collapse_0414.tsv", sep="\t", row.names=F)
 
-summary(baseDisease.lm <- lm(hasDisease ~ age+gender, data=dsams_collapse))
-summary(fullDisease.lm <- lm(hasDisease ~ age+gender+sys.bp + hdl + ldl + chol + diabetes + vegetable + fruit + smokingHistory + pActive + sugar_drinks + satisfaction + worthwhile + worry + depress + numberOfSteps,  data=dsams_collapse))
+
+summary(baseDisease.lm <- lm(hasDisease ~ age*gender, data=dsams_collapse))
+summary(fullDisease.lm <- lm(hasDisease ~ age*gender+sys.bp + hdl + chol + diabetes + vegetable + fruit + smokingHistory + pActive + sugar_drinks + satisfaction + worthwhile + worry + depress + numberOfSteps,  data=dsams_collapse))
 
 # Need to collapse to complete records for AIC step
 dsams_collapse_full = na.omit(dsams_collapse)
 
-summary(baseDisease_full.lm <- lm(hasDisease ~ age+gender, data=dsams_collapse_full))
-summary(fullDisease_full.lm <- lm(hasDisease ~ age+gender+sys.bp + hdl + ldl + chol + diabetes + vegetable + fruit + smokingHistory + pActive + sugar_drinks + satisfaction + worthwhile + worry + depress + numberOfSteps,  data=dsams_collapse_full))
+summary(glm(hasDisease~ age + gender + ldl, family="binomial",data=dsams_collapse))
+
+summary(baseDisease_full.lm <- glm(hasDisease ~ age:gender + age + gender, data=dsams_collapse_full, family="binomial"))
+summary(fullDisease_full.lm <- glm(hasDisease ~ age*gender+sys.bp + hdl + ldl + age*chol + diabetes + vegetable + fruit + smokingHistory + pActive + sugar_drinks + happy+satisfaction + worthwhile + worry + depress + numberOfSteps, family="binomial", data=dsams_collapse_full))
+
+# First thing - collapse ethnicity to White, Asian, Black, Hispanic, Other
+
+# Base model: Always has age, sex, age:sex , and ethnicity interaction
+# Test each other variable univariately (with base model) against each one.
+# Correlated variables: greater than 0.5 correlation coefficient
+# Add only most univariately associated of the potential correlated variables
+# Then, add all these variables to the "full scope" model
+# Run stepwise AIC "both" model selection against the data
+
+# Run it with the steps included and without the six minute walk stuff included
+
 
 ## Lets do a step here:
-step(fullDisease_full.lm,baseDisease_full.lm)
+backwardsDiseaseAIC.lm= step(fullDisease_full.lm, scope=c(lower=baseDisease_full.lm, upper=fullDisease_full.lm))
 
-summary(backwardsAIC.lm <- lm(formula = hasDisease ~ age + gender + sys.bp + chol + pActive + satisfaction + worry + depress + numberOfSteps, data = dsams_collapse_full))
+summary(backwardsDiseaseAIC.lm)
+summary(backwardsDiseaseAIC_all.lm <- lm(backwardsDiseaseAIC.lm, data = dsams_collapse))
 
-forwardsAIC.lm = step(baseDisease_full.lm, fullDisease_full.lm, direction="forward")
+forwardsAIC.lm = step(baseDisease_full.lm,scope=list(upper=fullDisease_full.lm,lower=~1))
+
+summary(forwardsAIC.lm)
 
 
+
+
+summary(baseSat_full.lm <- lm(satisfaction ~ age+gender, data=dsams_collapse_full))
+summary(fullSat_full.lm <- lm(satisfaction ~ age+gender+sys.bp + hdl + ldl + chol + diabetes + vegetable + fruit + smokingHistory + pActive + sugar_drinks + numberOfSteps, data=dsams_collapse_full))
+
+forStepAIC.lm = step(baseSat_full.lm, scope=list(lower=~1, upper=fullSat_full.lm))
+summary(forStepAIC.lm)
+
+backStepAIC.lm = step(fullSat_full.lm, scope=list(lower=~1, upper=fullSat_full.lm))
+summary(backStepAIC.lm)
