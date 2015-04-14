@@ -1,9 +1,30 @@
 ## Let's build the regression model:
 
+require(plyr)
+require(MASS)
+
 # Diet, Satisfaction, HeartAge, etc. 
 
 cv_health = read.table("../2015-04-12/cardiovascular-risk_factors-v1.tsv", sep="\t", head=T)
+zip_codes = read.table("zips_expanded.txt", sep="\t")
+names(zip_codes) = c("prefix", "state_code", "state")
+satisfiedTable = read.table("/Users/Julian/Documents/AshleyLab/MHealth/2015-04-12/cardiovascular-satisfied-v1.tsv", head=T, sep="\t")
+dietTable = read.table("/Users/Julian/Documents/AshleyLab/MHealth/2015-04-12/cardiovascular-Diet_survey_cardio-v1.tsv", head=T, sep="\t")
+hearttable = read.table("/Users/Julian/Documents/AshleyLab/MHealth/2015-04-12/cardiovascular-2-APHHeartAge-7259AC18-D711-47A6-ADBD-6CFCECDED1DF-v1.tsv", head=T, sep="\t")
 
+
+# Individual motion data
+indiv_all = read.table("/Users/Julian/Documents/AshleyLab/MHealth/2015-04-12/indMotion0412.txt", sep="\t", head=T)
+
+# six minute data
+sixmin = read.table("../2015-04-12/6minWalk_healthCode_steps.tsv", head=T, sep="\t")
+
+# Remove people with less than 12 hours of data:
+indiv = subset(indiv_all, SecTotal > 3600*12)
+
+# Merge everything - wow lol
+diet_satisfy <- merge(dietTable, satisfiedTable, by="healthCode")
+diet_satisfy_state <- merge(diet_satisfy, zip_codes, by.x="zip", by.y="prefix")
 diet_sat_age = merge(diet_satisfy_state, hearttable, by="healthCode")
 diet_sat_age_motion = merge(diet_sat_age, indiv, by="healthCode")
 diet_sat_age_motion_six = merge(diet_sat_age_motion, sixmin, by="healthCode")
@@ -45,12 +66,17 @@ dsams_collapse$gender[!dsams_collapse$gender%in%c("[\"HKBiologicalSexMale\"]", "
 summary(baseDisease.lm <- lm(hasDisease ~ age+gender, data=dsams_collapse))
 summary(fullDisease.lm <- lm(hasDisease ~ age+gender+sys.bp + hdl + ldl + chol + diabetes + vegetable + fruit + smokingHistory + pActive + sugar_drinks + satisfaction + worthwhile + worry + depress + numberOfSteps,  data=dsams_collapse))
 
-summary(lm(hasDisease ~ age + gender + pActive, data=dsams_collapse))
+# Need to collapse to complete records for AIC step
+dsams_collapse_full = na.omit(dsams_collapse)
 
-summary(lm(satisfaction ~ age + gender + pActive, data=dsams_collapse))
-
-
+summary(baseDisease_full.lm <- lm(hasDisease ~ age+gender, data=dsams_collapse_full))
+summary(fullDisease_full.lm <- lm(hasDisease ~ age+gender+sys.bp + hdl + ldl + chol + diabetes + vegetable + fruit + smokingHistory + pActive + sugar_drinks + satisfaction + worthwhile + worry + depress + numberOfSteps,  data=dsams_collapse_full))
 
 ## Lets do a step here:
-step(baseDisease.lm, scope=fullDisease.lm, direction="forward")
+step(fullDisease_full.lm,baseDisease_full.lm)
+
+summary(backwardsAIC.lm <- lm(formula = hasDisease ~ age + gender + sys.bp + chol + pActive + satisfaction + worry + depress + numberOfSteps, data = dsams_collapse_full))
+
+forwardsAIC.lm = step(baseDisease_full.lm, fullDisease_full.lm, direction="forward")
+
 
