@@ -966,7 +966,7 @@ ggplot(sixMin.demo.exSleep, aes(numberOfSteps, fill=hypertension))+geom_bar() +t
 
 
 
-# waking times
+# bedtime times
 sleep <- read.table("sleep_times_summary.txt")
 
 hist(sleep$V2/60,xlab="(24-Hour Clock) Time", main="Last non-stationary recording of the day")
@@ -1114,3 +1114,29 @@ motion.demo$age<-round(motion.demo$age/10)*10
 ggplot(motion.demo, aes(as.factor(age), active_frac))+ geom_boxplot() + theme_bw(17) +xlab("Decade") + ylab("Fraction of time active")+ ggtitle("Active time vs age")
 
 
+
+
+
+
+#REGRESSION
+
+
+reg = read.table("dsams_collapse_0413_3.tsv", header=T)
+
+
+#instructions from daryl: 
+#Julian put together the table dsams_collapse.tsv with both hasDisease and satisfaction. 
+#The filtering and sanity is kind of being done with eye's closed so use that table with 
+#an eye out for issues. I'll run hasDisease and you can check satisfaction using a stepwise 
+#linear regression. Covariates are whatever is in the table.
+
+glm(formula = satisfaction ~ gender + chol + age + pActive + gender:age + chol:age 
+    + hasDisease,  data = reg)
+
+reg2<-reg
+reg2$sat.bin = reg$satisfaction>= mean(reg$satisfaction, na.rm=T)
+
+a = glm(formula = sat.bin ~ gender + chol + age + pActive + gender:age + chol:age 
+    + hasDisease + sugar_drinks, family=binomial, data = reg2)
+
+summary(a)
