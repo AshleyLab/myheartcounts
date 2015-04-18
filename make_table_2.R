@@ -7,14 +7,14 @@
 
 
 all<- read.table("dsams_collapse_0414.tsv", header=T,as.is=T)
-males<- all[all$gender=="[HKBiologicalSexMale]",]
-females<- all[all$gender=="[HKBiologicalSexFemale]",]
-age.lt.30<- all[all$age<30,]
-age.30s<- all[all$age<40 & all$age>=30,]
-age.40s<- all[all$age<50 & all$age>=40,]
-age.50s<- all[all$age<60 & all$age>=50,]
-age.60s<- all[all$age<70 & all$age>=60,]
-age.gt.70<- all[all$age>=70,]
+males<- all[all$gender=="[HKBiologicalSexMale]" & !is.na(all$gender),]
+females<- all[all$gender=="[HKBiologicalSexFemale]" & !is.na(all$gender),]
+age.lt.30<- all[all$age<30 & !is.na(all$age),]
+age.30s<- all[all$age<40 & all$age>=30 & !is.na(all$age),]
+age.40s<- all[all$age<50 & all$age>=40 & !is.na(all$age),]
+age.50s<- all[all$age<60 & all$age>=50 & !is.na(all$age),]
+age.60s<- all[all$age<70 & all$age>=60 & !is.na(all$age),]
+age.gt.70<- all[all$age>=70 & !is.na(all$age),]
 
 groups<-c("males", "females", "age.lt.30", "age.30s", "age.40s", "age.50s", "age.60s", "age.gt.70")
 group.means=matrix(nrow=length(groups), ncol=2)
@@ -166,14 +166,14 @@ all.collapse$total.act = all.collapse$vig.act + all.collapse$mod.act
 
 
 
-males<- all.collapse[all.collapse$gender=="[HKBiologicalSexMale]",]
-females<- all.collapse[all.collapse$gender=="[HKBiologicalSexFemale]",]
-age.lt.30<- all.collapse[all.collapse$age<30,]
-age.30s<- all.collapse[all.collapse$age<40 & all.collapse$age>=30,]
-age.40s<- all.collapse[all.collapse$age<50 & all.collapse$age>=40,]
-age.50s<- all.collapse[all.collapse$age<60 & all.collapse$age>=50,]
-age.60s<- all.collapse[all.collapse$age<70 & all.collapse$age>=60,]
-age.gt.70<- all.collapse[all.collapse$age>=70,]
+males<- all.collapse[all.collapse$gender=="[HKBiologicalSexMale]" & !is.na(all.collapse$gender),]
+females<- all.collapse[all.collapse$gender=="[HKBiologicalSexFemale]" & !is.na(all.collapse$gender),]
+age.lt.30<- all.collapse[all.collapse$age<30 & !is.na(all.collapse$age),]
+age.30s<- all.collapse[all.collapse$age<40 & all.collapse$age>=30 & !is.na(all.collapse$age),]
+age.40s<- all.collapse[all.collapse$age<50 & all.collapse$age>=40 & !is.na(all.collapse$age),]
+age.50s<- all.collapse[all.collapse$age<60 & all.collapse$age>=50 & !is.na(all.collapse$age),]
+age.60s<- all.collapse[all.collapse$age<70 & all.collapse$age>=60 & !is.na(all.collapse$age),]
+age.gt.70<- all.collapse[all.collapse$age>=70 & !is.na(all.collapse$age),]
 
 
 
@@ -243,10 +243,20 @@ sd(age.50s$total.act, na.rm=T)
 sd(age.60s$total.act, na.rm=T)
 sd(age.gt.70$total.act, na.rm=T)
 
+write.csv(all.collapse,file="data.withSleep.csv" )
 
 
 
 
+#median age
+median(all$age, na.rm=T)
+sd(all$age, na.rm=T)
 
+#fraction male:
+nrow(males)/nrow(all)
+
+#median moderate or vigorous activity per week (mintes)
+median(all.collapse$total.act, na.rm=T) 
+mean(all.collapse$total.act, na.rm=T) 
 
 
