@@ -7,7 +7,7 @@ require(synapseClient)
 data.path <- "/home/common/myheart/data/"
 cache.path <- "/home/common/myheart/data/synapseCache"
 
-synapseCacheDir(cache.path) 
+synapseCacheDir(cache.path)
 synapseLogin()
 
 ### DATA ##########################################################################################
@@ -46,8 +46,11 @@ sync.blob <- function(x) {
             return(NULL)
             }
         }
-
-    for (j in c('syn3458480','syn3420486')) {
+    
+    #cardiovascular-6MWT Displacement Data-v1 syn4214144
+    #cardiovascular-displacement-v1 syn4095792
+    #cardiovascular-HealthKitDataCollector-v1 syn3560085
+    for (j in c('syn3458480','syn3420486','syn4214144','syn4214144','syn4095792','syn3560085')) {
         cat(paste0("* DOWNLOAD TABLE: ", j,"\n"))
 
         # query table for column annotation
