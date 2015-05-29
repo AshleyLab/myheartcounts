@@ -1,0 +1,163 @@
+---
+author: Daryl Waggott
+title: My Heart Counts - Demographics
+date: May 27, 2015
+output:
+   pdf_document:
+      toc: true
+      highlight: zenburn
+      keep_tex: true
+geometry: margin=.5in
+header-includes:
+   - \usepackage{longtable}
+   - \usepackage{float}
+---
+
+# Demographics
+
+```{r main, echo=F}
+require(knitr)
+require(readr)
+require(reporttools)
+require(pander)
+require(rmarkdown)
+require(printr)
+require(highlight)
+require(xts)
+require(ggplot2)
+options(xtable.comment = FALSE)
+```
+
+
+```{r functions}
+# get data
+file.name <- "../../data/tables/cardiovascular-NonIdentifiableDemographicsTask-v2.tsv"
+data1 <- read.table(file.name,as.is=T,sep="\t",header=T)
+
+# rename cols
+colnames(data1) <- gsub("NonIdentifiableDemographics.json.","",colnames(data1))
+cols.to.rename  <- match(c('patientBiologicalSex','patientCurrentAge','patientWakeUpTime',
+                  'patientGoSleepTime','patientWeightPounds','patientHeightInches'),colnames(data1))
+colnames(data1)[cols.to.rename] <- c("sex","age","waketime","sleeptime","weight","height")
+
+# fix utc offset
+data1$sleeptime <- gsub(":(..)$","\\1",data1$sleeptime)
+data1$waketime  <- gsub(":(..)$","\\1",data1$waketime)
+sleeptime.posix <- strptime(data1$sleeptime,"%Y-%m-%dT%H:%M:%S%z")
+waketime.posix  <- strptime(data1$waketime,"%Y-%m-%dT%H:%M:%S%z")
+
+# local sleep/wake time
+sleeptime.local.posix <- strptime(format(strptime(data1$sleeptime,"%Y-%m-%dT%H:%M:%S"),"%H:%M"),"%H:%M")
+waketime.local.posix  <- strptime(format(strptime(data1$waketime, "%Y-%m-%dT%H:%M:%S"),"%H:%M"),"%H:%M")
+data1$sleeptime.local <- format(align.time(sleeptime.local.posix-1,n=60*15), "%H:%M")
+data1$waketime.local  <- format(align.time(waketime.local.posix-1,n=60*15), "%H:%M")
+
+# sleep duration (absolute diff including dates)
+data1$sleepduration1  <- as.numeric(difftime(sleeptime.posix, waketime.posix,units="hours"))
+
+# sleep duration (relative diff ignoring dates)
+is.wake.after.sleep  <- !is.na(waketime.local.posix) & !is.na(sleeptime.local.posix) &
+    waketime.local.posix > sleeptime.local.posix
+is.wake.before.sleep <- !is.na(waketime.local.posix) & !is.na(sleeptime.local.posix) & 
+    waketime.local.posix <= sleeptime.local.posix
+data1[is.wake.after.sleep,  "sleepduration2"] <-
+    difftime(waketime.local.posix[is.wake.after.sleep],sleeptime.local.posix[is.wake.after.sleep],units="hours")
+data1[is.wake.before.sleep, "sleepduration2"] <-
+    24 - difftime(sleeptime.local.posix[is.wake.before.sleep], waketime.local.posix[is.wake.before.sleep],units="hours")
+
+# timezone 
+data1$timezone  <- format(sleeptime.posix,"%z")
+timezone.levels <- unique(data1$timezone)
+data1$timezone  <- factor(data1$timezone, levels=timezone.levels[order(as.numeric(timezone.levels))])
+
+# fix NAs
+data1[data1$weight==0,"weight"] <- NA
+data1[data1$height==0,"height"] <- NA
+data1$weight2 <- data1$weight
+
+# drop outliers
+data1[!is.na(data1$weight2) & data1$weight2>1000,"weight2"] <- NA
+
+# plotting variables and captions
+vars1 <- c("phoneInfo","appVersion","waketime.local","sleeptime.local","timezone","sex")
+vars2 <- c("weight", "weight2","height","sleepduration1","sleepduration2","age")
+cap1 <- "My Heart Counts cardiovascular-NonIdentifiableDemographicsTask-v2
+         nominal variables"
+cap2 <- "My Heart Counts cardiovascular-NonIdentifiableDemographicsTask-v2
+         continuous variables"
+```
+
+\clearpage
+
+```{r, results='asis'}
+tableNominal(vars=data1[,vars1], cap=cap1, 
+             vertical=FALSE,lab="tab:nominal",longtable=T)
+```
+
+\clearpage
+
+
+```{r, results='asis'}
+tableContinuous(vars=data1[,vars2], cap=cap2, 
+                vertical=FALSE,lab="tab:continuous",longtable=F)
+```
+
+
+## Outliers
+
+```{r, results='asis',warning=F}
+# weight
+heavy <- head(data1[order(-data1$weight),c("healthCode",vars2)],10)
+print(xtable(heavy),size="tiny",include.rownames=F)
+
+# sleep
+sleep.order <- order(data1$sleepduration1)
+sleepoutlier1 <- head(data1[sleep.order,c("healthCode",vars2,"sleeptime","waketime")],10)
+print(xtable(sleepoutlier1),size="tiny",include.rownames=F,floating=F)
+
+sleepoutlier2 <- tail(data1[sleep.order,c("healthCode",vars2,"sleeptime","waketime")],10)
+print(xtable(sleepoutlier2),size="tiny",include.rownames=F,floating=F)
+
+```
+
+```{r, results='asis',warning=F}
+
+sleepoutlier2 <- tail(data1[sleep.order,c("healthCode",vars2,"sleeptime","waketime")][!is.na(data1$sleepduration2),],10)
+print(xtable(sleepoutlier2),size="tiny",include.rownames=F,floating=F)
+```
+
+\clearpage
+
+## Unique Health Codes
+```{r, fig.width=5}
+# number of records
+nrow(data1)
+
+# number of unique codes
+length(unique(data1$healthCode))
+
+# records per healthcode
+p0 <- ggplot(data=data.frame(table(data1$healthCode)), aes(x=Freq)) + geom_histogram() + xlab(col) + theme_bw(20) 
+plot(p0)
+```
+
+\clearpage
+
+## Distributions
+```{r histograms1, warning=F,message=F,fig.width=5}
+
+for (col in c("height","weight2","sleepduration2","age")) {
+    p0 <- ggplot(data=data1, aes_string(x=col)) + geom_histogram() + xlab(col) + theme_bw(20) 
+    plot(p0)
+    }
+```
+\clearpage
+
+```{r histograms2, warning=F,message=F,fig.width=8}
+for (col in c("sleeptime.local","waketime.local")) {
+    p0 <- ggplot(data=data1, aes_string(x=col)) + geom_histogram() + xlab(col) +
+        theme_bw(10) + theme(axis.text.x = element_text(angle = 45, hjust = 1))
+    plot(p0)
+}
+
+```
