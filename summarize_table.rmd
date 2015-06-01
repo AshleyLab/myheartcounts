@@ -8,9 +8,11 @@ output:
       highlight: zenburn
       keep_tex: true
 geometry: margin=.5in
+graphics: yes
 header-includes:
    - \usepackage{longtable}
    - \usepackage{float}
+   - \usepackage{subfig}
 ---
 
 # Demographics
@@ -26,6 +28,8 @@ require(highlight)
 require(xts)
 require(ggplot2)
 options(xtable.comment = FALSE)
+options(xtable.floating = FALSE)
+options(xtable.floating.environment = "table*")
 ```
 
 
@@ -51,6 +55,8 @@ sleeptime.local.posix <- strptime(format(strptime(data1$sleeptime,"%Y-%m-%dT%H:%
 waketime.local.posix  <- strptime(format(strptime(data1$waketime, "%Y-%m-%dT%H:%M:%S"),"%H:%M"),"%H:%M")
 data1$sleeptime.local <- format(align.time(sleeptime.local.posix-1,n=60*15), "%H:%M")
 data1$waketime.local  <- format(align.time(waketime.local.posix-1,n=60*15), "%H:%M")
+#data1$sleeptime.local <- format(sleeptime.local.posix, "%H:%M")
+#data1$waketime.local  <- format(waketime.local.posix, "%H:%M")
 
 # sleep duration (absolute diff including dates)
 data1$sleepduration1  <- as.numeric(difftime(sleeptime.posix, waketime.posix,units="hours"))
@@ -89,7 +95,7 @@ cap2 <- "My Heart Counts cardiovascular-NonIdentifiableDemographicsTask-v2
 
 \clearpage
 
-```{r, results='asis'}
+```{r, results='asis',size="tiny"}
 tableNominal(vars=data1[,vars1], cap=cap1, 
              vertical=FALSE,lab="tab:nominal",longtable=T)
 ```
@@ -105,31 +111,28 @@ tableContinuous(vars=data1[,vars2], cap=cap2,
 
 ## Outliers
 
-```{r, results='asis',warning=F}
+```{r, warning=F}
 # weight
 heavy <- head(data1[order(-data1$weight),c("healthCode",vars2)],10)
-print(xtable(heavy),size="tiny",include.rownames=F)
 
 # sleep
 sleep.order <- order(data1$sleepduration1)
 sleepoutlier1 <- head(data1[sleep.order,c("healthCode",vars2,"sleeptime","waketime")],10)
-print(xtable(sleepoutlier1),size="tiny",include.rownames=F,floating=F)
-
 sleepoutlier2 <- tail(data1[sleep.order,c("healthCode",vars2,"sleeptime","waketime")],10)
-print(xtable(sleepoutlier2),size="tiny",include.rownames=F,floating=F)
-
+sleepoutlier2 <- tail(data1[sleep.order,c("healthCode",vars2,"sleeptime","waketime")][!is.na(data1$sleepduration2),],10)
 ```
 
-```{r, results='asis',warning=F}
-
-sleepoutlier2 <- tail(data1[sleep.order,c("healthCode",vars2,"sleeptime","waketime")][!is.na(data1$sleepduration2),],10)
-print(xtable(sleepoutlier2),size="tiny",include.rownames=F,floating=F)
+```{r, results='asis',warning=F,echo=F}
+print(xtable(heavy),size="tiny",include.rownames=F)
+print(xtable(sleepoutlier1),size="tiny",include.rownames=F)
+print(xtable(sleepoutlier2),size="tiny",include.rownames=F)
+print(xtable(sleepoutlier2),size="tiny",include.rownames=F)
 ```
 
 \clearpage
 
 ## Unique Health Codes
-```{r, fig.width=5}
+```{r, fig.width=4,fig.height=4,message=F}
 # number of records
 nrow(data1)
 
@@ -144,7 +147,7 @@ plot(p0)
 \clearpage
 
 ## Distributions
-```{r histograms1, warning=F,message=F,fig.width=5}
+```{r histograms1,warning=F,message=F,fig.width=4,fig.height=4}
 
 for (col in c("height","weight2","sleepduration2","age")) {
     p0 <- ggplot(data=data1, aes_string(x=col)) + geom_histogram() + xlab(col) + theme_bw(20) 
@@ -161,3 +164,4 @@ for (col in c("sleeptime.local","waketime.local")) {
 }
 
 ```
+

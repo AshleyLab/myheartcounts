@@ -26,6 +26,13 @@ read_yml <- function(x) {
     y <- fromJSON(x)
     }
 
+#outlier_interval_ped <- function(x) {
+#    for (i in 1:nrow(x)) {
+#        interval <- difftime(strptime(sixmin.blob.data[i,'endDate'],"%Y-%m-%dT%H:%M:%S%z"), strptime(sixmin.blob.data[i,'startDate'], "%Y-%m-%dT%H:%M:%S%z")
+#        x$distance
+#        }
+#    }
+
 # summarize 6min walk
 summarize_ped <- function(sixmin.blob.file) {
     sixmin.blob.data <- read_yml(sixmin.blob.file)
@@ -35,8 +42,16 @@ summarize_ped <- function(sixmin.blob.file) {
     duration1 <- round((as.numeric(difftime(strptime(sixmin.blob.data[n.rows,'endDate'],"%Y-%m-%dT%H:%M:%S%z"), strptime(sixmin.blob.data[1,'startDate'], "%Y-%m-%dT%H:%M:%S%z"), units="mins"))),2)
     duration2 <- round(as.numeric(difftime(strptime(sixmin.blob.data[n.rows,"endDate"],"%Y-%m-%dT%H:%M:%S%z"), strptime(sixmin.blob.data[1,"endDate"],"%Y-%m-%dT%H:%M:%S%z"),units="mins")),2)
     #mean.interval <- mean(as.numeric(difftime(strptime(sixmin.blob.data[2:(n.rows),"endDate"],"%Y-%m-%dT%H:%M:%S%z"), strptime(sixmin.blob.data[1:(n.rows-1),"endDate"],"%Y-%m-%dT%H:%M:%S%z"),units="secs")))
-    
-    unlist(c(ped.blob.file=sixmin.blob.file,duration1=duration1, duration2=duration2, sixmin.blob.data[n.rows,c(1,2,5,6)]))
+    interval.duration <- round(as.numeric(difftime(strptime(sixmin.blob.data[,"endDate"],"%Y-%m-%dT%H:%M:%S%z"), strptime(c(sixmin.blob.data[1,"startDate"],sixmin.blob.data[1:(nrow(sixmin.blob.data)-1),"endDate"]),"%Y-%m-%dT%H:%M:%S%z"),units="secs")),2) 
+    interval.step.rate <- c(sixmin.blob.data[1,"numberOfSteps"], sixmin.blob.data[2:nrow(sixmin.blob.data),"numberOfSteps"] - sixmin.blob.data[1:(nrow(sixmin.blob.data)-1), "numberOfSteps"]) / interval.duration
+    interval.distance.rate <- c(sixmin.blob.data[1,"distance"],sixmin.blob.data[2:nrow(sixmin.blob.data),"distance"] - sixmin.blob.data[1:(nrow(sixmin.blob.data)-1), "distance"]) / interval.duration
+#    browser()
+    median.distance.rate <- median(interval.distance.rate,na.rm=T)
+    median.step.rate    <- median(interval.step.rate,na.rm=T)
+    imputed.distance <- median.distance.rate * 360
+    n.outliers.distance <- sum(abs(scale(interval.distance.rate))>2,na.rm=T)
+    n.outliers.steps <- sum(abs(scale(interval.step.rate))>2,na.rm=T)
+    unlist(c(ped.blob.file=sixmin.blob.file,duration1=duration1, duration2=duration2, sixmin.blob.data[n.rows,c(1,2,5,6)], n.outliers.distance = n.outliers.distance,n.outliers.steps=n.outliers.steps,median.step.rate=median.step.rate,median.distance.rate=median.distance.rate,imputed.distance=imputed.distance))
     }
 
 # clean 6min
@@ -94,7 +109,6 @@ summarize_hr <- function(x) {
 
 summarize_acc <- function(x) {
     x.data <- read_yml(x)
-    browser()
     if (!is.null(x.data)){
         n.rows <- nrow(x.data)
         acc.duration1 <- round((as.numeric(difftime(strptime(x.data[n.rows,'endDate'],"%Y-%m-%dT%H:%M:%S%z"), strptime(x.data[1,'startDate'], "%Y-%m-%dT%H:%M:%S%z"), units="mins"))),2)
@@ -113,7 +127,7 @@ is.duplicated <- function(x) {duplicated(x) | duplicated(x,fromLast=T)}
 ### SIXMIN ########################################################################################
 
 # meta
-sixmin.meta.data <- read.table(sixmin.file, header=T,as.is=T,sep="\t")
+sixmin.meta.data <- read.table(sixmin.meta.file, header=T,as.is=T,sep="\t")
 
 # ped file
 ped.cache.dir  <- paste0(cache.path, "/", as.numeric(substr(sixmin.meta.data$pedometer_fitness.walk.items, 5,8)),"/", as.numeric(sixmin.meta.data$pedometer_fitness.walk.items))
@@ -143,13 +157,15 @@ hr.rest.blob.file  <- paste0(hr.rest.cache.dir, "/", lapply(as.list(hr.rest.cach
 
 run_ped <- function() {
 # loop over and summarize
+#ped.blob.data <- mclapply(as.list(ped.blob.file), function(x) {tryCatch(summarize_ped(x),  error=function(e) NA)},cores=20)
 ped.blob.data <- lapply(as.list(ped.blob.file), function(x) {tryCatch(summarize_ped(x),  error=function(e) NA)})
 ped.blob.data <- data.frame(do.call(rbind, ped.blob.data))
-ped.blob.data[,colnames(ped.blob.data) %in% c("duration1","duration2","floorsAscended","floorsDescended","numberOfSteps","distance")] <- apply(ped.blob.data[,colnames(ped.blob.data) %in% c("duration1","duration2","floorsAscended","floorsDescended","numberOfSteps","distance")], 2, function(x) {round(as.numeric(x),2)})
+numeric.cols <- c("duration1","duration2","floorsAscended","floorsDescended","numberOfSteps","distance", "n.outliers.distance","n.outliers.steps","median.step.rate","median.distance.rate","dist.per.step.rate","imputed.distance")
+ped.blob.data[,colnames(ped.blob.data) %in% numeric.cols] <- apply(ped.blob.data[,colnames(ped.blob.data) %in% numeric.cols], 2, function(x) {round(as.numeric(x),2)})
+browser()
 ped.blob.data$dist.per.step.rate <- ped.blob.data$distance / ped.blob.data$numberOfSteps
 
 ped.blob.data <- data.frame(sixmin.meta.data, ped.blob.data)
-
 # filter
 #ped.blob.data.filter <- filter_ped(ped.blob.data)
 is.filter.ped <- filter_ped(ped.blob.data)
@@ -163,21 +179,24 @@ write.table(ped.blob.data.filter, "/home/common/myheart/data/tables/cardiovascul
 
 # plot 
 pdf("sixmin_distribution.pdf")
-for (col in  c("duration1","duration2","floorsAscended","floorsDescended","numberOfSteps","distance","dist.per.step.rate")) {
+for (col in  numeric.cols) {
 #hist(as.numeric(sixmin.blob.data[,i]),main=colnames(sixmin.blob.data)[i], xlab=colnames(sixmin.blob.data)[i])
-p0 <- ggplot(data=sixmin.blob.data.filter, aes(sixmin.blob.data.filter[,col])) + geom_histogram() + xlab(col) + theme_bw(20) 
+p0 <- ggplot(data=ped.blob.data.filter, aes_string(x=col)) + geom_histogram() + xlab(col) + theme_bw(20) 
 plot(p0)
 }
 #p1 <- ggplot(data=sixmin.blob.data[is.duplicated(sixmin.blob.data$healthCode),], aes(factor(healthCode))) + geom_bar() + xlab("Health Code") + theme_bw(20)
 p1 <- ggplot(data=as.data.frame(n.attempts), aes(x=Freq)) + geom_histogram() + xlab("Number of 6min Attempts (>1)") + theme_bw(20)
+p2 <- ggplot(data=ped.blob.data.filter, aes(x=distance,y=imputed.distance)) + geom_point() + xlim(c(0,2100)) + ylim(c(0,2100)) + xlab("Pedometer Distance") + ylab("Predicted Distance") + theme_bw(20)
 plot(p1)
+plot(p2)
+
 dev.off()
 
 return(ped.blob.data)
 
 }
-run_ped()
-stop()
+ped.blob.data <- run_ped()
+
 ###  ACCELEROMETER DATA ###########################################################################
 
 run_acc <- function() {
@@ -195,7 +214,7 @@ colnames(acc.rest.blob.data) <- c("acc.rest.path","acc.rest.present","acc.rest.d
 }
 #run_acc()
 
-###  MOTION DATA $$$$$$$###########################################################################
+###  MOTION DATA ####################################################################################
 
 run_motion <- function() {
 
@@ -225,7 +244,7 @@ hr.rest.blob.data <- data.frame(do.call(rbind, hr.rest.blob.data))
 colnames(hr.rest.blob.data) <- c("hr.rest.path","hr.rest.present","hr.rest.duration1","hr.rest.device","hr.rest.mean","hr.rest.sd","hr.rest.units")
 
 }
-run_hr()
+#run_hr()
 
 ### WRITE #########################################################################################
 
