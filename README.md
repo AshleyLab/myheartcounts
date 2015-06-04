@@ -15,3 +15,7 @@ https://blog.twitter.com/2014/breakout-detection-in-the-wild
 AnomalyDetection package
 http://www.r-bloggers.com/twitters-new-r-package-for-anomaly-detection/
 
+Time Series Outlier Detection package
+http://www.r-bloggers.com/a-new-r-package-for-detecting-unusual-time-series/
+
+
