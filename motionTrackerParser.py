@@ -23,6 +23,7 @@ parser.add_argument("-o", default="", help="Output table of individual delimited
 parser.add_argument("-t", default="", help="Output table of time delimited data")
 parser.add_argument("-b", default="", help="Output the BIG table of minute delimited data")
 parser.add_argument("-test", default=0, help="Should I only do the first 100 as a test")
+parser.add_argument("-s", default=24*3600, help="Max number of seconds between intervals")
 
 args = parser.parse_args()
 csvs = list()
@@ -193,8 +194,8 @@ for c in csvs:
 		second_diff = (timesort[t+1] - timesort[t]).total_seconds()
 		# This gets the total number of seconds that this activity is performed at
 
-		# If it is longer then 30 minutes, I don't believe it:
-		if (second_diff > 1800):
+		# If it is longer then this time, I don't believe it:
+		if (second_diff > int(args.s)):
 			continue
 
 		if thisact != 0: # If not unknown, add to summary counts
