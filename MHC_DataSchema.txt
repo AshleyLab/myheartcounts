@@ -1,0 +1,23 @@
+MyHeartCounts Data Schemes
+
+  - Passive Data Collector
+      - Originally all three HealthKit types that were being collected were
+      represented by the identifier displacement. Starting from
+1.0.8 (I think)
+      weve replaced displacement with below.
+      - HealthKitWorkoutCollector
+         - Collects HKWorkoutType
+      - HealthKitDataCollector
+         - Collects HKQuantityType
+      - HealthKitSleepCollector
+         - Collects HKCategoryType which is just sleep for now
+      - motionActivityCollector
+         - Collects CMMotionActivityManager
+            - Motion data reflects whether the user is walking, running, in
+            a vehicle, or stationary for periods of time.
+
+
+
+   - 6 Minute Walk Test
+      - 6MWT Displacement Data
+         - Displacement data generated from lon, lat data from ResearchKit.
