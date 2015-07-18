@@ -46,12 +46,7 @@ def get_stats(name_to_ages):
         flat_list=[] 
         for age in name_to_ages[name]: 
             flat_list=flat_list+[age]*name_to_ages[name][age] 
-        #print(str(flat_list))
-        if len(flat_list)==0: 
-            print str(name)+":"+str(name_to_ages[name]) 
             continue
-        if name=="Anna":
-            print str(name_to_ages[name])
         median_dict[name]=numpy.median(flat_list)
         iqr_low[name]=numpy.percentile(flat_list,25)
         iqr_high[name]=numpy.percentile(flat_list,75)
@@ -76,8 +71,6 @@ def write_output(name_to_sex,median_dict,iqr_low_dict,iqr_high_dict,outputf):
     
 def get_national_statistics(ssa_national,ssa_national_outf,external_data):
     male_freq_dict,female_freq_dict=import_life_tables(external_data)
-    #print str(male_freq_dict) 
-    #print str(female_freq_dict) 
     print "got life tables!" 
     name_to_sex=dict()
     name_to_ages=dict()
