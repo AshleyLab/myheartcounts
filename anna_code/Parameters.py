@@ -3,6 +3,13 @@ basedir="/srv/gsfs0/projects/ashley/common/myheart/"
 table_dir=basedir+"data/tables/" 
 synapse_dir=basedir+"data/synapseCache/"
 
+#EXTERNAL DATA 
+external_data=basedir+"data/external/"
+ssa_national=basedir+"data/external/national/"
+ssa_national_outf=ssa_national+"ssa_national_summary.txt" 
+ssa_state=basedir+"data/external/state/"
+ssa_state_outf=ssa_state+"ssa_state_summary.txt" 
+
 #####PARAMETERS FOR GROUPING TIME SERIES DATA############
 
 walktables=basedir+"grouped_timeseries/6minute_walk/"
