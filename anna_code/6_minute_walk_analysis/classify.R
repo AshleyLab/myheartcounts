@@ -2,10 +2,11 @@ library(tree)
 library(data.table)
 library(randomForest)
 rm(list=ls())
-source('split_data.R')
+source('/home/anna/r_scripts/split_data.R')
 
 
 merged<-read.table('/home/anna/r_scripts/merged_acceleration_meta.txt')
+#merged<-read.table('/home/anna/scg3/r_scripts/merged_acceleration_meta.txt')
 merged<-as.data.frame(merged) #COERCE THE DATA TABLE TO A DATA FRAME 
 
 #DROP TIMESTAMP COLUMNS FOR NOW -- NOT SURE HOW TO USE THEM 
