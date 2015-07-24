@@ -11,7 +11,8 @@ for (i in 1:length(files)){
     cur_subject<-strsplit(files[i],"/")[[1]]
     cur_subject<-cur_subject[length(cur_subject)]
     cur_subject<-gsub(".tsv","",cur_subject)
-    result<-cor_coef(data$x,cur_subject) 
+    print(cur_subject)
+    result<-fourier_transform_features(data$x,data$timestamp,cur_subject) 
     }
     #EXTRACT ALL THE FEATURES 
     
