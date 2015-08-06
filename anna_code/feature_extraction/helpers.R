@@ -1,5 +1,4 @@
 #cdf 
-
 cdf<-function(x)
 {
   x<-x/sum(x)
@@ -19,10 +18,10 @@ ss<-function(x)
   sum(x^2)
 }
 
-#normalization /srv/gsfs0/projects/ashley/common/simband
+#normalization 
 normalize<-function(x)
 {
-(x-min(x))/(max(x)-min(x))
+  (x-min(x))/(max(x)-min(x))
 }
 
 #takes a difference between the last and first timestamp and divides by the number of samples to estimate the sampleing frequency
@@ -80,4 +79,64 @@ get_zero_crossing<-function(x)
   delta[negative]=0 
   zero_val=abs(sum(product*delta))
   return(zero_val)
+}
+
+#frequency ratio: A measure termed the frequency
+#ratio is defined as the ratio of the power in the high frequency band from 8 to 24 Hz
+#compared to the power in the low frequency band from 3 to 5 Hz
+get_frequency_ratio<-function(s,low_band_low,low_band_high,high_band_low,high_band_high)
+{
+  low_band_low_index<-max(which(s$freq<low_band_low))+1 
+  low_band_high_index<-max(which(s$freq<low_band_high))+1 
+  high_band_low_index<-max(which(s$freq<high_band_low))+1 
+  high_band_high_index<-max(which(s$freq<high_band_high))+1 
+  low_freq_spectrum<-sum(s$spec[low_band_low_index:low_band_high_index])
+  high_freq_spectrum<-sum(s$spec[high_band_low_index:high_band_high_index])
+  ratio<-low_freq_spectrum/high_freq_spectrum 
+  return(ratio)
+}
+
+#calculates the period of a signal 
+get_period<-function(x,interval)
+{
+  x_sub<-x[round(length(x)/2-interval/2):round(length(x)/2+interval/2)]
+  #is most of the signal power above the mean (don't flip for peak calls) or below the mean (flip for peak calls)
+  x_mean<-mean(x_sub)
+  x_high<-subset(x_sub,x_sub>x_mean)
+  x_high_mean<-mean(x_high)
+  x_low<-subset(x_sub,x_sub<x_mean)
+  x_low_mean<-mean(x_low)
+  if (abs(x_high_mean)>abs(x_low_mean))
+  {
+    stdval<-std(x_high)
+    thresh<-x_high_mean+stdval
+    peaks<-findpeaks(x_sub,minpeakheight = thresh) 
+    peaks<-peaks[,2]
+    period<-mean(diff(peaks))
+    for (i in 1:(length(peaks)-1))
+    {delta<-abs(peaks[i+1]-peaks[i])
+    if (min(delta,period)/max(delta,period)>0.5)
+    {
+       return(x[peaks[i]:peaks[i+1]])
+    }
+    }
+  }
+  else
+  {
+    stdval<-std(x_low)
+    thresh<-x_low_mean-stdval 
+    peaks<-findpeaks(-1*x_sub,minpeakheight=thresh)
+    peaks<-peaks[,2]
+    period<-mean(diff(peaks))
+    for(i in 1:(length(peaks)-1))
+    {
+      delta<-abs(peaks[i+1]-peaks[i])
+      if(min(delta,period)/max(delta,period)>0.5)
+      {
+        return(x[peaks[i]:peaks[i+1]])
+      }
+    }
+    
+  }
+  return(NULL)
 }
