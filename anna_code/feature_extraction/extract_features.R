@@ -8,6 +8,7 @@
 
 source("helpers.R")
 source("parameters.R")
+source("PAA.R") 
 
 library(wavelets) 
 library(data.table) 
@@ -16,7 +17,6 @@ library(pracma)
 require(numDeriv)
 library(Peaks)
 library(normwhn.test)
-library(TSclust)
 library.dynam('Peaks', 'Peaks', lib.loc=NULL)
 
 
