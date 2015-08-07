@@ -75,7 +75,7 @@ ts_features_multi<-function(data,fs,duration,subject)
 
 
 dwt_transform_features_multi <- function(data,subject)
-{browser() 
+{ 
   for(i in names(data))
   {
     cur_name<-i 

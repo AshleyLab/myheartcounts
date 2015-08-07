@@ -28,7 +28,8 @@ if (length(args)==0)
 startf=1 
 endf=length(files) 
 }
-
+startf=1
+endf=3
 for (i in startf:endf){
   data<-na.omit(fread(files[i],header=T))
   cur_subject<-strsplit(files[i],"/")[[1]]
@@ -38,7 +39,7 @@ for (i in startf:endf){
   #CHECK FOR THE CHANGEPOINTS 
   delta<-diff(data$timestamp)
   changepoints<-which(delta %in% subset(delta,abs(delta)>changepoint_thresh))
-  changepoints<-c(0,changepoints,length(x$timestamp))
+  changepoints<-c(0,changepoints,length(data$timestamp))
   for (j in 1:(length(changepoints)-1))
   {cur_segment=data[changepoints[j]:changepoints[j+1],]
 
@@ -49,12 +50,12 @@ for (i in startf:endf){
     #USE THIS ITERATION OF THE TEST!
     #EXTRACT ALL THE FEATURES FOR X, Y, Z axes 
 
-    l <- length(x)
+    l <- nrow(cur_segment) 
     outputvals<-get_fs(cur_segment$timestamp)
     fs<-outputvals[1] 
     duration<-outputvals[2] 
     axis_data<-subset(cur_segment,select=c("x","y","z"))
-    
+    print("extracting features") 
     #concatenate data frame for subjects 
     if(i==1)
     {
@@ -78,7 +79,7 @@ for (i in startf:endf){
 
     #this is a list of dataframes for each level 
     next_dwt_features<-dwt_transform_features_multi(axis_data,cur_subject)
-    for (j in 1:length(result_dwt))
+    for (j in 1:length(walk_result_dwt))
     {
       walk_result_dwt[[j]]<-rbind(walk_result_dwt[[j]],next_dwt_features[[j]])      
     }
@@ -97,6 +98,8 @@ if (length(args)==0)
 startf=1 
 endf=length(files) 
 }
+startf=1
+endf=3
 
 for (i in startf:endf){
   data<-na.omit(fread(files[i],header=T))
@@ -108,7 +111,7 @@ for (i in startf:endf){
   #CHECK FOR THE CHANGEPOINTS 
   delta<-diff(data$timestamp)
   changepoints<-which(delta %in% subset(delta,abs(delta)>changepoint_thresh))
-  changepoints<-c(0,changepoints,length(x$timestamp))
+  changepoints<-c(0,changepoints,length(data$timestamp))
   for (j in 1:(length(changepoints)-1))
   {cur_segment=data[changepoints[j]:changepoints[j+1],]
 
@@ -119,12 +122,12 @@ for (i in startf:endf){
     #USE THIS ITERATION OF THE TEST!
     #EXTRACT ALL THE FEATURES FOR X, Y, Z axes 
 
-    l <- length(x)
+    l <- nrow(cur_segment) 
     outputvals<-get_fs(cur_segment$timestamp)
     fs<-outputvals[1] 
     duration<-outputvals[2] 
     axis_data<-subset(cur_segment,select=c("x","y","z"))
-    
+    browser() 
     #concatenate data frame for subjects 
     if(i==1)
     {
@@ -138,6 +141,7 @@ for (i in startf:endf){
     }	  
     else
     {
+    browser() 
     #use rbind to add a row for the new subject to the existing feature dataframes 
     rest_result_arima<-rbind(rest_result_arima,arima_features_multi(axis_data,cur_subject))    
     rest_result_timeseries<-rbind(rest_result_timeseries,ts_features_multi(axis_data,fs,duration,cur_subject))
@@ -148,7 +152,7 @@ for (i in startf:endf){
 
     #this is a list of dataframes for each level 
     next_dwt_features<-dwt_transform_features_multi(axis_data,cur_subject)
-    for (j in 1:length(result_dwt))
+    for (j in 1:length(rest_result_dwt))
     {
       rest_result_dwt[[j]]<-rbind(rest_result_dwt[[j]],next_dwt_features[[j]])      
     }
@@ -157,18 +161,18 @@ for (i in startf:endf){
     }
     } 
   }     
-
+print("writing output files") 
 #WRITE DATAFRAMES TO OUTPUT FILES (IN CASE OF PARALLEL EXECUTION ON SCG3, THESE CAN THEN BE CONCATENATED) 
-write.table(walk_result_arima,file=paste("walk_result_arima.tsv_",startf,"_",endf,sep='\t') 
-write.table(walk_result_timeseries,file=paste("walk_result_timeseries.tsv_",startf,"_",endf,sep='\t')
-write.table(walk_result_fourier,file=paste("walk_result_fourier.tsv_",startf,"_",endf,sep='\t')
-write.table(walk_result_paa, file = paste("walk_result_paa.tsv_",startf,"_",endf,sep='\t')
-write.table(walk_result_svd,file=paste("walk_result_svd.tsv_",startf,"_",endf,sep='\t')
-write.table(walk_result_paa_aggregate,file=paste("walk_result_paa_aggregate.tsv_",startf,"_",endf,sep='\t')
+write.table(walk_result_arima,file=paste("walk_result_arima.tsv_",startf,"_",endf,sep='\t')) 
+write.table(walk_result_timeseries,file=paste("walk_result_timeseries.tsv_",startf,"_",endf,sep='\t'))
+write.table(walk_result_fourier,file=paste("walk_result_fourier.tsv_",startf,"_",endf,sep='\t'))
+write.table(walk_result_paa, file = paste("walk_result_paa.tsv_",startf,"_",endf,sep='\t'))
+write.table(walk_result_svd,file=paste("walk_result_svd.tsv_",startf,"_",endf,sep='\t'))
+write.table(walk_result_paa_aggregate,file=paste("walk_result_paa_aggregate.tsv_",startf,"_",endf,sep='\t'))
 
-write.table(rest_result_arima,file=paste("rest_result_arima.tsv_",startf,"_",endf,sep='\t') 
-write.table(rest_result_timeseries,file=paste("rest_result_timeseries.tsv_",startf,"_",endf,sep='\t')
-write.table(rest_result_fourier,file=paste("rest_result_fourier.tsv_",startf,"_",endf,sep='\t')
-write.table(rest_result_paa, file = paste("rest_result_paa.tsv_",startf,"_",endf,sep='\t')
-write.table(rest_result_svd,file=paste("rest_result_svd.tsv_",startf,"_",endf,sep='\t')
-write.table(rest_result_paa_aggregate,file=paste("rest_result_paa_aggregate.tsv_",startf,"_",endf,sep='\t')
+write.table(rest_result_arima,file=paste("rest_result_arima.tsv_",startf,"_",endf,sep='\t')) 
+write.table(rest_result_timeseries,file=paste("rest_result_timeseries.tsv_",startf,"_",endf,sep='\t'))
+write.table(rest_result_fourier,file=paste("rest_result_fourier.tsv_",startf,"_",endf,sep='\t'))
+write.table(rest_result_paa, file = paste("rest_result_paa.tsv_",startf,"_",endf,sep='\t'))
+write.table(rest_result_svd,file=paste("rest_result_svd.tsv_",startf,"_",endf,sep='\t'))
+write.table(rest_result_paa_aggregate,file=paste("rest_result_paa_aggregate.tsv_",startf,"_",endf,sep='\t'))
