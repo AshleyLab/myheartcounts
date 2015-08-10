@@ -1,5 +1,8 @@
 ### PREAMBLE ######################################################################################
 
+source("http://depot.sagebase.org/CRAN.R")
+pkgInstall("synapseClient")
+
 require(RSQLite)
 require(parallel)
 require(synapseClient)
@@ -50,7 +53,13 @@ sync.blob <- function(x) {
     #cardiovascular-6MWT Displacement Data-v1 syn4214144
     #cardiovascular-displacement-v1 syn4095792
     #cardiovascular-HealthKitDataCollector-v1 syn3560085
-    for (j in c('syn3458480','syn3420486','syn4214144','syn4214144','syn4095792','syn3560085')) {
+
+
+
+#ORIGINAL SET OF TABLES:
+#for (j in c('syn3458480','syn3420486','syn4214144','syn4214144','syn4095792','syn3560085')) {
+    #NEW TABLES FOR HealthKitWorkoutCollector, HealthKitSleepCollector, cardiovascular-motionActivityTracker
+    for (j in c('syn4536838','syn3560095','syn3560086','syn3458480','syn3420486','syn4214144','syn4214144','syn4095792','syn3560085','syn4857044')) {
         cat(paste0("* DOWNLOAD TABLE: ", j,"\n"))
 
         # query table for column annotation
