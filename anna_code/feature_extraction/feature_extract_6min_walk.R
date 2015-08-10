@@ -28,8 +28,13 @@ if (length(args)==0)
 startf=1 
 endf=length(files) 
 }
-startf=1
-endf=3
+if(endf > length(files))
+{
+endf=length(files) 
+}
+if(startf<= length(files))
+{
+gotfirst=FALSE 
 for (i in startf:endf){
   data<-na.omit(fread(files[i],header=T))
   cur_subject<-strsplit(files[i],"/")[[1]]
@@ -55,9 +60,8 @@ for (i in startf:endf){
     fs<-outputvals[1] 
     duration<-outputvals[2] 
     axis_data<-subset(cur_segment,select=c("x","y","z"))
-    print("extracting features") 
     #concatenate data frame for subjects 
-    if(i==1)
+    if(gotfirst==FALSE)
     {
     walk_result_arima<-arima_features_multi(axis_data,cur_subject)
     walk_result_timeseries<-ts_features_multi(axis_data,fs,duration,cur_subject)
@@ -66,6 +70,7 @@ for (i in startf:endf){
     walk_result_paa=piecewise_aggregate_multi(axis_data, duration, periodic=TRUE,cur_subject)
     walk_result_svd=svd_features_multi(axis_data,cur_subject)
     walk_result_paa_aggregate=piecewise_aggregate_resultant(cur_segment$x,cur_segment$y,cur_segment$z,duration, periodic=TRUE,cur_subject)   
+    gotfirst=TRUE 
     }	  
     else
     {
@@ -88,7 +93,11 @@ for (i in startf:endf){
     }
     } 
   }     
+print("writing output binary acceleration walk file") 
+save(walk_result_arima,walk_result_timeseries,walk_result_fourier,walk_result_paa,walk_result_svd,walk_result_paa_aggregate,walk_result_dwt,
+	file=paste("6minwalk_walk",startf,endf,sep="_"))
 
+}
 print("Analyzing rest acceleration data") 
 #REPEAT FOR THE ACCELERATION REST DATA 
 files <- list.files(path=accel_rest_dir, pattern="*.tsv", full.names=T, recursive=FALSE)
@@ -98,9 +107,13 @@ if (length(args)==0)
 startf=1 
 endf=length(files) 
 }
-startf=1
-endf=3
-
+if(endf >length(files))
+{
+endf=length(files) 
+}
+if(startf<=length(files))
+{
+gotfirst=FALSE 
 for (i in startf:endf){
   data<-na.omit(fread(files[i],header=T))
   cur_subject<-strsplit(files[i],"/")[[1]]
@@ -116,8 +129,8 @@ for (i in startf:endf){
   {cur_segment=data[changepoints[j]:changepoints[j+1],]
 
   #MAKE SURE THERE ARE 6 MINUTES OF DATA 
-  duration<-cur_segment$timestamp[length(cur_segment$timestamp)] - cur_segment$timestamp[1]
-  if ((duration > min_valid_duration) && (duration < max_valid_duration))
+  duration<-cur_segment$timestamp[length(cur_segment$timestamp)] - cur_segment$timestamp[1] 
+  if ((duration > min_valid_rest_duration) && (duration < max_valid_rest_duration))
   {
     #USE THIS ITERATION OF THE TEST!
     #EXTRACT ALL THE FEATURES FOR X, Y, Z axes 
@@ -127,9 +140,8 @@ for (i in startf:endf){
     fs<-outputvals[1] 
     duration<-outputvals[2] 
     axis_data<-subset(cur_segment,select=c("x","y","z"))
-    browser() 
     #concatenate data frame for subjects 
-    if(i==1)
+    if(gotfirst==FALSE)
     {
     rest_result_arima<-arima_features_multi(axis_data,cur_subject)
     rest_result_timeseries<-ts_features_multi(axis_data,fs,duration,cur_subject)
@@ -138,10 +150,10 @@ for (i in startf:endf){
     rest_result_paa=piecewise_aggregate_multi(axis_data, duration, periodic=TRUE,cur_subject)
     rest_result_svd=svd_features_multi(axis_data,cur_subject)
     rest_result_paa_aggregate=piecewise_aggregate_resultant(cur_segment$x,cur_segment$y,cur_segment$z,duration, periodic=TRUE,cur_subject)   
+    gotfirst=TRUE 
     }	  
     else
     {
-    browser() 
     #use rbind to add a row for the new subject to the existing feature dataframes 
     rest_result_arima<-rbind(rest_result_arima,arima_features_multi(axis_data,cur_subject))    
     rest_result_timeseries<-rbind(rest_result_timeseries,ts_features_multi(axis_data,fs,duration,cur_subject))
@@ -161,18 +173,7 @@ for (i in startf:endf){
     }
     } 
   }     
-print("writing output files") 
-#WRITE DATAFRAMES TO OUTPUT FILES (IN CASE OF PARALLEL EXECUTION ON SCG3, THESE CAN THEN BE CONCATENATED) 
-write.table(walk_result_arima,file=paste("walk_result_arima.tsv_",startf,"_",endf,sep='\t')) 
-write.table(walk_result_timeseries,file=paste("walk_result_timeseries.tsv_",startf,"_",endf,sep='\t'))
-write.table(walk_result_fourier,file=paste("walk_result_fourier.tsv_",startf,"_",endf,sep='\t'))
-write.table(walk_result_paa, file = paste("walk_result_paa.tsv_",startf,"_",endf,sep='\t'))
-write.table(walk_result_svd,file=paste("walk_result_svd.tsv_",startf,"_",endf,sep='\t'))
-write.table(walk_result_paa_aggregate,file=paste("walk_result_paa_aggregate.tsv_",startf,"_",endf,sep='\t'))
-
-write.table(rest_result_arima,file=paste("rest_result_arima.tsv_",startf,"_",endf,sep='\t')) 
-write.table(rest_result_timeseries,file=paste("rest_result_timeseries.tsv_",startf,"_",endf,sep='\t'))
-write.table(rest_result_fourier,file=paste("rest_result_fourier.tsv_",startf,"_",endf,sep='\t'))
-write.table(rest_result_paa, file = paste("rest_result_paa.tsv_",startf,"_",endf,sep='\t'))
-write.table(rest_result_svd,file=paste("rest_result_svd.tsv_",startf,"_",endf,sep='\t'))
-write.table(rest_result_paa_aggregate,file=paste("rest_result_paa_aggregate.tsv_",startf,"_",endf,sep='\t'))
+print("writing output binary rest file") 
+save(rest_result_arima,rest_result_timeseries,rest_result_fourier,rest_result_paa,rest_result_svd,rest_result_paa_aggregate,rest_result_dwt,
+     file=paste("6minwalk_rest",startf,endf,sep="_"))
+}

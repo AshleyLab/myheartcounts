@@ -9,22 +9,52 @@
 source("helpers.R")
 source("parameters.R")
 source("PAA.R") 
-
+source("findPeaks.R") 
+library(zoo) 
 library(wavelets) 
 library(data.table) 
 library(moments)
-library(pracma) 
 require(numDeriv)
-library(Peaks)
 library(normwhn.test)
-library.dynam('Peaks', 'Peaks', lib.loc=NULL)
+library(pracma) 
 
+##############################################################################################################
+#gets the proportion of activity state 
+activity_state_features<-function(timestamps,activities,subject,suffix)
+{          
+    if(missing(suffix))
+    {
+    suffix=""
+    }
+    time_day<-strptime(timestamps,"%Y-%m-%dT%H:%M:%S")
+    timediff_day<-as.numeric(diff(time_day)) 
+    num_entries_day=length(time_day) 
+    mean_timediff_day=mean(timediff_day) 
 
+    #GET THE PROPORTION OF EACH ACTIVITY 
+    activities_day<-factor(activities) 
+    automotive_day<-length(which(activities_day=="automotive"))/num_entries_day
+    cycling_day<-length(which(activities_day=="cycling"))/num_entries_day
+    running_day<-length(which(activities_day=="running"))/num_entries_day
+    stationary_day<-length(which(activities_day=="stationary"))/num_entries_day
+    unknown_day<-length(which(activities_day=="unknown"))/num_entries_day  
+    walking_day<-length(which(activities_day=="walking"))/num_entries_day 
+    
+    result<-data.frame(t(c(num_entries_day,mean_timediff_day,automotive_day,cycling_day,running_day,stationary_day,unknown_day,walking_day)),row.names=subject)
+    names(result)<-c(paste("NumDatapoints",suffix,sep=""),
+    paste("MeanInterval",suffix,sep=""),
+    paste("Automotive",suffix,sep=""),
+    paste("Cycling",suffix,sep=""),
+    paste("Running",suffix,sep=""),
+    paste("Stationary",suffix,sep=""),
+    paste("Unknown",suffix,sep=""),
+    paste("Walking",suffix,sep=""))
+    return(result) 
+    }
 
 ##############################################################################################################
 arima_features<-function(x,subject)
-{
-
+{ 
   ncoef<-10
   acf_covar_coef=acf(x,type="covariance",ncoef,plot=FALSE)
 
@@ -87,11 +117,12 @@ ts_features<-function(x,fs,duration,subject)
   
   
   #Time between peaks for a  point sample in the middle (i.e. around 3 minute mark for 6 minute walk)
-  sample_start=length(x)/2-interval/2 
-  sample_end=sample_start+interval
+  adjusted_interval=min(interval,length(x))
+  sample_start=length(x)/2-adjusted_interval/2 
+  sample_end=sample_start+adjusted_interval
   sample_subset=x[sample_start:sample_end]
-  peaks<-findpeaks(-1*sample_subset,minpeakheight = 0.5)
-  mean_time<-as.numeric(mean(diff(peaks[,2]))*(1/fs))
+  peaks<-findPeaks(-1*sample_subset)
+  mean_time<-as.numeric(mean(diff(peaks))*(1/fs))
  
   #STORE IN A DATAFRAME 
   result<-data.frame(t(c(mean_val,var_val,kurtosis_val,skewness_val,min_val,max_val,moments_all,integral,mav,mad,mmav,ssi,rms,v3,log_detector,wl,aac,dasdv,mfl,myop,wamp,zc,mean_time)))
@@ -182,7 +213,14 @@ dwt_transform_features <- function(x,subject)
 fourier_transform_features<-function(x, fs, duration,subject)
 { 
   #coerce signal into a time-series object
+  if(as.integer(fs)==0)
+  { 
+  data_ts<-x
+  }
+  else
+  {
   data_ts<-ts(detrend(x),1,as.integer(duration),as.integer(fs)) 
+  }
   s<-spectrum(data_ts,plot=FALSE) # get the spectral density, this calls fft internally 
   #PULL OUT FEATURES!
   
@@ -203,7 +241,7 @@ fourier_transform_features<-function(x, fs, duration,subject)
   freq_ratio<-get_frequency_ratio(s,low_band_low,low_band_high,high_band_low,high_band_high)
   
   #TOP 10 DOMINANT FREQUENCIES
-  pi<-findpeaks(s$spec)[,2] #only store the index of the peak maximum 
+  pi<-findPeaks(s$spec) #only store the index of the peak maximum 
   pi_f<-s$freq[pi]
   pi_s<-s$spec[pi]
   pi_f_round<-round(pi_f)
@@ -249,7 +287,7 @@ piecewise_aggregate<-function(x, duration, periodic,subject)
   if(periodic==TRUE)
   {
     #isolate a single period using a peak caller 
-    p<-get_period(x,interval)
+    p<-get_period(x,min(interval,length(x)))
     if(is.null(p))
     {
       print(paste("Could not find signal period for subject",subject,sep=""))
