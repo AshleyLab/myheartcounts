@@ -1,117 +1,105 @@
-rm(list=ls())
+library(wavelets) 
 library(data.table)
-#ALL FEATURES 
-#PCA 
- d<-as.data.frame(read.table("motiontracker_data.txt",row.name=1,header=T)) 
-# pr.all=prcomp(d,scale=TRUE) 
-# png('pca_all.png') 
-# biplot(pr.all,scale=0,xlabs=rep(".",17062))
-# dev.off() 
+source('extract_features.R')
+source('extract_features_multiaxes.R')  
+source('helpers.R') 
+source('parameters.R') 
 
-# png('pca_all_1_3.png')
-# biplot(pr.all,choices=c(1,3),scale=0,xlabs=rep(".",17062))
-# dev.off() 
+args <- commandArgs(trailingOnly = TRUE)
+startf<-args[1] 
+endf<-args[2] 
+#############################################################################################
 
-# png('pca_all_2_3.png')
-# biplot(pr.all,choices=c(2,3),scale=0,xlabs=rep(".",17062))
-# dev.off() 
+#extract features for acceleration walk
+gotfirst=FALSE
+files <- list.files(path=weekday_dir, pattern="*.tsv", full.names=T, recursive=FALSE)
+for (i in startf:endf){
+    success<-FALSE
+    #print(i) 
+    #STORE THE COEFFICIENTS IN THE FEATURE MATRIX THAT WE ARE BUILDING
+    cur_subject<-strsplit(files[i],"/")[[1]]
+    cur_subject<-cur_subject[length(cur_subject)]
+    cur_subject<-gsub(".tsv","",cur_subject)
+    print(cur_subject) 
+    try(
+    {
+    signal_weekday<-as.data.frame(read.table(files[i],header=F,stringsAsFactors=FALSE,sep="\t"))
+    weekend_file_name<-gsub("weekday","weekend",files[i])
+    signal_weekend<-as.data.frame(read.table(weekend_file_name,header=F,stringsAsFactors=FALSE,sep="\t"))
+    timestamp_weekday<-signal_weekday$V1 
+    timestamp_weekend<-signal_weekend$V1 
+    act_weekday<-signal_weekday$V2 
+    act_weekend<-signal_weekend$V2 
+    signal_weekday<-as.numeric(signal_weekday$V3) 
+    signal_weekend<-as.numeric(signal_weekend$V3) 
+  
 
+    l_weekday <- length(signal_weekday) 
+    outputvals_weekday<-get_fs(timestamp_weekday)
+    fs_weekday<-outputvals_weekday[1] 
+    duration_weekday<-outputvals_weekday[2] 
+    
 
-# #SCREE PLOT 
-# pr.all.var=pr.all$sdev^2 
-# pve.all=pr.all.var/sum(pr.all.var) 
-# png('pca_all_scree.png') 
-# plot(pve.all,xlab="Principal Component for All-Features",ylab="Proportion of Variance Explained",ylim=c(0,1),type="b") 
-# dev.off() 
-
-
-# #WAVELETS 
-# wavelets<-d[,1:20] 
-# proportions<-d[,21:length(names(d))]
-
-# pr.wavelet=prcomp(wavelets,scale=TRUE) 
-# pr.proportion=prcomp(proportions,scale=TRUE) 
-
-# png('pca_wavelet.png')
-# biplot(pr.wavelet,scale=0,xlabs=rep(".",17062))
-# dev.off() 
-
-# png('pca_wavelet_1_3.png')
-# biplot(pr.wavelet,choices=c(1,3),scale=0,xlabs=rep(".",17062))
-# dev.off() 
-
-# png('pca_wavelet_2_3.png')
-# biplot(pr.wavelet,choices=c(2,3),scale=0,xlabs=rep(".",17062))
-# dev.off() 
-
-
-# #SCREE PLOT 
-# pr.wavelet.var=pr.wavelet$sdev^2 
-# pve.wavelet=pr.wavelet.var/sum(pr.wavelet.var) 
-# png('pca_wavelet_scree.png') 
-# plot(pve.wavelet,xlab="Principal Component for Wavelet-Features",ylab="Proportion of Variance Explained",ylim=c(0,1),type="b") 
-# dev.off() 
-
-# #PROPORTIONS 
-# png('pca_proportion.png')
-# biplot(pr.proportion,scale=0,xlabs=rep(".",17062))
-# dev.off() 
+    l_weekend <- length(signal_weekend) 
+    outputvals_weekend<-get_fs(timestamp_weekend)
+    fs_weekend<-outputvals_weekend[1] 
+    duration_weekend<-outputvals_weekend[2] 
 
 
-# png('pca_proportion_1_3.png')
-# biplot(pr.proportion,choices=c(1,3),scale=0,xlabs=rep(".",17062))
-# dev.off() 
+    if(gotfirst==FALSE)
+    {
+    #get the weekday features 
+    weekday_arima<-arima_features(signal_weekday,cur_subject)
+    weekday_timeseries<-ts_features(signal_weekday,fs_weekday,duration_weekday,cur_subject) 
+    weekday_fourier<-fourier_transform_features(signal_weekday,fs_weekday,duration_weekday,cur_subject)
+    weekday_dwt<-dwt_transform_features(signal_weekday,cur_subject)
+    weekday_paa=piecewise_aggregate(signal_weekday, duration_weekday, periodic=FALSE,cur_subject)
+    weekday_svd=svd_features(signal_weekday,cur_subject)
+    weekday_activity_state=activity_state_features(timestamp_weekday,act_weekday,cur_subject)
 
-# png('pca_proportion_2_3.png')
-# biplot(pr.proportion,choices=c(2,3),scale=0,xlabs=rep(".",17062))
-# dev.off() 
+    #get the weekend features 
+    weekend_arima<-arima_features(signal_weekend,cur_subject)
+    weekend_timeseries<-ts_features(signal_weekend,fs_weekend,duration_weekend,cur_subject) 
+    weekend_fourier<-fourier_transform_features(signal_weekend,fs_weekend,duration_weekend,cur_subject)
+    weekend_dwt<-dwt_transform_features(signal_weekend,cur_subject)
+    weekend_paa=piecewise_aggregate(signal_weekend, duration_weekend, periodic=FALSE,cur_subject)
+    weekend_svd=svd_features(signal_weekend,cur_subject)
+    weekend_activity_state=activity_state_features(timestamp_weekend,act_weekend,cur_subject)	
+    gotfirst=TRUE
+    }
+    else
+    {
+    #get the weekday features 
+    print("weekday") 
+    weekday_arima<-rbind(weekday_arima,arima_features(signal_weekday,cur_subject))
+    print("arima") 
 
-# #SCREE PLOT 
-# pr.proportion.var=pr.proportion$sdev^2 
-# pve.proportion=pr.proportion.var/sum(pr.proportion.var) 
-# png('pca_proportion_scree.png') 
-# plot(pve.proportion,xlab="Principal Component for Proportion-Features",ylab="Proportion of Variance Explained",ylim=c(0,1),type="b") 
-# dev.off()  
+    weekday_timeseries<-rbind(weekday_timeseries,ts_features(signal_weekday,fs_weekday,duration_weekday,cur_subject))
+    print("ts") 
+    weekday_fourier<-rbind(weekday_fourier,fourier_transform_features(signal_weekday,fs_weekday,duration_weekday,cur_subject)) 
+    print("fourier")
+    weekday_dwt<-rbind(weekday_dwt,dwt_transform_features(signal_weekday,cur_subject)) 
+    print("dwt") 
+    weekday_paa<-rbind(weekday_paa,piecewise_aggregate(signal_weekday,duration_weekday,periodic=FALSE,cur_subject))
+    print("paa") 
+    weekday_svd<-rbind(weekday_svd,svd_features(signal_weekday,cur_subject)) 
+    print("svd") 
+    weekday_activity_state<-rbind(weekday_activity_state,activity_state_features(timestamp_weekday,act_weekday,cur_subject))
+    print("activity state") 
 
-
-#DELTA OF WEEKEND AND WEEKDAY ACTIVITY 
-delta_w1<-abs(d$day1-d$end1)
-delta_w2<-abs(d$day2-d$end2)
-delta_w3<-abs(d$day3-d$end3) 
-delta_w4<-abs(d$day4-d$end4) 
-delta_w5<-abs(d$day5-d$end5) 
-delta_w6<-abs(d$day6-d$end6)
-delta_w7<-abs(d$day7-d$end7)
-delta_w8<-abs(d$day8-d$end8)
-delta_w9<-abs(d$day9-d$end9)
-delta_w10<-abs(d$day10-d$end10)
-delta_automotive<-abs(d$automotive_day-d$automative_end)
-delta_stationary<-abs(d$stationary_day-d$stationary_end)
-delta_unknown<-abs(d$unknown_day-d$unknown_end)
-delta_walking<-abs(d$walking_day-d$walking_end)
-delta_cycling<-abs(d$cycling_day-d$cycling_end)
-delta_running<-abs(d$running_day-d$running_end)
-delta_num_datapoints<-abs(d$num_datapoints_day-d$num_datapoints_end)
-delta_mean_interval<-abs(d$mean_interval_day-d$mean_interval_end)
-deltas<-data.frame(delta_w1,delta_w2,delta_w3,delta_w4,delta_w5,delta_w6,delta_w7,delta_w8,delta_w9,delta_w10,delta_automotive,delta_stationary,delta_unknown,delta_walking,delta_cycling,delta_running,delta_num_datapoints,delta_mean_interval,row.names=row.names(d)) 
-
-pr.deltas=prcomp(deltas,scale=TRUE) 
-png('pca_deltas.png') 
-biplot(pr.deltas,scale=0,xlabs=rep(".",17062))
-dev.off() 
-
-png('pca_deltas_1_3.png')
-biplot(pr.deltas,choices=c(1,3),scale=0,xlabs=rep(".",17062))
-dev.off() 
-
-png('pca_deltas_2_3.png')
-biplot(pr.deltas,choices=c(2,3),scale=0,xlabs=rep(".",17062))
-dev.off() 
-
-
-#SCREE PLOT 
-pr.deltas.var=pr.deltas$sdev^2 
-pve.deltas=pr.deltas.var/sum(pr.deltas.var) 
-png('pca_deltas_scree.png') 
-plot(pve.deltas,xlab="Principal Component for Deltas-Features",ylab="Proportion of Variance Explained",ylim=c(0,1),type="b") 
-dev.off() 
+    #get the weekend features 
+    print("weekend")
+    weekend_arima<-rbind(weekend_arima,arima_features(signal_weekend,cur_subject))
+    weekend_timeseries<-rbind(weekend_timeseries,ts_features(signal_weekend,fs_weekend,duration_weekend,cur_subject))
+    weekend_fourier<-rbind(weekend_fourier,fourier_transform_features(signal_weekend,fs_weekend,duration_weekend,cur_subject))
+    weekend_dwt<-rbind(weekend_dwt,dwt_transform_features(signal_weekend,cur_subject))
+    weekend_paa<-rbind(weekend_paa,piecewise_aggregate(signal_weekend,duration_weekend,periodic=FALSE,cur_subject))
+    weekend_svd<-rbind(weekend_svd,svd_features(signal_weekend,cur_subject))
+    weekend_activity_state<-rbind(weekend_activity_state,activity_state_features(timestamp_weekend,act_weekend,cur_subject))
+    }
+  })
+}
+print("writing output binary weekday  file") 
+save(weekday_arima,weekday_timeseries,weekday_fourier,weekday_dwt,weekday_paa,weekday_svd,weekday_activity_state,file=paste("motiontracker_weekday",startf,endf,sep="_"))
+print("writing out binary weekend file") 
+save(weekend_arima,weekend_timeseries,weekend_fourier,weekend_dwt,weekend_paa,weekend_svd,weekend_activity_state,file=paste("motiontracker_weekend",startf,endf,sep="_"))

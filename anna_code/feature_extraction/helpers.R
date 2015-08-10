@@ -98,8 +98,14 @@ get_frequency_ratio<-function(s,low_band_low,low_band_high,high_band_low,high_ba
 
 #calculates the period of a signal 
 get_period<-function(x,interval)
-{
+{ 
   x_sub<-x[round(length(x)/2-interval/2):round(length(x)/2+interval/2)]
+  x_unique=unique(x_sub) 
+  if (length(x_unique)<0.5*length(x_sub))
+  {
+  #We have excessive duplicates, remove them 
+  x_sub=x_unique 
+  }	
   #is most of the signal power above the mean (don't flip for peak calls) or below the mean (flip for peak calls)
   x_mean<-mean(x_sub)
   x_high<-subset(x_sub,x_sub>x_mean)
@@ -108,13 +114,11 @@ get_period<-function(x,interval)
   x_low_mean<-mean(x_low)
   if (abs(x_high_mean)>abs(x_low_mean))
   {
-    stdval<-std(x_high)
-    thresh<-x_high_mean+stdval
-    peaks<-findpeaks(x_sub,minpeakheight = thresh) 
-    peaks<-peaks[,2]
+    peaks<-findPeaks(x_sub)
     period<-mean(diff(peaks))
     for (i in 1:(length(peaks)-1))
-    {delta<-abs(peaks[i+1]-peaks[i])
+    {
+    delta<-abs(peaks[i+1]-peaks[i])
     if (min(delta,period)/max(delta,period)>0.5)
     {
        return(x[peaks[i]:peaks[i+1]])
@@ -123,10 +127,7 @@ get_period<-function(x,interval)
   }
   else
   {
-    stdval<-std(x_low)
-    thresh<-x_low_mean-stdval 
-    peaks<-findpeaks(-1*x_sub,minpeakheight=thresh)
-    peaks<-peaks[,2]
+    peaks<-findPeaks(-1*x_sub) 
     period<-mean(diff(peaks))
     for(i in 1:(length(peaks)-1))
     {

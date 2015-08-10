@@ -3,6 +3,8 @@
 #data directories 
 accel_walk_dir<-'/srv/gsfs0/projects/ashley/common/myheart/grouped_timeseries/6minute_walk/acceleration_walk'
 accel_rest_dir<-'/srv/gsfs0/projects/ashley/common/myheart/grouped_timeseries/6minute_walk/acceleration_rest'
+weekday_dir<-'/srv/gsfs0/projects/ashley/common/myheart/grouped_timeseries/motiontracker_sampled/weekday'
+weekend_dir<-'/srv/gsfs0/projects/ashley/common/myheart/grouped_timeseries/motiontracker_sampled/weekend'
 
 #age, sex, other categorical information 
 metadata<-'/srv/gsfs0/projects/ashley/common/myheart/results/Non_timeseries_data_07012014.tsv'
@@ -10,6 +12,10 @@ metadata<-'/srv/gsfs0/projects/ashley/common/myheart/results/Non_timeseries_data
 #Pedometer for QC 
 pedometer_dir<-'/srv/gsfs0/projects/ashley/common/myheart/grouped_timeseries/6minute_walk/pedometer'
  
+#activity state filtering
+min_entries<-1000
+
+
 
 #6 minute walk filtering 
 changepoint_thresh<-10 

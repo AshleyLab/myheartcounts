@@ -3,6 +3,15 @@ source('extract_features.R')
 source('helpers.R')
 source('parameters.R')
 
+activity_state_features_multi<-function(timestamps_day,timestamps_end,activity_day,activity_end,subject)
+{
+weekday_result<-activity_state_features(timestamps_day,activity_day,subject,"_weekday") 
+weekend_result<-activity_state_features(timestamps_end,activity_end,subject,"_weekend")
+merged_df<-merge(weekday_result,weekend_result)
+return(merged_df) 
+}
+
+
 arima_features_multi<-function(data,subject)
 {
   for(i in names(data))
