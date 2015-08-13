@@ -7,9 +7,10 @@ def main():
         data.remove('') 
 
     #identify the duplicated columns 
-    header=data[0].split('\t') 
+    header="\t"+data[0]
+    header=header.split('\t') 
     dups=dict() 
-    for i in range(1,len(header)): 
+    for i in range(len(header)): 
         for j in range(i+1,len(header)): 
             field1=header[i].replace('.json','') 
             field2=header[j].replace('.json','') 
@@ -22,6 +23,8 @@ def main():
     outf=open(sys.argv[1]+".NODUPLICATES",'w') 
     for line in data: 
         recorded=dict() 
+        if line==data[0]: 
+            line='\t'+line 
         line=line.split('\t') 
         out_line=[] 
         for i in range(len(line)): 
