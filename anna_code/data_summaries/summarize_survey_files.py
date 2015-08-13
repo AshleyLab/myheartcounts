@@ -92,8 +92,15 @@ def get_age_sex_indices(table_dir,demographics):
             age_index=header.index('heartAgeDataAge') 
             sex_index=header.index('heartAgeDataGender') 
         else: 
-            age_index=header.index('NonIdentifiableDemographics.json.patientCurrentAge') 
-            sex_index=header.index('NonIdentifiableDemographics.json.patientBiologicalSex') 
+            #the field may or may not include the word "json" 
+            if "NonIdentifiableDemographics.json.patientCurrentAge" in header: 
+                age_index=header.index('NonIdentifiableDemographics.json.patientCurrentAge')
+            else: 
+                age_index=header.index('NonIdentifiableDemographics.patientCurrentAge')
+            if "NonIdentifiableDemographics.json.patientBiologicalSex" in header: 
+                sex_index=header.index('NonIdentifiableDemographics.json.patientBiologicalSex') 
+            else: 
+                sex_index=header.index('NonIdentifiableDemographics.patientBiologicalSex') 
         table_to_age_index[table]=age_index+1
         table_to_sex_index[table]=sex_index+1
     return table_to_age_index,table_to_sex_index 
@@ -135,9 +142,18 @@ def read_known_entries(table_dir,demographics,table_to_age_index,table_to_sex_in
                 sex_entry.remove("NA") 
             sex_entry=[i.replace("HKBiologicalSex","") for i in sex_entry] 
             sex_entry=[i.replace("[","").replace("]","").replace('\"','')  for i in sex_entry] 
+            print str(age_entry) 
             if isheartage: 
-                #print str(age_entry)
-                age_entry=[2015-parse(i).year for i in age_entry] #allow age +/- 1 for comparison with Dem. file data, since they may or may not have had a birthday this year     
+                # since v.1.0.10, there are both years and numerical ages in the heart age file. Be able to parse both of them. 
+                age_entry_filtered=[] 
+                for ae in age_entry: 
+                    if ae.__contains__('-'): 
+                        #YEAR! 
+                        age_entry_filtered.append(2015-int(ae.split('-')[0]))
+                    else: 
+                        age_entry_filtered.append(int(ae))
+                age_entry=age_entry_filtered                 
+                #age_entry=[2015-parse(i).year for i in age_entry] #allow age +/- 1 for comparison with Dem. file data, since they may or may not have had a birthday this year     
                 if healthcode not in heartage_age: 
                     heartage_age[healthcode]=age_entry 
                 else: 
@@ -164,6 +180,7 @@ def add_demographic_entries(resolved_index_h,resolved_index_d,table_to_age_index
     for table in demographics: 
         data=split_lines(table_dir+table)
         age_index=table_to_age_index[table] 
+        print "age_index:"+str(age_index) 
         sex_index=table_to_sex_index[table]
         to_remove=[age_index,sex_index] 
         header=data[0].split('\t') 
@@ -254,8 +271,8 @@ def write_output(survey_summary_file,subjects,resolved_age,resolved_sex,demograp
             header1_survey.append(fname) 
             header2_survey.append(feature) 
 
-    header1="#File\tAge\tSex\tConfidenceAge\tConfidenceSex\t"+"\t".join(header1_dem)+"\t"+"\t".join(header1_survey)
-    header2="Feature\tAge\tSex\tConfidenceAge\tConfidenceSex\t"+"\t".join(header2_dem)+"\t"+"\t".join(header2_survey) 
+    header1="#File\tAge\tConfidenceAge\tSex\tConfidenceSex\t"+"\t".join(header1_dem)+"\t"+"\t".join(header1_survey)
+    header2="Feature\tAge\tConfidenceAge\tSex\tConfidenceSex\t"+"\t".join(header2_dem)+"\t"+"\t".join(header2_survey) 
     outf.write(header1+'\n'+header2+'\n') 
     print "got headers!" 
     print "subjects:"+str(len(subjects))
@@ -322,9 +339,9 @@ def main():
         if subject in dem_sex: 
             ds=dem_sex[subject] 
 
-        resolved_age_subject,resolved_age_confidence,index_age_d,index_age_h = resolve(hs,ds)
+        resolved_age_subject,resolved_age_confidence,index_age_d,index_age_h = resolve(ha,da)
         #print "resolved age information" 
-        resolved_sex_subject,resolved_sex_confidence,index_sex_d,index_sex_h = resolve(ha,da) 
+        resolved_sex_subject,resolved_sex_confidence,index_sex_d,index_sex_h = resolve(hs,ds) 
         #print "resolved sex information" 
         if resolved_age_subject!=None:
             resolved_age[subject]=[resolved_age_subject,resolved_age_confidence]
