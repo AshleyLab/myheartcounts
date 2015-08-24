@@ -1,0 +1,32 @@
+#$ -cwd
+#$ -S /bin/bash
+
+#$ -R y
+#$ -w e
+
+# email address to send notices to
+#$ -M $USER@stanford.edu
+#$ -m beas
+
+#$ -pe orte 32
+
+echo "job starting on `date`"
+echo ""
+#unset MODULEPATH
+#. /etc/profile.d/modules.sh
+echo "purging module environment"
+module purge
+echo "loading modules..."
+# list your module load commands here:
+module load r/3.2.0 openmpi-x86_64 gnu_parallel/20150422
+echo "done"
+echo ""
+module list
+echo ""
+echo "beginning job on `hostname`"
+
+tmphosts=`mktemp`
+awk '{ for (i=0; i < $2; ++i) { print $1} }' $PE_HOSTFILE > $tmphosts
+
+echo ""
+mpirun -np 1 -machinefile $tmphosts /srv/gs1/software/R/3.2.0/bin/R --slave -f feature_select_motiontracker.R

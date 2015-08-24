@@ -71,3 +71,6 @@ full_walk_result_dwt[[j]]<-rbind(full_walk_result_dwt[[j]],walk_result_dwt[[j]])
 }
 }
 }
+
+#SAVE THE CONCATENATED DATA FRAMES 
+save(full_walk_result_arima,full_walk_result_fourier,full_walk_result_paa_aggregate,full_walk_result_timeseries,full_walk_result_paa,full_walk_result_svd,full_walk_result_dwt,full_rest_result_arima,full_rest_result_fourier,full_rest_result_paa_aggregate,full_rest_result_timeseries,full_rest_result_paa,full_rest_result_svd,full_rest_result_dwt,file="6minwalk_concatenated")
