@@ -125,7 +125,7 @@ ts_features<-function(x,fs,duration,subject)
   mean_time<-as.numeric(mean(diff(peaks))*(1/fs))
  
   #STORE IN A DATAFRAME 
-  result<-data.frame(t(c(mean_val,var_val,kurtosis_val,skewness_val,min_val,max_val,moments_all,integral,mav,mad,mmav,ssi,rms,v3,log_detector,wl,aac,dasdv,mfl,myop,wamp,zc,mean_time)))
+  result<-data.frame(t(c(mean_val,var_val,kurtosis_val,skewness_val,min_val,max_val,moments_all,integral,mav,mad,mmav,ssi,rms,v3,log_detector,wl,aac,dasdv,mfl,myop,wamp,zc,mean_time)),row.names=subject)
   
   l <- list();
   for(i in 0:10)
@@ -244,7 +244,7 @@ fourier_transform_features<-function(x, fs, duration,subject)
   pi<-findPeaks(s$spec) #only store the index of the peak maximum 
   pi_f<-s$freq[pi]
   pi_s<-s$spec[pi]
-  pi_f_round<-round(pi_f)
+  pi_f_round<-round(pi_f,2)
   uniq_f<-c() 
   uniq_s<-c()
   for(i in unique(pi_f_round))

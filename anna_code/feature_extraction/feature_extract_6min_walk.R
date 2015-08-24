@@ -11,7 +11,6 @@ args <- commandArgs(trailingOnly = TRUE)
 startf<-args[1] 
 endf<-args[2] 
 
-
 #############################################################################################
 #CREATE A DATA FRAME FOR FEATURE STORAGE
 features<-data.frame(cur_subject=character(),
@@ -32,9 +31,11 @@ if(endf > length(files))
 {
 endf=length(files) 
 }
+startf=1
+endf=50 
 if(startf<= length(files))
 {
-gotfirst=FALSE 
+gotfirst=FALSE
 for (i in startf:endf){
   data<-na.omit(fread(files[i],header=T))
   cur_subject<-strsplit(files[i],"/")[[1]]
@@ -111,6 +112,8 @@ if(endf >length(files))
 {
 endf=length(files) 
 }
+startf=1
+endf=50
 if(startf<=length(files))
 {
 gotfirst=FALSE 

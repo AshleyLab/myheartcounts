@@ -9,7 +9,6 @@ args <- commandArgs(trailingOnly = TRUE)
 startf<-args[1] 
 endf<-args[2] 
 #############################################################################################
-
 #extract features for acceleration walk
 gotfirst=FALSE
 files <- list.files(path=weekday_dir, pattern="*.tsv", full.names=T, recursive=FALSE)
@@ -78,7 +77,11 @@ for (i in startf:endf){
     print("ts") 
     weekday_fourier<-rbind(weekday_fourier,fourier_transform_features(signal_weekday,fs_weekday,duration_weekday,cur_subject)) 
     print("fourier")
-    weekday_dwt<-rbind(weekday_dwt,dwt_transform_features(signal_weekday,cur_subject)) 
+    newtransform<-dwt_transform_features(signal_weekday,cur_subject)
+    for(j in 1:length(weekday_dwt))
+    {
+    weekday_dwt[[j]]<-rbind(weekday_dwt[[j]],newtransform[[j]])
+    }
     print("dwt") 
     weekday_paa<-rbind(weekday_paa,piecewise_aggregate(signal_weekday,duration_weekday,periodic=FALSE,cur_subject))
     print("paa") 
@@ -92,7 +95,11 @@ for (i in startf:endf){
     weekend_arima<-rbind(weekend_arima,arima_features(signal_weekend,cur_subject))
     weekend_timeseries<-rbind(weekend_timeseries,ts_features(signal_weekend,fs_weekend,duration_weekend,cur_subject))
     weekend_fourier<-rbind(weekend_fourier,fourier_transform_features(signal_weekend,fs_weekend,duration_weekend,cur_subject))
-    weekend_dwt<-rbind(weekend_dwt,dwt_transform_features(signal_weekend,cur_subject))
+    newtransform<-dwt_transform_features(signal_weekend,cur_subject)
+    for(j in 1:length(weekend_dwt))
+    {
+    weekend_dwt[[j]]<-rbind(weekend_dwt[[j]],newtransform[[j]])
+    }
     weekend_paa<-rbind(weekend_paa,piecewise_aggregate(signal_weekend,duration_weekend,periodic=FALSE,cur_subject))
     weekend_svd<-rbind(weekend_svd,svd_features(signal_weekend,cur_subject))
     weekend_activity_state<-rbind(weekend_activity_state,activity_state_features(timestamp_weekend,act_weekend,cur_subject))
