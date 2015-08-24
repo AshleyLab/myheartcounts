@@ -1,0 +1,5 @@
+rm(list=ls())
+library(data.table)
+data=data.frame(read.table("HeartAgeRelatedPredictions.txt",sep="\t",header=TRUE,row.names = 1))
+plot(data$Age,data$HeartAge,xlab="True Subject Age",ylab="Predicted Heart Age")
+title("True Age vs Heart Age: R^2 = 0.743")
