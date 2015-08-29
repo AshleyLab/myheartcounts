@@ -21,6 +21,7 @@ data<-data[,-toremove]
 ncolumns=ncol(data)
 cnames = names(data)
 
+browser() 
 #1) identify any correlated features 
 feature_groups<-get_high_cor_features(merged_df)
 print('got feature cor') 

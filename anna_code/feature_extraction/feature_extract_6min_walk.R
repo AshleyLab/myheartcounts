@@ -19,6 +19,7 @@ features<-data.frame(cur_subject=character(),
 
 #############################################################################################
 #extract features for acceleration walk
+accel_walk_dir="/home/anna/scg2/grouped_timeseries/6minute_walk/acceleration_walk/"
 print("Analyzing motion acceleration data") 
 files <- list.files(path=accel_walk_dir, pattern="*.tsv", full.names=T, recursive=FALSE)
 if (length(args)==0)
@@ -37,7 +38,7 @@ if(startf<= length(files))
 {
 gotfirst=FALSE
 for (i in startf:endf){
-  data<-na.omit(fread(files[i],header=T))
+  data<-na.omit(fread(files[i],header=F))
   cur_subject<-strsplit(files[i],"/")[[1]]
   cur_subject<-cur_subject[length(cur_subject)]
   cur_subject<-gsub(".tsv","",cur_subject)
@@ -64,6 +65,7 @@ for (i in startf:endf){
     #concatenate data frame for subjects 
     if(gotfirst==FALSE)
     {
+      browser() 
     walk_result_arima<-arima_features_multi(axis_data,cur_subject)
     walk_result_timeseries<-ts_features_multi(axis_data,fs,duration,cur_subject)
     walk_result_fourier<-fourier_transform_features_multi(axis_data,fs,duration,cur_subject) 
@@ -123,7 +125,7 @@ for (i in startf:endf){
   cur_subject<-cur_subject[length(cur_subject)]
   cur_subject<-gsub(".tsv","",cur_subject)
   print(cur_subject) 
-
+  setnames(data,c("V1","V2","V3","V4"),c("timestamp","x","y","z"))
   #CHECK FOR THE CHANGEPOINTS 
   delta<-diff(data$timestamp)
   changepoints<-which(delta %in% subset(delta,abs(delta)>changepoint_thresh))
