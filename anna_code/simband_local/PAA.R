@@ -1,5 +1,5 @@
 PAA<-function (x, w) 
-{
+{ 
     if ((w - floor(w)) > 0) {
         stop("w (number of frames) must be an integer")
     }

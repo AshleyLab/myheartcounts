@@ -33,7 +33,7 @@ for (i in 1:length(files)){
     ecg_timeseries<-ts_features(signal_ecg,fs_ecg,duration_ecg,cur_subject) 
     ecg_fourier<-fourier_transform_features(signal_ecg,fs_ecg,duration_ecg,cur_subject)
     ecg_dwt<-dwt_transform_features(signal_ecg,cur_subject)
-    ecg_paa=piecewise_aggregate(signal_ecg, duration_ecg, periodic=FALSE,cur_subject)
+    ecg_paa=piecewise_aggregate(signal_ecg, duration_ecg, periodic=TRUE,cur_subject)
     ecg_svd=svd_features(signal_ecg,cur_subject)
     gotfirst=TRUE
     }
@@ -51,7 +51,7 @@ for (i in 1:length(files)){
     ecg_dwt[[j]]<-rbind(ecg_dwt[[j]],newtransform[[j]])
     }
     print("dwt") 
-    ecg_paa<-rbind(ecg_paa,piecewise_aggregate(signal_ecg,duration_ecg,periodic=FALSE,cur_subject))
+    ecg_paa<-rbind(ecg_paa,piecewise_aggregate(signal_ecg,duration_ecg,periodic=TRUE,cur_subject))
     print("paa") 
     ecg_svd<-rbind(ecg_svd,svd_features(signal_ecg,cur_subject)) 
     print("svd") 

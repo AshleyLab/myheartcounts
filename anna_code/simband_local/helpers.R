@@ -1,3 +1,5 @@
+library(pracma)
+
 kmeansAIC = function(fit){
   
   m = ncol(fit$centers)
@@ -104,7 +106,7 @@ get_zero_crossing<-function(x)
 #ratio is defined as the ratio of the power in the high frequency band from 8 to 24 Hz
 #compared to the power in the low frequency band from 3 to 5 Hz
 get_frequency_ratio<-function(s,low_band_low,low_band_high,high_band_low,high_band_high)
-{
+{ 
   low_band_low_index<-max(which(s$freq<low_band_low))+1 
   low_band_high_index<-max(which(s$freq<low_band_high))+1 
   high_band_low_index<-max(which(s$freq<high_band_low))+1 
@@ -133,27 +135,30 @@ get_period<-function(x,interval)
   x_low_mean<-mean(x_low)
   if (abs(x_high_mean)>abs(x_low_mean))
   {
-    peaks<-findPeaks(x_sub)
+    peaks<-findpeaks(x_sub,minpeakheight = 150)
+    peaks=peaks[,2]
     period<-mean(diff(peaks))
     for (i in 1:(length(peaks)-1))
     {
     delta<-abs(peaks[i+1]-peaks[i])
     if (min(delta,period)/max(delta,period)>0.5)
     {
-       return(x[peaks[i]:peaks[i+1]])
+       return(x_sub[peaks[i]:peaks[i+1]])
     }
     }
   }
   else
   {
-    peaks<-findPeaks(-1*x_sub) 
+  
+    peaks<-findpeaks(-1*x_sub,minpeakheight=100) 
+    peaks=peaks[,2]
     period<-mean(diff(peaks))
     for(i in 1:(length(peaks)-1))
     {
       delta<-abs(peaks[i+1]-peaks[i])
       if(min(delta,period)/max(delta,period)>0.5)
       {
-        return(x[peaks[i]:peaks[i+1]])
+        return(x_sub[peaks[i]:peaks[i+1]])
       }
     }
     
