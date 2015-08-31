@@ -13,8 +13,9 @@ files <- list.files(path=value_dir, pattern="values*", full.names=T, recursive=F
 for (i in 1:length(files)){
     success<-FALSE
     #STORE THE COEFFICIENTS IN THE FEATURE MATRIX THAT WE ARE BUILDING
-    cur_subject<-strsplit(files[i],"_")[[1]]
-    cur_subject<-cur_subject[length(cur_subject)]
+    cur_subject<-paste(strsplit(files[i],"_")[[1]][2],strsplit(files[i],"_")[[1]][3],strsplit(files[i],"_")[[1]][4],sep=".")
+    #cur_subject<-strsplit(files[i],"_")[[1]]
+    #cur_subject<-cur_subject[length(cur_subject)]
     #cur_subject<-gsub(".tsv","",cur_subject)
     print(cur_subject) 
     signal_ecg<-as.data.frame(read.table(files[i],header=F,stringsAsFactors=FALSE,sep="\t"))
@@ -58,10 +59,11 @@ for (i in 1:length(files)){
     }
 }
 print("writing output binary ecg  file") 
-save(ecg_arima,ecg_timeseries,ecg_fourier,ecg_dwt,ecg_paa,ecg_svd,file="ECG_subject8")
+save(ecg_arima,ecg_timeseries,ecg_fourier,ecg_dwt,ecg_paa,ecg_svd,file="ECG_subjects")
 ecg_dwt<-ecg_dwt[[7]]
 rownames(ecg_timeseries)=rownames(ecg_fourier)
 
+#This also needs to change
 #get the set of subjects that havet data in each of the data frames 
 subjects1<-rownames(ecg_arima)
 subjects2<-rownames(ecg_dwt)
@@ -70,6 +72,8 @@ subjects4<-rownames(ecg_paa)
 subjects5<-rownames(ecg_svd)
 subjects6<-rownames(ecg_timeseries)
 
+
+#This needs to change
 common=subjects1
 common=intersect(common,subjects2)
 common=intersect(common,subjects3)
