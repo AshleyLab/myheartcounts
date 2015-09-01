@@ -1,3 +1,4 @@
+import sys 
 from Parameters import * 
 from helpers import * 
 from datetime import datetime
@@ -20,6 +21,8 @@ def parse_blob(blob_hash):
         top_dir=blob_hash[-3::].lstrip('0') 
         if top_dir=="": 
                 top_dir='0' 
+	if blob_hash=="NA":
+		return None
         full_dir=synapse_dir+top_dir+'/'+blob_hash
         csv_files=[f for f in listdir(full_dir) if isfile(join(full_dir,f))]
         for f in csv_files: 
@@ -27,7 +30,7 @@ def parse_blob(blob_hash):
                         continue 
                 else: 
                         return split_lines(full_dir+'/'+f) 
-
+	return None
 
 
 #function to parse the file "cardiovascular-HealthKitDataCollector-v1.tsv" 
@@ -44,6 +47,8 @@ def parse_cardiovascular_displacement(data):
                         continue 
                 blob=line1[8] 
                 data1=parse_blob(blob)
+		if data1==None: 
+			continue 
                 for line in data1:
                         if line.startswith('2015')==False: 
                                 continue 
@@ -69,10 +74,11 @@ def parse_cardiovascular_displacement(data):
 
         
 def main():
-        from Parameters import * 
+	from Parameters import * 
 	if synapse_dir.endswith('/')==False: 
 		synapse_dir=synapse_dir+'/' 
-	fname=basedir+'cardiovascular-displacement-v1.sorted'
+	#fname=table_dir+cardio_disp_file 
+	fname=sys.argv[1] 
         data=split_lines(fname) 
         cardv_disp_dict=parse_cardiovascular_displacement(data[1::])
         for feature in cardv_disp_dict: 

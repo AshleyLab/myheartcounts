@@ -6,7 +6,7 @@ ln_chol	11.853	0.302	13.54	0.94
 ln_age_ln_chol	-2.664	0	-3.114	0
 ln_hdl	-7.99	-0.307	-13.578	-18.92
 ln_age_ln_hdl	1.769	0	3.149	4.475
-ln_treated_systolic	1.797	1.1916	2.019	29.291
+ln_treated_systolic	1.797	1.916	2.019	29.291
 ln_age_ln_treated_systolic	0	0	0	-6.432
 ln_untreated_systolic	1.764	1.809	1.957	27.82
 ln_age_ln_untreated_systolic	0	0	0	-6.087

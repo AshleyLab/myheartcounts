@@ -7,7 +7,7 @@ source('parameters.R')
 
 
 #############################################################################################
-#extract features for acceleration walk
+#extract features for ECG
 gotfirst=FALSE
 files <- list.files(path=value_dir, pattern="values*", full.names=T, recursive=FALSE)
 for (i in 1:length(files)){

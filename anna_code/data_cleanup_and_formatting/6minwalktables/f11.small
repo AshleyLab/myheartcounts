@@ -1,3 +1,0 @@
-9931_25	3fff9cc2-9dd2-411b-9189-b059a310735b	9b02c701-6d1b-4a1f-b2a5-11c585ca1a24	NA	2015-04-08	2015-04-07 15:02:10	version 1.0.2, build 6	iPhone 6	2762586	2762590	2762595	2762600	2762604	2762608	2762612
-9936_25	eb22417d-5f17-409a-b16b-5ed52602a483	98fd16c8-471e-47a3-8124-2b3df0943d8e	NA	2015-04-08	2015-04-06 16:02:05	version 1.0.2, build 6	iPhone 6	2762737	2762741	2762747	2762753	2762757	2762761	2762768
-recordId	healthCode	externalId	uploadDate	createdOn	appVersion	phoneInfo	pedometer_fitness.walk.items	accel_fitness_walk.json.items	deviceMotion_fitness.walk.items	HKQuantityTypeIdentifierHeartRate_fitness.walk.items	accel_fitness_rest.json.items	deviceMotion_fitness.rest.items	HKQuantityTypeIdentifierHeartRate_fitness.rest.items

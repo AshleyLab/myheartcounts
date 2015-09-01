@@ -1,3 +1,4 @@
+import sys 
 from Parameters import * 
 from helpers import * 
 from datetime import datetime
@@ -17,6 +18,8 @@ def split_lines(fname):
 
 #reads in a blob file specified with hash notation in a table file 
 def parse_blob(blob_hash): 
+	if blob_hash=="NA":
+		return None 
         top_dir=blob_hash[-3::].lstrip('0') 
         if top_dir=="": 
                 top_dir='0' 
@@ -43,14 +46,20 @@ def parse_health_kit_data_collector(data):
                         continue 
                 subject=line1[2] 
                 blob=line1[8] 
+		if blob=="NA":
+			continue
                 data1=parse_blob(blob)
                 accounted_for=dict() 
                 for line in data1: 
 			line=line.replace(',','\t')
                         parts=line.split('\t') 
+			if len(parts)<3: 
+				continue 
                         if parts[0]=="datetime": 
                                 continue 
                         feature=parts[1] 
+			if feature.startswith('20'): 
+				feature=parts[2] 
                         if feature not in feature_dict: 
                                 feature_dict[feature]=dict() 
                         if subject not in feature_dict[feature]: 
@@ -63,22 +72,26 @@ def parse_health_kit_data_collector(data):
 
         
 def main():
+	from Parameters import * 
 	if synapse_dir.endswith('/')==False: 
 		synapse_dir=synapse_dir+'/' 
-	table_files=[f for f in listdir(table_dir) if isfile(join(table_dir,f))]
-	fname=table_dir_sorted+'cardiovascular-HealthKitDataCollector-v1.tsv'
-        data=split_lines(fname)
-        health_kit_dict=parse_health_kit_data_collector(data[1::])
-        for feature in health_kit_dict: 
-                #try to create the directory for the feature 
-                dirname=healthkit_tables+feature+'/'
-                if not os.path.exists(dirname):
-                        os.makedirs(dirname)
-                #in the directory, write the data for each subject
-                for subject in health_kit_dict[feature]: 
-                        outf=open(dirname+subject+'.tsv','w') 
-                        cur_entries=health_kit_dict[feature][subject] 
-                        cur_entries.sort() 
-                        outf.write('\n'.join(cur_entries)+'\n')
+	if table_dir.endswith('/')==False: 
+		table_dir=table_dir+'/' 
+	for fname in sys.argv[1::]: 
+		print str(fname) 
+		#fname=table_dir+t
+		data=split_lines(fname) 
+		health_kit_dict=parse_health_kit_data_collector(data[1::])
+		for feature in health_kit_dict: 
+			#try to create the directory for the feature 
+			dirname=healthkit_tables+feature+'/'
+			if not os.path.exists(dirname):
+				os.makedirs(dirname)
+			#in the directory, write the data for each subject
+			for subject in health_kit_dict[feature]: 
+				outf=open(dirname+subject+'.tsv','w') 
+				cur_entries=health_kit_dict[feature][subject] 
+				cur_entries.sort() 
+				outf.write('\n'.join(cur_entries)+'\n')
 if __name__=="__main__": 
 	main() 

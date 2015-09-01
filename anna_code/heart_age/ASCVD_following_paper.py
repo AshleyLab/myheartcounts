@@ -95,10 +95,12 @@ def parse_inputs():
     rf1=header.index('riskfactors1')
     rf2=header.index('riskfactors2')
     rf3=header.index('riskfactors3')
-    rf4=header.index('riskfactors4') 
-    labels=['age','sex','race','totalchol','hdl','systolicbp','diabetes','smoking','hypertension','meds','diastolic','riskfactors1','riskfactors2','riskfactors3','riskfactors4']
+    rf4=header.index('riskfactors4')
+    weight=header.index('NonIdentifiableDemographics.json.patientWeightPounds')
+    height=header.index('NonIdentifiableDemographics.json.patientHeightInches') 
+    labels=['age','sex','race','totalchol','hdl','systolicbp','diabetes','smoking','hypertension','meds','diastolic','riskfactors1','riskfactors2','riskfactors3','riskfactors4','height','weight']
     
-    indices=[age_index,sex_index,race_index,cholesterol_index,hdl_index,systolic_bp_index,diabetes_index,smoking_index,hypertension_index,meds_index,diastolic_bp_index,rf1,rf2,rf3,rf4 ]
+    indices=[age_index,sex_index,race_index,cholesterol_index,hdl_index,systolic_bp_index,diabetes_index,smoking_index,hypertension_index,meds_index,diastolic_bp_index,rf1,rf2,rf3,rf4,height,weight]
     print str(len(labels))
     print str(len(indices))
     
@@ -148,9 +150,13 @@ def parse_inputs():
                 value=float(value)
             elif label=="riskfactors4":
                 value=float(value)
+            elif label=="height":
+                value=float(value)
+            elif label=="weight":
+                value=float(value) 
                 
             subdict[label]=value
-        if len(subdict.keys())==15:
+        if len(subdict.keys())==17:
             subject_dict[subject]=subdict 
     return subject_dict   
 
@@ -296,6 +302,10 @@ def calculate_optimal(baseline_dict,average_components,coefficients):
         for sex in ['Male','Female']:
             optimal_dict[race][sex]=dict() 
             for age in range(20,100):
+                if age<29:
+                    if sex=="Female":
+                        if race=="White":
+                            continue 
                 baseline=get_10year_baseline(baseline_dict,age,sex,race)
                 values=calculate_10year_risk_components_subroutine(age,sex,race,optimal['totalchol'],optimal['hdl'],optimal['systolicbp'],optimal['diabetes'],optimal['smoking'],optimal['hypertension'],1,coefficients,baseline)
                 #print str(values)
@@ -304,6 +314,12 @@ def calculate_optimal(baseline_dict,average_components,coefficients):
                     optimal_dict[race][sex][riskval].append(age)
                 else:
                     optimal_dict[race][sex][riskval]=[age]
+    #formula breaks down for White Women @ 20 yo.
+    #if 0.25 not in optimal_dict['White']['Female']:
+    #    optimal_dict['White']['Female'][.25]=[] 
+    #for age in range(20,25):
+    #    optimal_dict['White']['Female'][.25].append(age) 
+
     #print "OPTIMAL DICT:"+str(optimal_dict)
     #FOR TESTING:
     outf=open('optimal_10year.txt','w')
@@ -410,15 +426,15 @@ def get_heart_age(subject_dict,risk_10year,optimal_vals):
         race="White" #Formula for "White" will be used for anyone who does not self-identify as Black
     optimal_vals=optimal_vals[race][sex]
     #print 'risk10year:'+str(risk_10year) 
-    min_age_for_risk=100 
+    min_age_for_risk=100
     for riskval in optimal_vals:
         #print "riskval:"+str(riskval) 
         if riskval >=risk_10year:
             #print " riskval >=risk_10year" 
             age_for_risk=optimal_vals[riskval]
             #print "age_for_risk:"+str(age_for_risk) 
-            if min(age_for_risk) < min_age_for_risk:
-                min_age_for_risk=min(age_for_risk)
+            if max(age_for_risk) < min_age_for_risk:
+                min_age_for_risk=max(age_for_risk)
     #print "MIN AGE FOR RISK:"+str(min_age_for_risk) 
     return min_age_for_risk
                 
@@ -539,9 +555,15 @@ def main():
         result_dict[subject]=[subject_dict[subject]['age'],risk_10year,lifetime_risk[0],lifetime_risk[1],heart_age]
     outf=open('HeartAgeRelatedPredictions.txt','w')
 
-    outf.write('Subject\tAge\t10YearRisk\tLifetimeRisk75\tLifetimeRisk95\tHeartAge\tSex\tRace\tTotalCholesterol\tHDL\tSystolicBP\tDiabetes\tSmoking\tHypertension\tMeds\tDiastolic\tRiskFactors1\tRiskFactors2\tRiskFactors3\tRiskFactors4\n')
+    outf.write('Subject\tAge\t10YearRisk\tLifetimeRisk75\tLifetimeRisk95\tHeartAge\tSex\tRace\tTotalCholesterol\tHDL\tSystolicBP\tDiabetes\tSmoking\tHypertension\tMeds\tDiastolic\tRiskFactors1\tRiskFactors2\tRiskFactors3\tRiskFactors4\t\Height\tWeight\tBMI\n')
     for subject in result_dict:
-        outf.write(subject+'\t'+'\t'.join([str(i) for i in result_dict[subject]])+'\t'+subject_dict[subject]['sex']+'\t'+str(subject_dict[subject]['race'])+'\t'+str(subject_dict[subject]['totalchol'])+'\t'+str(subject_dict[subject]['hdl'])+'\t'+str(subject_dict[subject]['systolicbp'])+'\t'+str(subject_dict[subject]['diabetes'])+'\t'+str(subject_dict[subject]['smoking'])+'\t'+str(subject_dict[subject]['hypertension'])+'\t'+str(subject_dict[subject]['meds'])+'\t'+str(subject_dict[subject]['diastolic'])+'\t'+str(subject_dict[subject]['riskfactors1'])+'\t'+str(subject_dict[subject]['riskfactors2'])+'\t'+str(subject_dict[subject]['riskfactors3'])+'\t'+str(subject_dict[subject]['riskfactors4'])+'\n')
+        if subject_dict[subject]['height']==0:
+            bmi="NA"
+        elif subject_dict[subject]['weight']==0:
+            bmi="NA"
+        else:
+            bmi=(703.0*subject_dict[subject]['weight'])/(subject_dict[subject]['height']*subject_dict[subject]['height'])
+        outf.write(subject+'\t'+'\t'.join([str(i) for i in result_dict[subject]])+'\t'+subject_dict[subject]['sex']+'\t'+str(subject_dict[subject]['race'])+'\t'+str(subject_dict[subject]['totalchol'])+'\t'+str(subject_dict[subject]['hdl'])+'\t'+str(subject_dict[subject]['systolicbp'])+'\t'+str(subject_dict[subject]['diabetes'])+'\t'+str(subject_dict[subject]['smoking'])+'\t'+str(subject_dict[subject]['hypertension'])+'\t'+str(subject_dict[subject]['meds'])+'\t'+str(subject_dict[subject]['diastolic'])+'\t'+str(subject_dict[subject]['riskfactors1'])+'\t'+str(subject_dict[subject]['riskfactors2'])+'\t'+str(subject_dict[subject]['riskfactors3'])+'\t'+str(subject_dict[subject]['riskfactors4'])+'\t'+str(subject_dict[subject]['height'])+'\t'+str(subject_dict[subject]['weight'])+'\t'+str(bmi)+'\n')
         
         
 if __name__=="__main__": 

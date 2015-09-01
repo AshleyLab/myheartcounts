@@ -5,12 +5,12 @@ national_file<-"ssa_national_summary.txt"
 
 #GET THE DIRECTORY TO READ PDF FILES FROM AS A COMMAND LINE ARGUMENT 
 args <- commandArgs(trailingOnly = TRUE)
-if (length(args) < 1)
-{
-stop("Please pass directory of pdf files as an argument")
-}
-pdf_directory<-args[1]
-#pdf_directory<-"/home/annashch/myheartcounts/anna_code/pdf_to_text"
+#if (length(args) < 1)
+#{
+#stop("Please pass directory of pdf files as an argument")
+#}
+#pdf_directory<-args[1]
+pdf_directory<-"/home/anna/scg3/myheartcounts/anna_code/pdf_to_text"
 
 #ITERATE THROUGH PDF FILES AND EXTRACT THE NAME AND EMAIL FIELDS 
 files <- list.files(path=pdf_directory, pattern="*.pdf", full.names=T, recursive=FALSE)
@@ -23,6 +23,7 @@ for(i in 1:length(files))
     print(paste(i," of ",nfiles))
     fname<-files[i]
     rr <- tt(elem=list(uri=fname),language="en",id="id1")
+    browser() 
     name_field<-"Name of Adult Participant"
     email_field<-"Email"
     
@@ -42,6 +43,7 @@ for(i in 1:length(files))
     #STORE THE DATA 
     personal_info<-rbind(personal_info,data.frame(name,email))    
 }
+browser() 
 rownames(personal_info)<-personal_info$name 
 #MERGE WITH NATIONAL STATISTICS ABOUT NAME AGE AND SEX
 national_stats<-as.data.frame(read.table(national_file,header=TRUE,row.names=1,stringsAsFactors=FALSE))

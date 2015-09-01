@@ -88,7 +88,7 @@ def main():
 	    start_line=int(sys.argv[index+1])
     end_line=None 
     if "-end" in sys.argv: 
-	    index=sys.argv.index("end") 
+	    index=sys.argv.index("-end") 
 	    end_line=int(sys.argv[index+1]) 
     
     #####################################################
@@ -120,12 +120,16 @@ def main():
                             with open(blobfilename+'.clean','w') as outf: 
                                     json.dump([],outf) 
                             continue 
-                    json_object=json.loads(blob) 
-                    #print str(json_object) 
                     timestamp_dict=dict() 
-                    for entry in json_object: 
-                        timestamp=entry.get(timestamp_field)  
-                        timestamp_dict[timestamp]=entry #any entries with a duplicated timestamp will be overwritten
+                    json_object=json.loads(blob) 
+		    if timestamp_field in json_object: 
+			    timestamp=json_object.get(timestamp_field) 
+			    timestamp_dict[timestamp]=json_object
+		    else: 
+			    for entry in json_object:
+				    #print str(type(entry)) 
+				    timestamp=entry.get(timestamp_field)  
+				    timestamp_dict[timestamp]=entry #any entries with a duplicated timestamp will be overwritten
                     #sort by timestamp 
                     sorted_timestamp_dict=collections.OrderedDict(sorted(timestamp_dict.items()))
                     out_list=[]

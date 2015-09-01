@@ -12,7 +12,7 @@ def main():
     subject_to_version=dict() 
     for f in files: 
         if f.endswith('.tsv'): 
-            #print str(f) 
+            print str(f) 
             data=open(table_dir+f,'r').read().split('\n') 
             if '' in data: 
                 data.remove('') 

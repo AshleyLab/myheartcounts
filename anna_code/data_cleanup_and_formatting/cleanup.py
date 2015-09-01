@@ -6,7 +6,7 @@
 from Parameters import * 
 from os import listdir 
 from os.path import isfile,join 
-
+import sys 
 
 #reads in a datafile and splits by line 
 #replace '\r\n' with '\n' for Linux & Windows compatible newline characters 
@@ -50,11 +50,18 @@ def main():
     else: 
 	    print "By default, the script will ignore blob entries that already contain a .clean file. To override these files, call the script with the flag -f" 
     valid_line_start="2015" #assume all data collected in 2015 
+    targetlength_motion=1.5*len("2015-03-06T10:55:04-06:00,unknown,0,medium,1,0.50")
+    first_target=int(sys.argv[1]) 
+    last_target=int(sys.argv[2]) 
     for f in blob_csv_formats: 
         print str(f) 
+	if f.lower().__contains__("motion"): 
+		ismotion=True 
+	else: 
+		ismotion=False 
         data=split_lines(table_dir+f) 
         counter=0 
-        for line in data[1::]:
+        for line in data[first_target:last_target]:
                 line=line.split('\t')     
                 counter+=1 
                 if counter%1000==0: 
@@ -63,29 +70,31 @@ def main():
                 if blobname=="NA": 
                         continue 
                 try:        
-                        blob,blobfilename=parse_blob(blobname,force) 
-			if blob==None: 
-				continue 
-                        outf=open(blobfilename+'.clean','w')                         
-                        header=blob_headers[f] 
-                        outf.write(header+'\n') 
-                        blob.sort() #sort by timestamp (the first entry) 
-                        last_line=None 
-                        for blob_line in blob: 
-                                if blob_line.startswith(valid_line_start):
-				#check to see if there is a repeat date entry! 
-					bad_index=find(valid_line_start,10,len(line))
-					if bad_index > -1: 
-						blob_line=blob_bline[0:bad_index]+'\n'+blob_line[bad_index::]
-                                        if last_line==None: 
-                                                outf.write(blob_line+'\n') 
-                                                last_line=blob_line.split('\n')[-1]  
-                                        elif blob_line!=last_line: #there are duplicate entries in the blobs, we only want to record them once 
-                                                outf.write(blob_line+'\n') 
-                                                last_line=blob_line.split('\n')[-1] 
-                except:
-                        print str(blobname) #print out any blob names that could not be filtered and continue 
-                        continue 
+		    blob,blobfilename=parse_blob(blobname,force) 
+		    if blob==None: 
+			    continue 
+		    outf=open(blobfilename+'.clean','w')                         
+		    header=blob_headers[f] 
+		    outf.write(header+'\n') 
+		    blob.sort() #sort by timestamp (the first entry) 
+		    last_line=None 
+		    for blob_line in blob: 
+			    if blob_line.startswith(valid_line_start):
+			    #check to see if there is a repeat date entry! 
+				    if ismotion and (len(blob_line)>targetlength_motion):
+					    bad_index=blob_line.find(valid_line_start,10,len(blob_line))
+					    if bad_index > -1: 
+						    blob_line=blob_line[0:bad_index]+'\n'+blob_line[bad_index::]
+				    if last_line==None: 
+					    outf.write(blob_line+'\n') 
+					    last_line=blob_line.split('\n')[-1]  
+				    elif blob_line!=last_line: #there are duplicate entries in the blobs, we only want to record them once 
+					    outf.write(blob_line+'\n') 
+					    last_line=blob_line.split('\n')[-1] 
+	        except:
+		    print "failed:"+str(blobname) #print out any blob names that could not be filtered and continue 
+		    continue 
+
 
 if __name__=="__main__": 
 	main() 

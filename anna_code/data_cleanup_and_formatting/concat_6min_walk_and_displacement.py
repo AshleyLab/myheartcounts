@@ -8,6 +8,7 @@ from dateutil.parser import parse
 import json 
 import pickle 
 import sys 
+import codecs 
 
 #reads in a datafile and splits by line 
 #replace '\r\n' with '\n' for Linux & Windows compatible newline characters 
@@ -18,6 +19,8 @@ def split_lines(fname):
         return data
 #reads in a blob file specified with hash notation in a table file 
 def parse_blob(blob_hash):
+	if blob_hash=="NA":
+		return None 
         top_dir=blob_hash[-3::].lstrip('0') 
         if top_dir=="": 
                 top_dir='0' 
@@ -77,19 +80,20 @@ def parse_subject(subject,lines):
         deviceMotion_rest_list=[]
         hr_list_rest=[]
         #headers 
-        pedometer_header="startDate,endDate,numberOfSteps,distance,floorsAscended,floorsDescended" 
-        acceleration_walk_header="timestamp,x,y,z" 
-        acceleration_rest_header="timestamp,x,y,z"  
-        deviceMotion_walk_header="timestamp,useAcceleration_x,userAcceleration_y,userAcceleration_z,magneticField_x,magneticField_y,magneticField_z,magneticField_accuracy,gravity_x,gravity_y,gravity_z,rotationRate_x,rotationRate_y,rotationRate_z,attitude_x,attitude_y,attitude_z,attitude_w"
-        deviceMotion_rest_header="timestamp,useAcceleration_x,userAcceleration_y,userAcceleration_z,magneticField_x,magneticField_y,magneticField_z,magneticField_accuracy,gravity_x,gravity_y,gravity_z,rotationRate_x,rotationRate_y,rotationRate_z,attitude_x,attitude_y,attitude_z,attitude_w"
-        hr_header_walk="" 
-        hr_header_rest=""
+        pedometer_header="startDate\tendDate\tnumberOfSteps\tdistance\tfloorsAscended\tfloorsDescended" 
+        acceleration_walk_header="timestamp\tx\ty\tz" 
+        acceleration_rest_header="timestamp\tx\ty\tz"  
+        deviceMotion_walk_header="timestamp\tuseAcceleration_x\tuserAcceleration_y\tuserAcceleration_z\tmagneticField_x\tmagneticField_y\tmagneticField_z\tmagneticField_accuracy\tgravity_x\tgravity_y\tgravity_z\trotationRate_x\trotationRate_y\trotationRate_z\tattitude_x\tattitude_y\tattitude_z\tattitude_w"
+        deviceMotion_rest_header="timestamp\tuseAcceleration_x\tuserAcceleration_y\tuserAcceleration_z\tmagneticField_x\tmagneticField_y\tmagneticField_z\tmagneticField_accuracy\tgravity_x\tgravity_y\tgravity_z\trotationRate_x\trotationRate_y\trotationRate_z\tattitude_x\tattitude_y\tattitude_z\tattitude_w"
+        hr_header_walk="startDate\tendDate\tvalue\tsource\tunit" 
+        hr_header_rest="startDate\tendDate\tvalue\tsource\tunit" 
         for line1 in lines:                 
                 line1=line1.split('\t') 
                 if len(line1)<9: 
                         continue 
                 subject=line1[2] 
                 #get all 7 blobs 
+		print str(line1) -
                 ped_blob=line1[8]
                 accel_walk_blob=line1[9] 
                 dev_mo_walk_blob=line1[10] 
@@ -127,10 +131,11 @@ def parse_subject(subject,lines):
 				    startDate=str(entry.get("startDate")) 
 				    endDate=str(entry.get("endDate"))
 				    value=str(entry.get("value")) 
-				    source=str(entry.get("source")) 
+				    source=entry.get("source")
+				    source=str(source.encode("ascii","ignore"))
 				    unit=str(entry.get("unit")) 
 				    string_entry="\t".join([startDate,endDate,value,source,unit])
-				    hr_list_walk.append(str(entry)) 
+				    hr_list_walk.append(string_entry) 
                 except: 
                         #print "did not parse blob:"+str(hr_walk_blob) 
                         pass
@@ -146,10 +151,11 @@ def parse_subject(subject,lines):
 				    startDate=str(entry.get("startDate")) 
 				    endDate=str(entry.get("endDate"))
 				    value=str(entry.get("value")) 
-				    source=str(entry.get("source")) 
+				    source=entry.get("source")
+				    source=str(source.encode("ascii","ignore"))
 				    unit=str(entry.get("unit")) 
 				    string_entry="\t".join([startDate,endDate,value,source,unit])
-                                    hr_list_rest.append(str(entry)) 
+                                    hr_list_rest.append(string_entry) 
                 except: 
                         #print "did not parse blob:"+str(hr_rest_blob) 
                         pass
@@ -305,28 +311,27 @@ def parse_6min_walk(data):
 
 
 def main():
+	print "sys.argv:"+str(sys.argv) 
+	allowed=[table_dir+'cardiovascular-6MWT Displacement Data-v1.tsv'] 
 	if len(sys.argv)<2: 
-		print " please enter the name of the 6 minute walk table to be parsed"
-		exit() 
-		#This is not hard-coded since for parallelization purposes we might want to give a smaller subset table for parsing. 
-
-        f=sys.argv[1] 
-        allowed=[f,'cardiovascular-6MWT Displacement Data-v1.sorted'] 
+		allowed.append(table_dir+'cardiovascular-6MinuteWalkTest-v2.tsv') 
+	else: 
+		f=sys.argv[1] 
+		allowed.append(f) 
+	print str(allowed) 
 	for t in allowed:
 		print "TABLE:"+str(t)  
-		data=split_lines(walktables+t)
-                if t==f: 
-                        parse_6min_walk(data[1::]) 
-                elif t=='cardiovascular-6MWT Displacement Data-v1.sorted': 
+		data=split_lines(t)
+		if t.split('/')[-1]=='cardiovascular-6MWT Displacement Data-v1.tsv': 
                         d6min_disp_dict,d6min_disp_header=parse_6min_disp(data[1::])
                         for subject in d6min_disp_dict: 
                                 outf=open(walktables+"displacement/"+subject+'.tsv','w') 
 				#MAKE SURE WE ARE ADDING A NEWLINE AT THE END 
-				subject_entries=d6min_disp_subject[subject] 
+				subject_entries=d6min_disp_dict[subject] 
 				subject_entries.sort() 
                                 outf.write(d6min_disp_header+'\n'+'\n'.join(subject_entries)+'\n')
-                else: 
-                        continue 
+                else:
+                        parse_6min_walk(data[1::]) 
                 
 
 if __name__=="__main__": 

@@ -7,7 +7,7 @@ def main():
         data.remove('') 
 
     #identify the duplicated columns 
-    header="\t"+data[0]
+    header='\t'+data[0]
     header=header.split('\t') 
     dups=dict() 
     for i in range(len(header)): 
@@ -25,6 +25,9 @@ def main():
         recorded=dict() 
         if line==data[0]: 
             line='\t'+line 
+            first=True
+        else: 
+            first=False 
         line=line.split('\t') 
         out_line=[] 
         for i in range(len(line)): 
@@ -42,6 +45,8 @@ def main():
             else: 
                 out_line.append(line[i]) 
                 recorded[i]=1 
+        if first==True: 
+            out_line=out_line[1::] 
         outf.write('\t'.join(out_line)+'\n')
         
                 

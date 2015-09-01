@@ -1,3 +1,4 @@
+import sys 
 from Parameters import * 
 from helpers import * 
 from datetime import datetime
@@ -9,6 +10,7 @@ from dateutil.parser import parse
 #reads in a datafile and splits by line 
 #replace '\r\n' with '\n' for Linux & Windows compatible newline characters 
 def split_lines(fname): 
+	print str(fname) 
 	data=open(fname,'r').read().replace('\r\n','\n').split('\n')
 	if '' in data:
 		data.remove('') 
@@ -30,7 +32,38 @@ def parse_blob(blob_hash):
                 else: 
                         #print str(f) 
                         split_data=split_lines(full_dir+'/'+f)
-                        return split_data 
+                        return split_data
+
+#function to parse the file "cardiovascular-motionActivityCollector-v1.tsv" 
+def parse_motion_tracker_activity(data):
+        subject_dict=dict() 
+        counter=0 
+        for line1 in data[1::]: 
+                counter+=1 
+                if counter%1000==0: 
+                        print "COUNTER:"+str(counter) 
+                line1=line1.split('\t') 
+                if len(line1)<9: 
+                        continue 
+                subject=line1[2]
+                if subject not in subject_dict:
+                    subject_dict[subject]=[] 
+                blob=line1[8] 
+                if blob=="NA": 
+                        continue 
+                data1=parse_blob(blob)
+                if data1==None: 
+                        print str(blob) 
+                        continue 
+                if '' in data1: 
+                        data1.remove('')
+                for line in data1[1::]:
+                        if line.startswith('2015'): 
+				#add on any missing values! 
+				line=line.replace(',','\t') 
+                                subject_dict[subject].append(line) 
+        return subject_dict 
+        
 #function to parse the file "cardiovascular-motionTracker-v1.tsv"
 def parse_motion_tracker(data): 
         subject_dict=dict() 
@@ -47,8 +80,6 @@ def parse_motion_tracker(data):
                     subject_dict[subject]=[] 
                 blob=line1[8] 
                 if blob=="NA": 
-                        continue 
-                if blob in bad_blobs: 
                         continue 
                 data1=parse_blob(blob)
                 if data1==None: 
@@ -75,22 +106,32 @@ def parse_motion_tracker(data):
         return subject_dict 
 
 def main():
-        from Parameters import * 
+	from Parameters import * 
 	if table_dir.endswith('/')==False: 
 		table_dir=table_dir+'/' 
 	if synapse_dir.endswith('/')==False: 
 		synapse_dir=synapse_dir+'/' 
-	table_files=['cardiovascular-motionTracker-v1.tsv.sorted']
-	for t in table_files:
-                if t=='cardiovascular-motionTracker-v1.tsv.sorted':
-                        data=split_lines(table_dir+t)
+	for t in sys.argv[1::]: 
+                if t.__contains__('cardiovascular-motionTracker-v1.tsv'):
+                        data=split_lines(t)
                         motion_track_dict=parse_motion_tracker(data[1::])
-                else: 
+			for subject in motion_track_dict:
+				outf=open(motiontracker_tables+"/motiontracker/"+subject+'.tsv','w')
+				values=motion_track_dict[subject] 
+				values.sort() 
+				outf.write('\n'.join(values)+'\n')
+
+                elif t.__contains__('cardiovascular-motionActivityCollector-v1.tsv'):
+                        data=split_lines(t)
+                        motion_track_activity_dict=parse_motion_tracker_activity(data[1::])
+			for subject in motion_track_activity_dict:
+				outf=open(motiontracker_tables+"/motionactivity/"+subject+'.tsv','w')
+				values=motion_track_activity_dict[subject]
+				values.sort()
+				outf.write('\n'.join(values)+'\n')
+                else:
+                        print "Invalid table name entered:"+str(t) 
                         continue 
-        for subject in motion_track_dict:
-            outf=open(motiontrakcer_table+subject+'.tsv','w')
-            values=motion_track_dict[subject] 
-            values.sort() 
-            outf.write('\n'.join(values)+'\n') 
+            
 if __name__=="__main__": 
 	main() 

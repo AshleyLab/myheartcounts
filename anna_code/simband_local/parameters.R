@@ -1,5 +1,6 @@
 #contains parameters used in the feature extraction scripts 
-value_dir="/home/anna/scg/myheartcounts/anna_code/simband_local/values"
+#value_dir="/home/anna/scg/myheartcounts/anna_code/simband_local/values"
+value_dir="/srv/gsfs0/projects/ashley/jntorres/SIMBAND/values" 
 
 #data directories 
 accel_walk_dir<-'/srv/gsfs0/projects/ashley/common/myheart/grouped_timeseries/6minute_walk/acceleration_walk'

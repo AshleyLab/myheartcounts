@@ -117,9 +117,9 @@ def read_known_entries(table_dir,demographics,table_to_age_index,table_to_sex_in
         print str(table) 
         data=split_lines(table_dir+table)
         age_index=table_to_age_index[table] 
-        #print "age_index:"+str(age_index) 
+        print "age_index:"+str(age_index) 
         sex_index=table_to_sex_index[table] 
-        #print "sex_index:"+str(sex_index) 
+        print "sex_index:"+str(sex_index) 
         if data[0].__contains__("heartAgeDataAge"):
             isheartage=True
         else:
@@ -142,7 +142,7 @@ def read_known_entries(table_dir,demographics,table_to_age_index,table_to_sex_in
                 sex_entry.remove("NA") 
             sex_entry=[i.replace("HKBiologicalSex","") for i in sex_entry] 
             sex_entry=[i.replace("[","").replace("]","").replace('\"','')  for i in sex_entry] 
-            print str(age_entry) 
+            #print str(age_entry) 
             if isheartage: 
                 # since v.1.0.10, there are both years and numerical ages in the heart age file. Be able to parse both of them. 
                 age_entry_filtered=[] 
@@ -198,11 +198,13 @@ def add_demographic_entries(resolved_index_h,resolved_index_d,table_to_age_index
             del header[index-1]
         header=header[7::] 
 
-        for line in data: 
+        for line in data[1::]: 
             line=line.split('\t') 
             if len(line)<9: 
                 continue 
+            #print str(line) 
             for index in sorted(to_remove,reverse=True): 
+                #print str(index)+","+str(table) 
                 del line[index] 
             subject=line[2]
             line=line[8::] 
