@@ -3,6 +3,13 @@
 require(synapseClient)
 library(ggplot2)
 library(reshape2)
+library(maps)
+library(mapdata)
+library(mapproj)
+?map
+
+library(RColorBrewer)
+
 synapseLogin()
 setwd('/Users/Julian/Documents/AshleyLab/MHealth')
 
@@ -15,21 +22,27 @@ q
 
 satisfied <- synTableQuery('SELECT * FROM syn3420615')
 satisfiedTable <- satisfied@values
+satisfiedTable = read.table("/Users/Julian/Documents/AshleyLab/MHealth/2015-04-12/cardiovascular-satisfied-v1.tsv", head=T, sep="\t")
 diet <- synTableQuery("SELECT * FROM syn3420518")
 dietTable <- diet@values
+dietTable = read.table("/Users/Julian/Documents/AshleyLab/MHealth/2015-04-12/cardiovascular-Diet_survey_cardio-v1.tsv", head=T, sep="\t")
 satisfied_wState <- merge(satisfiedTable, zip_codes, by.x="zip", by.y="prefix")
+summary(satisfied.lm <- lm(satisfiedwith_life ~ state, data=satisfied_wState))
+
 num_per_state = data.frame(table(satisfied_wState$state))
 satisfaction_by_state = aggregate(satisfied_wState$satisfiedwith_life, list(satisfied_wState$state), mean, na.rm=T)
+
+pdf("SatisfyByState_0412.pdf", height=7, width=12)
+stateMapPlot(satisfaction_by_state, "Blues", "x", c(0,6.8,6.9,7,7.1,7.2,7.3,9), nameStateColumn="Group.1")
+legend("bottomright", legend=c("<6.8", "6.8 - 6.9", "6.9 - 7.0", "7.1 - 7.2", "7.2 - 7.3", ">7.3"), fill=brewer.pal(6, "Blues"), bg=NULL, box.lty=0)
+title(main="Average Satisfaction by State")
+dev.off()
+summary(lmer(satisfiedwith_life ~ 1 |state, data=satisfied_wState))
 
 ggplot(data=to_order_color) + geom_bar(aes(x=Group.1,y=x), fill=to_order_color$color, col="black", stat="Identity") + theme_bw() + theme(axis.text.x=element_text(angle=90, hjust=1, vjust=0.5), axis.title.x=element_blank()) + labs(y="Satisfied with Life?", title="Satisfaction by State") + ylim(0,10)
 ggsave("SatisfiedByState_barplot.pdf")
 
-library(maps)
-library(mapdata)
-library(mapproj)
-?map
 
-library(RColorBrewer)
 
 # ColorBrewerPalette
 colors_for_satisfaction = brewer.pal(5, "Blues")
@@ -381,10 +394,10 @@ countyIndsTotal$pop = countyIndsTotal$totalvalue/100
 
 
 pop_levels <- c(0,1,5,10,20,50,100,1000)
-png("TotalPopSamplesByCounty.png", height=1600, width=2000)
+pdf("TotalPopSamplesByCounty_0412.pdf", height=7, width=12)
 plotMapCounty(countyIndsTotal, "Blues", "pop", pop_levels, nameCountyCode="countyCode")
-title(main="Estimated Number of Stanford MHealth Participants per County", cex.main=4)
-legend("bottomright", legend=c("None", "<1", "1 to 5", "5 to 10","10 to 20", "20 to 50","50 to 100", ">100"), fill=c("grey",brewer.pal(length(ind_levels)-1, "Blues")), cex=3, box.lwd=0)
+title(main="Estimated Number of Stanford MHealth Participants per County", cex.main=1)
+legend("bottomright", legend=c("None", "<1", "1 to 5", "5 to 10","10 to 20", "20 to 50","50 to 100", ">100"), fill=c("grey",brewer.pal(length(ind_levels)-1, "Blues")), cex=1, box.lwd=0, box.lty=0)
 dev.off()
 
 ## Plot number of individuals by state
@@ -421,9 +434,67 @@ sleepTable = sleep@values
 sleep_satisfy = merge(sleepTable, satisfied_wState, by="healthCode")
 ## Lss than 14 hours of sleep on average
 sleep_satisfy = subset(sleep_satisfy, sleep_time < 14)
+summary(lm(satisfiedwith_life ~ sleep_time, data=sleep_satisfy))
+plot(satisfiedwith_life ~ sleep_time, data=sleep_satisfy)
 ind_sleep = aggregate(sleep_satisfy$sleep_time, list(sleep_satisfy$healthCode), mean)
 names(ind_sleep) = c("healthCode", "sleep_time")
-ind_sleep_zip = merge(ind_sleep, )
+ind_sleep_zip = merge(ind_sleep, unique_frame)
+
+countySleep = map3DigitZipToCounty(ind_sleep_zip$zip, ind_sleep_zip$sleep_time, census_table)
+plotMapCounty(countySleep, "Blues", "value", c(0,6,7,7.25,7.5,7.75,8,9,10), nameCountyCode="countyCode")
+ind_sleep_state = merge(ind_sleep, unique_frame_state)
+sleepState = aggregate(ind_sleep_state$sleep_time, list(ind_sleep_state$state), mean)
+names(sleepState) = c("state", "sleep_time")
+stateMapPlot(sleepState, "Blues", "sleep_time", c(0,6,6.5,7,7.5,7.75,8,10))
+
+## Diet Satisfy - look at sugar drinks, and fruits + veggies, and grains + fish + fruits + veggies
+
+diet_satisfy_state = merge(diet_satisfy, zip_codes, by.x="zip", by.y="prefix")
+diet_satisfy_state = subset(diet_satisfy_state, vegetable < 30, fruit < 20)
+## Veggies by State
+
+veggies_state = aggregate(diet_satisfy_state$vegetable, list(diet_satisfy_state$state), mean)
+stateMapPlot(veggies_state, "Greens", "x", c(0,1.5,1.75,2,2.25,5), nameStateColumn="Group.1")
+
+## Fruit and vegetables
+diet_satisfy_state$fruitveg = diet_satisfy_state$vegetable + diet_satisfy_state$fruit
+fruitveg_state = aggregate(diet_satisfy_state$fruitveg, list(diet_satisfy_state$state), mean, na.rm=T)
+pdf("FruitsVeggiesByState_0412.pdf", width=12, height=7)
+fruitveg_levels =c(0,2.5,2.75,3,3.25,3.5,5)
+stateMapPlot(fruitveg_state, "Greens", "x", fruitveg_levels, nameStateColumn="Group.1", state_lwd=2)
+legend("bottomright", fill=brewer.pal(length(fruitveg_levels)-1, "Greens"), legend=c("< 2.50", "2.50 - 2.75", "2.75 - 3.00", "3.00 - 3.25", "3.25 - 3.50", "> 3.50"), cex=1, bg=NULL, box.lwd=0, box.lty=0)
+title(main="Daily Cups of Fruits and Vegetables by State",cex.main=1)
+dev.off()
+names(fruitveg_state) = c("State", "Cups of Fruit and Vegetables")
+write.table(fruitveg_state, "FruitVeggieState.txt", sep="\t", row.names=F)
+summary(lm((fruit+vegetable)~state, data=diet_satisfy_state))
 
 
+MySummary = function(data, var, by, fun, range) {
+  thisvalue = aggregate(data[[var]], list(data[[by]]), fun)
+  thisvalue = subset(thisvalue, thisvalue$x>=range[1] & thisvalue$x<=range[2])
+  print(mean(thisvalue$x))
+  print(median(thisvalue$x))
+  print(sd(thisvalue$x))
+  print(range(thisvalue$x))
+  print(nrow(thisvalue))
+}
+
+MySummary(dietTable, "vegetable", "healthCode", mean, c(0,30))
+MySummary(dietTable, "fruit", "healthCode", mean, c(0,30))
+MySummary(dietTable, "grains", "healthCode", mean, c(0,30))
+MySummary(dietTable, "fish", "healthCode", mean, c(0,30))
+MySummary(dietTable, "sugar_drinks", "healthCode", mean, c(0,100))
+
+MySummary(satisfiedTable, "satisfiedwith_life", "healthCode", mean, c(0,10))
+
+data.frame(table(satisfiedTable$riskfactors1))
+
+diet_satisfy_state$less1veg = diet_satisfy_state$vegetable < 1
+veg_state = aggregate(diet_satisfy_state$less1veg, list(diet_satisfy_state$state), mean, na.rm=T)
+names(veg_state) = c("State", "PercLess1")
+cdc_veg = read.csv("../CDC_StateData/VegetablesByStateCDC.csv")
+cdc_veg_state = merge(veg_state, cdc_veg, by="State")
+cor(cdc_veg_state$PercLess1, cdc_veg_state$PercentLessThanOneVegetable)
+summary(lm(PercentLessThanOneVegetable ~ PercLess1, data=cdc_veg_state))
 
