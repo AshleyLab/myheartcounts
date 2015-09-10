@@ -42,7 +42,6 @@ dev.off()
 
 
 ### Time data
-
 time_use = subset(time, NumTotal>100)
 
 time_use$pWalk = time_use$NumWalking/time_use$NumTotal
@@ -363,7 +362,48 @@ cdc_active = read.csv("../CDC_StateData/exerciseCDCByState.csv")
 cdc_tracker = merge(pActive_state, cdc_active, by="State")
 
 
+### Let's do some general time series on the time data
 
+time$pWalk = time$NumWalking/time$NumTotal
+time$pStat = time$NumStationary/time$NumTotal
+time$pRun = time$NumRunning/time$NumTotal
+time$pCycle = time$NumCycling/time$NumTotal
+time$pAuto = time$NumAutomotive/time$NumTotal
+time$pActive = time$pRun + time$pCycle + time$pWalk
+time$pInactive = time$pStat + time$pAuto
 
+time$pActive[time$NumTotal<100] = NA
+
+time_pActive.acf = acf(time$pActive, na.action=na.pass, lag.max=60*24)
+plot(time_pActive.acf, xlim=c(0,100) )
+
+time_pActive.arima = arima(time$pActive)
+## ARIMA residuals merged with hours 
+resids_hour = data.frame(resid=as.numeric(time_pActive.arima$residual), hour=time$Hour)
+ggplot(aes(x=as.factor(hour), y=resid), data=resids_hour) + geom_boxplot() + theme_bw()
+require(graphics)
+tsdiag(time_pActive.arima)
+
+t.test(subset(resids_hour, hour==12)$resid, subset(resids_hour, hour==13 | hour==11)$resid)
+
+resids_fact.aov = aov(resid ~ as.factor(hour), data=resids_hour)
+TukeyHSD(resids_fact.aov)
+
+time_day = subset(time, Hour >= 6 & Hour <= 19)
+time_day.acf = acf(time_day$pActive, na.action=na.pass, lag.max=60*(19-6+1)*3)
+
+time$dayhour = paste(time$Month, time$Day, time$Hour, sep="_")
+
+active_agg = aggregate(time$pActive, list(time$dayhour), mean, na.omit=T)
+names(active_agg) = c("DayHour", "pActive")
+hourly_acf = acf(active_agg$pActive, na.action=na.pass, lag.max=100)
+month_day_hour_f = data.frame(t(unname(data.frame(strsplit(as.character(active_agg$DayHour), split="_")))))
+names(month_day_hour_f) = c("Month", "Day", "Hour")
+hourly_arima = arima(active_agg$pActive)
+month_day_hour_f$resid = hourly_arima$residual
+
+ggplot(data=month_day_hour_f) + geom_boxplot(aes(x=as.factor(as.numeric(as.character(Hour))), y=resid)) + theme_bw()
+
+t.test(subset(month_day_hour_f, Hour==12)$resid, subset(month_day_hour_f, Hour==11 | Hour == 13)$resid)
 
 

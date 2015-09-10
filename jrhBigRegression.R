@@ -11,12 +11,17 @@ names(zip_codes) = c("prefix", "state_code", "state")
 satisfiedTable = read.table("/Users/Julian/Documents/AshleyLab/MHealth/2015-04-12/cardiovascular-satisfied-v1.tsv", head=T, sep="\t")
 dietTable = read.table("/Users/Julian/Documents/AshleyLab/MHealth/2015-04-12/cardiovascular-Diet_survey_cardio-v1.tsv", head=T, sep="\t")
 hearttable = read.table("/Users/Julian/Documents/AshleyLab/MHealth/2015-04-12/cardiovascular-2-APHHeartAge-7259AC18-D711-47A6-ADBD-6CFCECDED1DF-v1.tsv", head=T, sep="\t")
-sixmin = read.table("../2015-04-12/6minWalk_healthCode_steps.tsv", head=T, sep="\t")
+sixmin = read.table("/Users/Julian/Documents/AshleyLab/MHealth/2015-04-12/6minWalk_healthCode_steps.tsv", head=T, sep="\t")
 
-
-
+activ_sleep = read.table("/Users/Julian/Documents/AshleyLab/MHealth/2015-04-12/cardiovascular-ActivitySleep-v1.tsv", sep="\t")
+six_table = read.table("/Users/Julian/Documents/AshleyLab/MHealth/2015-04-12/cardiovascular-6MinuteWalkTest-v2.tsv", sep="\t")
+day_one = read.table("/Users/Julian/Documents/AshleyLab/MHealth/2015-04-12/cardiovascular-day_one-v1.tsv",sep="\t")
 # Individual motion data
 indiv_all = read.table("/Users/Julian/Documents/AshleyLab/MHealth/2015-04-12/indMotion0412.txt", sep="\t", head=T)
+daily_check = read.table("/Users/Julian/Documents/AshleyLab/MHealth/2015-04-12/cardiovascular-daily_check-v1.tsv" ,sep="\t", head=T)
+
+dayone_hcode = c(dietTable$healthCode, activ_sleep$healthCode, day_one$healthCode, satisfiedTable$healthCode, day_one$healthCode)
+
 
 # Remove people with less than 12 hours of data:
 indiv = subset(indiv_all, SecTotal > 3600*12)
