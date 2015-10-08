@@ -1,12 +1,12 @@
 ### Motion Tracker Data Analysis
-setwd("/Users/Julian/Documents/AshleyLab/MHealth/MotionTrackData")
+setwd("/Users/Julian/Documents/AshleyLab/MHealth/MotionTrackData0412")
 # Read in individual data
 
-indiv_all = read.table("mFileIndParse.txt", sep="\t", head=T)
+indiv_all = read.table("/Users/Julian/Documents/AshleyLab/MHealth/2015-04-12/indMotion0412.txt", sep="\t", head=T)
 
 # Read in time data
 
-time = read.table("mFileTimeParse.txt", sep="\t", head=T)
+time = read.table("/Users/Julian/Documents/AshleyLab/MHealth/2015-04-12/timeMotion0412.txt", sep="\t", head=T)
 
 ## Individual Data Analysis
 
@@ -23,7 +23,7 @@ indiv$pCycle = indiv$SecCycling/indiv$SecTotal
 indiv$pAuto = indiv$SecAutomotive/indiv$SecTotal
 
 # Basic Stats on the Total Information Collected
-pdf("BasicMotionTrackStats.pdf", height=10, width=10)
+pdf("BasicMotionTrackStats0412.pdf", height=10, width=10)
 par(mfrow=c(2,2))
 hist((indiv$SecWalking+indiv$SecCycling + indiv$SecRunning)/3600, breaks=100, main="Hours Active, Total", ylab="Number of Individuals", xlab="Hours Active", col="lightblue")
 hist(indiv$SecStationary/3600, breaks=100, main="Hours Stationary, Total", ylab="Number of Individuals", xlab="Hours Stationary", col="lightblue")
@@ -32,7 +32,7 @@ hist(indiv$SecTotUnk/3600, breaks=100, main="Hours Recorded, Total", ylab="Numbe
 dev.off()
 
 ## Basic Stats on the Proportions of Time doing Things
-pdf("PropMotionTrackStats.pdf", height=10, width=10)
+pdf("PropMotionTrackStats0412.pdf", height=10, width=10)
 par(mfrow=c(2,2))
 hist((indiv$pWalk+indiv$pCycle + indiv$pRun), breaks=50, main="Proportion Time Active", ylab="Number of Individuals", xlab="Proportion Active", col="lightblue", xlim=c(0,1))
 hist(indiv$pStat, breaks=100, main="Proportion Time Stationary", ylab="Number of Individuals", xlab="Proportion Stationary", col="lightblue",xlim=c(0,1))
@@ -42,7 +42,6 @@ dev.off()
 
 
 ### Time data
-
 time_use = subset(time, NumTotal>100)
 
 time_use$pWalk = time_use$NumWalking/time_use$NumTotal
@@ -50,7 +49,8 @@ time_use$pStat = time_use$NumStationary/time_use$NumTotal
 time_use$pRun = time_use$NumRunning/time_use$NumTotal
 time_use$pCycle = time_use$NumCycling/time_use$NumTotal
 time_use$pAuto = time_use$NumAutomotive/time_use$NumTotal
-
+time_use$pActive = time_use$pRun + time_use$pCycle + time_use$pWalk
+time_use$pInactive = time_use$pStat + time_use$pAuto
 hist(time_use$pWalk)
 hist(time_use$pRun)
 hist(time_use$pAuto)
@@ -58,13 +58,22 @@ hist(time_use$pCycle)
 hist(time_use$pStat)
 
 ggplot(aes(x=Hour), data=time_use) + geom_histogram(binwidth=1, fill="grey55", col="white") + xlim(c(0,23)) + theme_bw() + labs(y="Count of Times with >100 Observations", x="Hour of the Day", title="Hours of Day with >100 Motion Tracker Observations")
-ggsave("HoursOfDay_hist.pdf", height=6, width=8)
+ggsave("HoursOfDay_hist0412.pdf", height=6, width=8)
+
+
+ggplot(aes(x=as.factor(Hour), y=NumTotal), data=time_use) + geom_boxplot() + ylim(c(0,1300)) + theme_bw() + labs(y="Number of Observations Each Minute", x="Hour of the Day", title="Number of Observations")
+ggsave("HoursOfDay_boxplot0412.pdf", height=6, width=8)
+
+
 
 time_to_plot = data.frame(pActive =time_use$pActive, pInactive=time_use$pInactive, Hour = time_use$Hour, HourMinute=time_use$Hour*60+ time_use$Minute)
 time_melt = melt(time_to_plot, id.vars=c("Hour", "HourMinute"))
 levels(time_melt$variable) = c("Active", "Inactive")
-ggplot(aes(x=as.factor(Hour), y=value), data=time_melt) + facet_grid(~variable) + geom_boxplot() + theme_bw() + labs(x="Hour of the Day", y="Proportion of Individuals in Given State Each Minute") 
-ggsave("DayActiveVsInactive.pdf", height=7, width=12)
+ggplot(aes(x=as.factor(Hour), y=value), data=time_melt) + facet_grid(~variable) + geom_boxplot(outlier.size=0.75) + theme_bw() + labs(x="Hour of the Day", y="Proportion of Individuals in Given State Each Minute") 
+ggsave("DayActiveVsInactive0420.pdf", height=7, width=12)
+ggplot(aes(x=as.factor(Hour), y=value, fill=variable), data=time_melt) + geom_boxplot(outlier.size=0.75) + theme_bw() + labs(x="Hour of the Day", y="Proportion of Individuals in Given State Each Minute") + theme(legend.title=element_blank())
+ggsave("DayActiveVsInactive_samePlot.pdf", height=7, width=9)
+
 
 
 ggplot(aes(x=as.factor(HourMinute), y=value), data=time_melt) + facet_grid(~variable) + geom_point(alpha=0.05) + theme_bw() + labs(x="Minute of the Day", y="Proportion of Individuals in Given State Each Minute") + theme(panel.grid=element_blank(), axis.text.x=element_blank(), axis.ticks.x=element_blank())
@@ -167,6 +176,37 @@ ggsave("HistogramOfEarliestDay.pdf", height=6, width=9)
 
 heartage = synTableQuery("SELECT * FROM syn3458936")
 hearttable = heartage@values
+
+## Get summary of heart values
+
+bp_sum = aggregate(hearttable$bloodPressureInstruction, list(hearttable$healthCode), mean)
+bp_sum = subset(bp_sum, x>60 & x<220)
+mean(bp_sum$x)
+median(bp_sum$x)
+sd(bp_sum$x)
+range(bp_sum$x)
+
+chol_sum = aggregate(hearttable$heartAgeDataTotalCholesterol, list(hearttable$healthCode), mean)
+chol_sum = subset(chol_sum, x>100 & x < 400)
+mean(chol_sum$x)
+median(chol_sum$x)
+sd(chol_sum$x)
+range(chol_sum$x)
+
+hdl_sum = aggregate(hearttable$heartAgeDataHdl, list(hearttable$healthCode), mean)
+hdl_sum = subset(hdl_sum, x>0 & x<200)
+mean(hdl_sum$x)
+median(hdl_sum$x)
+sd(hdl_sum$x)
+range(hdl_sum$x)
+
+ldl_sum = aggregate(hearttable$heartAgeDataLdl, list(hearttable$healthCode), mean)
+ldl_sum = subset(ldl_sum, x>0 & x<300)
+mean(ldl_sum$x)
+median(ldl_sum$x)
+sd(ldl_sum$x)
+range(ldl_sum$x)
+
 hearttable_motion = merge(hearttable, indiv, by="healthCode")
 hearttable_motion$pActive = hearttable_motion$pWalk + hearttable_motion$pRun + hearttable_motion$pCycle
 
@@ -217,11 +257,11 @@ ggsave("BP_vsRunWalk.pdf", width=8, height=5)
 
 #3 Lets add six minute data
 
-sixmin = read.table("../SixMinute/cardiovascular-6MinuteWalkTest-v2_withSteps_filtered.tsv", head=T, sep="\t")
+sixmin = read.table("../2015-04-12/6minWalk_healthCode_steps.tsv", head=T, sep="\t")
 bp_use_estim_six = merge(bp_use_estim_u, sixmin, by="healthCode")
-summary(bp_sixmin.lm <- lm(bp_estim ~ distance + pActive + age + gender, data=bp_use_estim_six))
+summary(bp_sixmin.lm <- lm(bp_estim ~ numberOfSteps + pActive + age + gender, data=bp_use_estim_six))
 
-summary(bp_sixmin_log.lm <- lm(bp_estim ~ distance + log(pActive) + age + gender, data=bp_use_estim_six))
+summary(bp_sixmin_log.lm <- lm(bp_estim ~ numberOfSteps + log(pActive) + age + gender, data=bp_use_estim_six))
 
 
 
@@ -236,7 +276,7 @@ map_runwalk_log.lm = lm(MAP_estim ~ log(pActive) + age + gender, data=map_use_es
 summary(map_runwalk_log.lm)
 
 map_estim_six = merge(map_use_estim_u, sixmin, by="healthCode")
-map_six.lm <- lm(MAP_estim ~ distance + pActive + age +gender, data=map_estim_six)
+map_six.lm <- lm(MAP_estim ~ distance + pActive + age*gender, data=map_estim_six)
 summary(map_six.lm)
 
 map_six_log.lm <- lm(MAP_estim ~ distance + age + log(pActive)+gender, data=map_estim_six)
@@ -291,9 +331,10 @@ indiv_zip$pActive = indiv_zip$pWalk + indiv_zip$pRun + indiv_zip$pCycle
 summary(active_state.lm <- lm(pActive ~ state, data=indiv_zip))
 pActive_state = aggregate(indiv_zip$pActive, list(indiv_zip$state), mean)
 names(pActive_state)=c("State", "pActive")
-pdf("ProportionActivityByState.pdf", height=6, width=10)
+pdf("ProportionActivityByState0412.pdf", height=7, width=12)
 stateMapPlot(pActive_state, "Blues", "pActive", c(0,0.06,0.07,0.08,0.09,0.10,1), nameStateColumn="State")
-legend("bottomright", legend=c("<6%", "6%-7%", "7%-8%", "8%-9%", "9%-10%", ">10%"), fill=brewer.pal(6, "Blues"), box.lty=0, bg=NULL)
+legend("bottomright", legend=c("< 6%", "6% - 7%", "7% - 8%", "8% - 9%", "9% - 10%", "> 10%"), fill=brewer.pal(6, "Blues"), box.lty=0, bg=NULL)
+title(main="Average Proportion of Time Spent Active by State")
 dev.off()
 
 pAuto_state = aggregate(indiv_zip$pAuto, list(indiv_zip$state), mean)
@@ -312,4 +353,57 @@ pdf("BP_byState.pdf", height=6, width=10)
 stateMapPlot(bp_state_u, "Reds", "bp", c(100,120,121,122,123,124,150), nameStateColumn="state")
 legend("bottomright", legend=c("<120", "120 - 121", "122 - 123", "123 - 124",">124"), fill=brewer.pal(5,"Reds"), box.lty=0, bg=NULL)
 dev.off()
+
+
+## Read in CDC Activity Data
+
+cdc_active = read.csv("../CDC_StateData/exerciseCDCByState.csv")
+
+cdc_tracker = merge(pActive_state, cdc_active, by="State")
+
+
+### Let's do some general time series on the time data
+
+time$pWalk = time$NumWalking/time$NumTotal
+time$pStat = time$NumStationary/time$NumTotal
+time$pRun = time$NumRunning/time$NumTotal
+time$pCycle = time$NumCycling/time$NumTotal
+time$pAuto = time$NumAutomotive/time$NumTotal
+time$pActive = time$pRun + time$pCycle + time$pWalk
+time$pInactive = time$pStat + time$pAuto
+
+time$pActive[time$NumTotal<100] = NA
+
+time_pActive.acf = acf(time$pActive, na.action=na.pass, lag.max=60*24)
+plot(time_pActive.acf, xlim=c(0,100) )
+
+time_pActive.arima = arima(time$pActive)
+## ARIMA residuals merged with hours 
+resids_hour = data.frame(resid=as.numeric(time_pActive.arima$residual), hour=time$Hour)
+ggplot(aes(x=as.factor(hour), y=resid), data=resids_hour) + geom_boxplot() + theme_bw()
+require(graphics)
+tsdiag(time_pActive.arima)
+
+t.test(subset(resids_hour, hour==12)$resid, subset(resids_hour, hour==13 | hour==11)$resid)
+
+resids_fact.aov = aov(resid ~ as.factor(hour), data=resids_hour)
+TukeyHSD(resids_fact.aov)
+
+time_day = subset(time, Hour >= 6 & Hour <= 19)
+time_day.acf = acf(time_day$pActive, na.action=na.pass, lag.max=60*(19-6+1)*3)
+
+time$dayhour = paste(time$Month, time$Day, time$Hour, sep="_")
+
+active_agg = aggregate(time$pActive, list(time$dayhour), mean, na.omit=T)
+names(active_agg) = c("DayHour", "pActive")
+hourly_acf = acf(active_agg$pActive, na.action=na.pass, lag.max=100)
+month_day_hour_f = data.frame(t(unname(data.frame(strsplit(as.character(active_agg$DayHour), split="_")))))
+names(month_day_hour_f) = c("Month", "Day", "Hour")
+hourly_arima = arima(active_agg$pActive)
+month_day_hour_f$resid = hourly_arima$residual
+
+ggplot(data=month_day_hour_f) + geom_boxplot(aes(x=as.factor(as.numeric(as.character(Hour))), y=resid)) + theme_bw()
+
+t.test(subset(month_day_hour_f, Hour==12)$resid, subset(month_day_hour_f, Hour==11 | Hour == 13)$resid)
+
 

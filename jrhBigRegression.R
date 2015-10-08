@@ -4,17 +4,24 @@ require(plyr)
 require(MASS)
 
 # Diet, Satisfaction, HeartAge, etc. 
-
+setwd("/Users/Julian/Documents/AshleyLab/MHealth/2015-04-12")
 cv_health = read.table("../2015-04-12/cardiovascular-risk_factors-v1.tsv", sep="\t", head=T)
 zip_codes = read.table("../zips_expanded.txt", sep="\t")
 names(zip_codes) = c("prefix", "state_code", "state")
 satisfiedTable = read.table("/Users/Julian/Documents/AshleyLab/MHealth/2015-04-12/cardiovascular-satisfied-v1.tsv", head=T, sep="\t")
 dietTable = read.table("/Users/Julian/Documents/AshleyLab/MHealth/2015-04-12/cardiovascular-Diet_survey_cardio-v1.tsv", head=T, sep="\t")
 hearttable = read.table("/Users/Julian/Documents/AshleyLab/MHealth/2015-04-12/cardiovascular-2-APHHeartAge-7259AC18-D711-47A6-ADBD-6CFCECDED1DF-v1.tsv", head=T, sep="\t")
+sixmin = read.table("/Users/Julian/Documents/AshleyLab/MHealth/2015-04-12/6minWalk_healthCode_steps.tsv", head=T, sep="\t")
 
-
+activ_sleep = read.table("/Users/Julian/Documents/AshleyLab/MHealth/2015-04-12/cardiovascular-ActivitySleep-v1.tsv", sep="\t")
+six_table = read.table("/Users/Julian/Documents/AshleyLab/MHealth/2015-04-12/cardiovascular-6MinuteWalkTest-v2.tsv", sep="\t")
+day_one = read.table("/Users/Julian/Documents/AshleyLab/MHealth/2015-04-12/cardiovascular-day_one-v1.tsv",sep="\t")
 # Individual motion data
 indiv_all = read.table("/Users/Julian/Documents/AshleyLab/MHealth/2015-04-12/indMotion0412.txt", sep="\t", head=T)
+daily_check = read.table("/Users/Julian/Documents/AshleyLab/MHealth/2015-04-12/cardiovascular-daily_check-v1.tsv" ,sep="\t", head=T)
+
+dayone_hcode = c(dietTable$healthCode, activ_sleep$healthCode, day_one$healthCode, satisfiedTable$healthCode, day_one$healthCode)
+
 
 # Remove people with less than 12 hours of data:
 indiv = subset(indiv_all, SecTotal > 3600*12)
@@ -41,6 +48,12 @@ lots_of_merge$age = as.numeric(difftime("2015-04-08",strptime(lots_of_merge$hear
 lots_of_merge$cholDrug = grepl("1", lots_of_merge$medications_to_treat)
 lots_of_merge$bpDrug = grepl("2", lots_of_merge$medications_to_treat)
 
+cv_health$cholDrug = grepl("1", cv_health$medications_to_treat)
+cv_health$bpDrug = grepl("2", cv_health$medications_to_treat)
+cv_health$hasDisease = cv_health$heart_disease != "[10]" & cv_health$heart_disease != "[]"
+cv_health$onDrug = cv_health$medications_to_treat != "[4]" & cv_health$medications_to_treat !="[]"
+
+cv_health_collapse = ddply(cv_health, .(healthCode), summarize, hasDisease = max(hasDisease), onDrug=max(onDrug))
 
 # Filter age to reasonable values
 lots_of_merge$age[lots_of_merge$age > 120]= NA
@@ -217,8 +230,13 @@ satisfaction_fruit.lm <- lm(satisfaction ~ fruit + age*gender + ethnicity2, data
 summary(satisfaction_fruit.lm)
 satisfaction_smokingHistory.lm <- lm(satisfaction ~ smokingHistory + age*gender + ethnicity2, data=dsams_collapse)
 summary(satisfaction_smokingHistory.lm)
-satisfaction_pActive.lm <- lm(satisfaction ~ pActive + age*gender + ethnicity2, data=dsams_collapse)
+satisfaction_pActive.lm <- lm(satisfaction ~ pActive*age + age*gender + ethnicity2, data=dsams_collapse)
 summary(satisfaction_pActive.lm)
+AIC(satisfaction_pActive.lm)
+satisfaction_pActive_age.lm <- lm(satisfaction ~ pActive + age*gender + ethnicity2, data=dsams_collapse)
+summary(satisfaction_pActive_age.lm)
+AIC(satisfaction_pActive_age.lm)
+
 satisfaction_sugar_drinks.lm <- lm(satisfaction ~ sugar_drinks + age*gender + ethnicity2, data=dsams_collapse)
 summary(satisfaction_sugar_drinks.lm)
 satisfaction_satisfaction.lm <- lm(satisfaction ~ satisfaction + age*gender + ethnicity2, data=dsams_collapse)
@@ -235,9 +253,9 @@ satisfaction_zip.lm <- lm(satisfaction ~ zip + age*gender + ethnicity2, data=dsa
 summary(satisfaction_zip.lm)
 satisfaction_state.lm <- lm(satisfaction ~ state + age*gender + ethnicity2, data=dsams_collapse)
 summary(satisfaction_state.lm)
-satisfaction_numberOfSteps.lm <- lm(satisfaction ~ numberOfSteps + age*gender + ethnicity2, data=dsams_collapse)
+satisfaction_numberOfSteps.lm <- lm(satisfaction ~ numberOfSteps*age + age*gender + ethnicity2, data=dsams_collapse)
 summary(satisfaction_numberOfSteps.lm)
-satisfaction_distance.lm <- lm(satisfaction ~ distance + age*gender + ethnicity2, data=dsams_collapse)
+satisfaction_distance.lm <- lm(satisfaction ~ distance*age + age*gender + ethnicity2, data=dsams_collapse)
 summary(satisfaction_distance.lm)
 satisfaction_hasDisease.lm <- lm(satisfaction ~ hasDisease + age*gender + ethnicity2, data=dsams_collapse)
 summary(satisfaction_hasDisease.lm)
@@ -275,4 +293,13 @@ satisfy_step_n.lm = step(baseSatisfy_n.lm, scope=list(upper=fullSatisfy_n.lm, lo
 summary(satisfy_step_n.lm)
 length(resid(satisfy_step_n.lm))
 
+satisfy_user = aggregate(satisfiedTable$satisfiedwith_life,by=list(satisfiedTable$healthCode), mean)
+median(satisfy_user$x, na.rm=T)
 
+unique_state = unique(data.frame(healthCode = diet_satisfy_state$healthCode, state=diet_satisfy_state$state))
+num_inds = data.frame(table(unique_state$healthCode))
+u_state_n = merge(unique_state, num_inds, by.x="healthCode", by.y="Var1")
+u_state_n$weight = 1/u_state_n$Freq
+state_counts = aggregate(u_state_n$weight, list(u_state_n$state), sum)
+names(state_counts) = c("state", "count")
+state_counts = subset(state_counts, !state%in%c("Armed Forces Americas", "Armed Forces Europe", "Armed Forces Asia", "Virgin Islands", "Puerto Rico", "Armed Forces Pacific", "Guam"))
