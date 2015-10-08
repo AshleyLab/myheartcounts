@@ -5,8 +5,9 @@ load("motion_tracker_concatenated")
 #empirically, pca on DWT showed that using the level 7 transform gives the best data separation by components 1,2,3 
 full_weekday_dwt<-full_weekday_dwt[[7]]
 full_weekend_dwt<-full_weekend_dwt[[7]]
-rownames(full_weekday_timeseries)=rownames(full_weekday_fourier)
-rownames(full_weekend_timeseries)=rownames(full_weekend_fourier)
+browser() 
+#rownames(full_weekday_timeseries)=rownames(full_weekday_fourier)
+#rownames(full_weekend_timeseries)=rownames(full_weekend_fourier)
 #get the set of subjects that havet data in each of the data frames 
 subjects1<-rownames(full_weekday_activity_state)
 subjects2<-rownames(full_weekday_arima)

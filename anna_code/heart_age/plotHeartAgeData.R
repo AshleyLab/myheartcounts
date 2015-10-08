@@ -1,13 +1,13 @@
 rm(list=ls())
 library(data.table)
 library(ggplot2)
+library(reshape2)
 data=data.frame(read.table("HeartAgeRelatedPredictions.txt",sep="\t",header=TRUE,row.names = 1))
 
 #TRUE AGE VS PREDICTED HEART AGE ! 
 agecor=round(cor(data$Age,data$HeartAge),2)
 maintitle=paste("True Age vs Heart Age: R^2=",agecor,sep=" ")
-p<-ggplot(data, aes(Age, HeartAge),ylab="Predicted Heart Age")
-p + geom_point(aes(fill="blue"),alpha = 1/5,pch=22,color="black")+ xlab("True Subject Age") +
+p<-ggplot(data, aes(Age, HeartAge),ylab="Predicted Heart Age") + geom_point(aes(fill="blue"),alpha = 1/5,pch=22,color="black")+ xlab("True Subject Age") +
   ylab("Predicted Heart Age") +
   ggtitle(maintitle)+
   ylim(20,100)+
@@ -15,8 +15,9 @@ p + geom_point(aes(fill="blue"),alpha = 1/5,pch=22,color="black")+ xlab("True Su
   geom_abline(slope=1, intercept=0)+
   geom_abline(slope=0.96,intercept=6.07)+
   theme(axis.text.x=element_text(colour="black"))+
-  theme(axis.text.y=element_text(colour="black"))
-
+  theme(axis.text.y=element_text(colour="black"))+
+  theme_bw(20)
+p
 bmi_bad=c(39.3765138408,
           29.1242857143,
           31.5171592938,
@@ -55,3 +56,39 @@ glife$RiskFactors4<-factor(glife$RiskFactors4)
 
 ggplot(glife, aes(LifetimeRisk95, fill = RiskFactors3)) + geom_density(alpha = 0.2)+  theme(axis.text.x=element_text(colour="black"))+
   theme(axis.text.y=element_text(colour="black"))+ylab('Densitry')+xlab('Calculated Lifetime Risk')+labs(colour="Self-Perceived Risk")
+
+#PLOT AGE VS 10 YEAR & LIFETIME RISK, FOR PLOT ON CALCULATED VS PERCEIVED RISK 
+meta=data.frame(read.table("NonTimeSeries.txt",header=T,sep='\t'))
+merged=merge(meta,data,by.x="Subject",by.y="row.names")
+moi=subset(merged,select=c("X10YearRisk","LifetimeRisk75","RiskFactors1","RiskFactors2","RiskFactors3","RiskFactors4","Age.y"))
+p <- ggplot(moi, aes(factor(RiskFactors1), X10YearRisk))+
+     geom_boxplot()+
+     theme_bw(20)+
+     xlab("Self-Predicted 10-Year Risk : 1(Not at all) to 5 (Extremely)")+
+     ylab("Calculated 10-Year Risk")+
+     ylim(c(0,40))+
+     annotate("text", x = 4, y =35, label = "Pearson cor.=0.18",size=10)
+
+p <- ggplot(moi, aes(factor(RiskFactors2), X10YearRisk))+
+  geom_boxplot()+
+  theme_bw(20)+
+  xlab("Self-Predicted 10-Year Risk Relative to Others: 1(Lower) to 5 (Higher)")+
+  ylab("Calculated 10-Year Risk")+
+  ylim(c(0,40))+
+  annotate("text", x = 4, y =35, label = "Pearson cor.=0.09",size=10)
+
+p <- ggplot(moi, aes(factor(RiskFactors3), LifetimeRisk75))+
+  geom_boxplot()+
+  theme_bw(20)+
+  xlab("Self-Predicted Lifetime Risk: 1(Not at all) to 5 (Extremely)")+
+  ylab("Calculated Lifetime Risk")+
+  ylim(c(0,40))+
+  annotate("text", x = 4, y =35, label = "Pearson cor.=0.09",size=10)
+
+p <- ggplot(moi, aes(factor(RiskFactors4), X10YearRisk))+
+  geom_boxplot()+
+  theme_bw(20)+
+  xlab("Self-Predicted Lifetime Risk Relative to Others: 1(Much Lower) to 5 (Much Higher)")+
+  ylab("Calculated Lifetime Risk")+
+  ylim(c(0,40))+
+  annotate("text", x = 4, y =35, label = "Pearson cor.=0.15",size=10)

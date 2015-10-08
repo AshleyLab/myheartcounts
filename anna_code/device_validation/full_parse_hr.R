@@ -1,22 +1,23 @@
 rm(list=ls())
 library(XML)
 library(ggplot2)
+library(reshape2)
 
 #READ IN STATE CHANGES FILE (i.e. START AND END TIME FOR EACH ACTIVITY)
-states=data.frame(read.table("states.csv",header=T,sep='\t',stringsAsFactors=FALSE,row.names=1))
+states=data.frame(read.table("states2.csv",header=T,sep='\t',stringsAsFactors=FALSE,row.names=1))
 states$startTime=strptime(as.character(states$startTime),"%Y%m%d%H%M%S")
 states$endTime=strptime(as.character(states$endTime),"%Y%m%d%H%M%S")
 states$startTime=as.POSIXct(states$startTime,tz="PDT")
 states$endTime=as.POSIXct(states$endTime,tz="PDT")
 
 #READ IN GOLD STANDARD DATA 
-gold_standard_det=data.frame(read.table("gold_standard_details.csv",header=T,sep='\t',stringsAsFactors = FALSE))
+gold_standard_det=data.frame(read.table("gold_standard_details_2.csv",header=T,sep='\t',stringsAsFactors = FALSE))
 names(gold_standard_det)=c("gold_standard_startDate","gold_standard_energy","gold_standard_hr")
 gold_standard_det$gold_standard_startDate=strptime(as.character(gold_standard_det$gold_standard_startDate),"%Y%m%d%H%M%S")
 gold_standard_det$gold_standard_startDate=as.POSIXct(gold_standard_det$gold_standard_startDate,tz="PDT")
 
 #READ IN BASIS DATA 
-basis=data.frame(read.table("basis.csv",sep="\t",header=T,stringsAsFactors = FALSE))
+basis=data.frame(read.table("basis_2.csv",sep="\t",header=T,stringsAsFactors = FALSE))
 names(basis)=c("basis_startDate","basis_energy","basis_gsr","basis_hr","basis_temp","basis_steps")
 basis$basis_startDate=strptime(as.character(basis$basis_startDate),"%Y-%m-%d %H:%M")
 basis$basis_startDate=as.POSIXct(basis$basis_startDate, tz = "PDT") 
@@ -35,7 +36,7 @@ apple_steps_startDate=c()
 apple_steps_endDate=c() 
 
 #build apple data frame 
-apple_xml=xmlToList(xmlParse("export.xml"))
+apple_xml=xmlToList(xmlParse("export_2.xml"))
 for(i in 1:length(apple_xml))
 {
 if(is.na(apple_xml[[i]]["type"]))
@@ -63,8 +64,8 @@ apple_energy_endDate=c(apple_energy_endDate,apple_xml[[i]]["endDate"])
 else if (cur_type=="HKQuantityTypeIdentifierStepCount")
 {
   apple_steps=c(apple_steps,as.numeric(apple_xml[[i]][["value"]]))
-  apple_steps_startDate=c(apple_energy_startDate,apple_xml[[i]]["startDate"])
-  apple_steps_endDate=c(apple_energy_endDate,apple_xml[[i]]["endDate"])
+  apple_steps_startDate=c(apple_steps_startDate,apple_xml[[i]]["startDate"])
+  apple_steps_endDate=c(apple_steps_endDate,apple_xml[[i]]["endDate"])
   
 }
 }
@@ -80,20 +81,82 @@ apple_energy_df$apple_energy_startDate=strptime(as.character(apple_energy_df$app
 apple_energy_df$apple_energy_endDate=strptime(as.character(apple_energy_df$apple_energy_endDate),"%Y%m%d%H%M%S")
 apple_energy_df$apple_energy_startDate=as.POSIXct(apple_energy_df$apple_energy_startDate,tz="PDT")
 apple_energy_df$apple_energy_endDate=as.POSIXct(apple_energy_df$apple_energy_endDate,tz="PDT")
-
 apple_steps_df=data.frame(apple_steps,apple_steps_startDate,apple_steps_endDate)
 apple_steps_df$apple_steps_startDate=strptime(as.character(apple_steps_df$apple_steps_startDate),"%Y%m%d%H%M%S")
 apple_steps_df$apple_steps_endDate=strptime(as.character(apple_steps_df$apple_steps_endDate),"%Y%m%d%H%M%S")
 apple_steps_df$apple_steps_startDate=as.POSIXct(apple_steps_df$apple_steps_startDate,tz="PDT")
 apple_steps_df$apple_steps_endDate=as.POSIXct(apple_steps_df$apple_steps_endDate,tz="PDT")
 
+#TODO: THIS WILL VARY BY ANALYSIS -- START OR END DATE USED? 
+apple_hr_df$apple_hr_startDate=apple_hr_df$apple_hr_endDate
+apple_energy_df$apple_energy_startDate=apple_energy_df$apple_energy_endDate
+apple_steps_df$apple_steps_startDate=apple_steps_df$apple_steps_endDate
 #TODO:THE TIMEPOINTS MAY BE 1 MINUTE OR SO OFF ACROSS THE DIFFERENT DEVICES; COMPUTE AUTOCORRELATION TO ALIGN ALL TIMES
+
+#FITBIT DATA 
+fitbit=data.frame(read.table("fitbit_2.csv",sep='\t',header=TRUE,stringsAsFactors = FALSE))
+fitbit$Date=as.POSIXct(strptime(fitbit$Date,"%m/%d/%Y %H:%M:%S"),tz="PDT")
+names(fitbit)=c("fitbit_date","fitbit_hr","fitbit_energy","fitbit_steps")
 
 #BIN THE DATA BY ACTIVITY TYPE 
 merged=merge(basis,apple_hr_df,by.x="basis_startDate",by.y="apple_hr_startDate",all=TRUE)
 merged=merge(merged,gold_standard_det,by.x="basis_startDate",by.y="gold_standard_startDate",all=TRUE)
 merged=merge(merged,apple_energy_df,by.x="basis_startDate",by.y="apple_energy_startDate",all=TRUE)
 merged=merge(merged,apple_steps_df,by.x="basis_startDate",by.y="apple_steps_startDate",all=TRUE)
+merged=merge(merged,fitbit,by.x="basis_startDate",by.y="fitbit_date",all=TRUE)
+
+
+#PLOT!! 
+mdf<- melt(merged, id="basis_startDate",measure=c("apple_hr","basis_hr","gold_standard_hr","fitbit_hr"))  # convert to long format
+#mdf$date=strptime(as.character(mdf$date),"%Y-%m-%d %H:%M")
+gold_standard=data.frame(read.table("gold_standard_subject2.csv",header=T,sep='\t',stringsAsFactors = FALSE))
+gold_standard$Time=strptime(as.character(gold_standard$Time),"%Y%m%d%H%M%S")
+gold_standard$Time=as.POSIXct(gold_standard$Time,tz="PDT")
+last=as.POSIXct(strptime(as.character("20150904075800"),"%Y%m%d%H%M%S"),tz="PDT")
+first=as.POSIXct(strptime(as.character("20150904071400"),"%Y%m%d%H%M%S"),tz="PDT")
+
+p=ggplot(data=mdf,
+         aes(x=basis_startDate, y=value, colour=variable)) + geom_line() +geom_point(data=gold_standard,aes(Time,HR,color="gold_standard_hr_steady_state"),size=5)+theme_bw(20)+theme(axis.text = element_text(size = 18),
+                                                                                                                                                           legend.key = element_rect(fill = "navy"),
+                                                                                                                                                           legend.text=element_text(size=18),
+                                                                                                                                                           legend.background = element_rect(fill = "white"),
+                                                                                                                                                           legend.position = c(0.14, 0.80),
+                                                                                                                                                           panel.grid.major = element_blank(),
+                                                                                                                                                           panel.grid.minor = element_blank(),
+                                                                                                                                                           axis.title=element_text(size=18,face="bold"))+annotate("text", x = states$startTime+50, y = rep(200,length(states$startTime)), label = rownames(states),size=8)+xlab("Time")+ylab("Heart Rate (bpm)")+ scale_fill_discrete(name="Device")+geom_vline(data=states, linetype=4, aes(xintercept=as.numeric(endTime)) )+xlim(c(first,last))+ scale_color_manual(values=c("#FF0000", "#66FF33", "#0000FF","#CC9900","#CC9900"))
+p
+mdf<- melt(merged, id="basis_startDate",measure=c("apple_energy","basis_energy","gold_standard_energy","fitbit_energy"))  # convert to long format
+#mdf$date=strptime(as.character(mdf$date),"%Y-%m-%d %H:%M")
+gold_standard=data.frame(read.table("gold_standard_subject2.csv",header=T,sep='\t',stringsAsFactors = FALSE))
+gold_standard$Time=strptime(as.character(gold_standard$Time),"%Y%m%d%H%M%S")
+gold_standard$Time=as.POSIXct(gold_standard$Time,tz="PDT")
+last=as.POSIXct(strptime(as.character("20150904075800"),"%Y%m%d%H%M%S"),tz="PDT")
+first=as.POSIXct(strptime(as.character("20150904071400"),"%Y%m%d%H%M%S"),tz="PDT")
+
+p=ggplot(data=mdf,
+         aes(x=basis_startDate, y=value, colour=variable)) + geom_line() +geom_point(data=gold_standard,aes(Time,ENERGY,color="gold_standard_energy_steady_state"),size=5)+theme_bw(20)+theme(axis.text = element_text(size = 18),
+                                                                                                                                                                                      legend.key = element_rect(fill = "navy"),
+                                                                                                                                                                                      legend.text=element_text(size=18),
+                                                                                                                                                                                      legend.background = element_rect(fill = "white"),
+                                                                                                                                                                                      legend.position = c(0.14, 0.80),
+                                                                                                                                                                                      panel.grid.major = element_blank(),
+                                                                                                                                                                                      panel.grid.minor = element_blank(),
+                                                                                                                                                                                      axis.title=element_text(size=18,face="bold"))+annotate("text", x = states$startTime+50, y = rep(20,length(states$startTime)), label = rownames(states),size=8)+xlab("Time")+ylab("Kcal")+ scale_fill_discrete(name="Device")+geom_vline(data=states, linetype=4, aes(xintercept=as.numeric(endTime)) )+xlim(c(first,last))+ scale_color_manual(values=c("#FF0000", "#66FF33", "#0000FF","#CC9900","#CC9900"))
+p
+
+
+mdf<- melt(merged, id="basis_startDate",measure=c("apple_steps","basis_steps","fitbit_steps"))  # convert to long format
+#mdf$date=strptime(as.character(mdf$date),"%Y-%m-%d %H:%M")
+last=as.POSIXct(strptime(as.character("20150904075800"),"%Y%m%d%H%M%S"),tz="PDT")
+first=as.POSIXct(strptime(as.character("20150904071400"),"%Y%m%d%H%M%S"),tz="PDT")
+
+p=ggplot(data=mdf,
+         aes(x=basis_startDate, y=value, colour=variable))+ geom_line()+theme_bw(20)+theme(axis.text = element_text(size = 18), legend.key = element_rect(fill = "navy"),legend.text=element_text(size=18),
+                                                                                      legend.background = element_rect(fill = "white"),
+                                                                                      legend.position = c(0.14, 0.80),                                                                                                                                                                                              panel.grid.major = element_blank(),
+                                                                                      panel.grid.minor = element_blank(),
+                                                                                      axis.title=element_text(size=18,face="bold"))+annotate("text", x = states$startTime+50, y = rep(200,length(states$startTime)), label = rownames(states),size=8)+xlab("Time")+ylab("Steps")+ scale_fill_discrete(name="Device")+geom_vline(data=states, linetype=4, aes(xintercept=as.numeric(endTime)) )+scale_color_manual(values=c("#FF0000", "#66FF33", "#0000FF"))+xlim(c(first,last))
+p
 
 #SITTING 
 sit1_start=states['Sit1','startTime']

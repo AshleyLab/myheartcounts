@@ -7,7 +7,7 @@ weekday_dir<-'/srv/gsfs0/projects/ashley/common/myheart/grouped_timeseries/motio
 weekend_dir<-'/srv/gsfs0/projects/ashley/common/myheart/grouped_timeseries/motiontracker_sampled/weekend'
 
 #age, sex, other categorical information 
-metadata<-'/srv/gsfs0/projects/ashley/common/myheart/results/Non_timeseries_data_07012014.tsv'
+metadata<-'/srv/gsfs0/projects/ashley/common/myheart/results/NonTimeSeries_10022015.txt'
 
 #Pedometer for QC 
 pedometer_dir<-'/srv/gsfs0/projects/ashley/common/myheart/grouped_timeseries/6minute_walk/pedometer'

@@ -1,0 +1,227 @@
+282e4f18-79bf-4499-8301-bceb34e6b153.tsv	
+034be618-a998-4219-913d-66513efc4a80.tsv	
+f8cd29ef-2386-457b-b30e-76c74c56de78.tsv	
+eb7ec390-e2dc-4d59-8b31-136d6c626e04.tsv	
+a42a3c5f-1dfd-41af-bfed-a9fddf86d5e6.tsv	
+523f7b11-26d6-4506-b59c-4f406f9a8a00.tsv	(null)	Health
+2e79095e-a012-4f54-b42e-e3e78649e191.tsv	
+dd528c69-2ee8-4bbc-8944-4e31a1ccf256.tsv	
+c0d01112-9844-491d-9208-04f689f3ddde.tsv	(null)	Health
+7a2f263b-f9cb-40ec-aeff-9f9fb96a8236.tsv	
+c49c0e93-16af-41cf-9353-2535b52ffa79.tsv	
+db6fada0-cd80-4f24-b2c6-0d787dc8e632.tsv	
+36bf76ab-2498-4998-889e-69b9c155f5a9.tsv	
+1a000a44-d9b3-44d8-baad-662e2f36490a.tsv	
+e95511ba-897e-4b19-9975-ea61e12ce59a.tsv	
+366815e5-991e-4084-b880-de870802fcb5.tsv	iGluco
+5f3dae06-637f-4433-a8f5-6bdfd34d2a24.tsv	
+9f6f2e04-2c82-43cf-9873-52368ae7b6ca.tsv	iGluco
+2873e02f-ced9-4472-b0c5-527a1edf4b51.tsv	
+6f088b3c-3db1-49ea-8fe2-256ab1f7421e.tsv	
+e9f5baad-2193-418b-8af0-3e61e512481b.tsv	(null)	Health	Glucose
+b1769ca3-ece4-4249-b85b-9803d8e66646.tsv	
+eebf6a41-4f4a-4d21-bd46-b3f641e09902.tsv	
+11cb2c55-5602-4bb1-a575-53c254fb941d.tsv	
+26695e95-1bee-43d6-9eda-40fff57121b9.tsv	Health
+cedbb909-bdb7-4eee-a6f7-bce64a94259f.tsv	
+9bf770cd-c370-4e2b-b190-b17dc7c3277c.tsv	
+2e9fb3e4-a83d-4d89-a607-f8fba4b0cc5c.tsv	iGluco
+3a435eb1-73b4-4237-a33f-db235eaeac86.tsv	Health
+a175ba8f-6b23-4746-8767-1c940c22c1be.tsv	
+b8eacce5-b602-41cf-b16d-c9b7b50a936d.tsv	
+05222306-443f-4266-aed6-433944875f12.tsv	
+c7bda0b1-a9b8-4579-8d21-cb32d8bf7002.tsv	
+5372067c-4544-409a-a864-49e7ea899632.tsv	
+30139a61-d3bb-42b7-82b0-4a4cec8db227.tsv	
+498db199-0720-4e51-ac35-3b9b16aaeab1.tsv	
+a8a90fd9-a154-4902-be29-8c1fa056ca5c.tsv	
+1b5af208-b607-4259-9b65-58d4d914d614.tsv	
+af2d7d16-cd78-4646-a5e6-48d67f1abacd.tsv	(null)
+6c42bcbb-a7b3-41c5-a462-a0b59a999454.tsv	Health
+d48eaf12-daac-40dd-8e38-c159432feb88.tsv	
+27861edd-62af-4339-9e1a-d56975e96ba4.tsv	Glucose
+08202046-930a-44bc-b03e-1cfc07dca58d.tsv	
+f90756e2-7b5b-4c99-ad37-572b4299c486.tsv	
+721cbee6-1c62-4c5c-a3b6-9fcddcdc6ce5.tsv	
+383e1eee-cf63-4c4c-9194-6100ff86e310.tsv	(null)	iGluco
+66cbab32-36af-4ad7-a252-732eb4e6f1b9.tsv	
+43eab35c-9ddb-489e-a93c-933d64da5d35.tsv	
+ecfc5531-30df-4496-b46e-8ca0b591c027.tsv	
+71837998-7c40-4776-8730-a7dec814d357.tsv	
+52cb2f4f-b852-4465-87e7-814c91d98638.tsv	
+7ec0d6ad-3690-4818-ba97-ebdf5f1954e8.tsv	
+9766761e-e3b8-49a1-9d11-bad7e9171810.tsv	
+a1e59edb-087e-4c77-8acb-9dafbf4c8402.tsv	
+005eb8bc-2f61-4fea-83e6-db7e83e819b2.tsv	
+8d645157-2cca-40f0-8bde-9c14b5ee4cad.tsv	
+6d63b6f4-7641-4c13-8e51-4605a42295b5.tsv	
+09e8d3c6-9230-4b6c-b287-47f77e05d1ad.tsv	
+4e2e2bf2-b176-4d70-86dd-45d127e48f1c.tsv	
+7bbfe704-95fc-43a1-9ada-29d8fc9e842e.tsv	
+6945eaef-c716-47aa-8177-9fe56a975fa3.tsv	
+5b4ff923-2429-41cb-b2d0-ef2bfa7da294.tsv	
+c321186c-e5ec-454c-8040-0b516f189a78.tsv	
+c5553c29-a8d0-43bb-a91c-2672a3703776.tsv	
+4610cd67-0057-4b8e-a7be-f62bcb30a78a.tsv	
+ebb2c02c-9339-4e84-93b6-0505fb97a92f.tsv	
+a1a8e506-febb-4cc2-b5e3-67d738fd5d5c.tsv	
+1c7e1c11-cf26-4b78-9438-c09038b2e379.tsv	
+cef6e5b2-06c7-4b28-ae15-959caacd3e8e.tsv	
+e5c9c6d6-324c-4590-b8ed-ef9c9f80f20d.tsv	(null)	iGluco
+1be339d6-b5c8-42ae-ad0f-048d6a7d5021.tsv	(null)
+48f19810-cc43-4b78-a39f-ac8927d24e96.tsv	
+59f3bc71-ad64-4a82-9589-f46078ec8b2f.tsv	
+50bd768d-2cf8-46a2-b833-258179495a83.tsv	
+05d113f0-a786-481d-b45c-52159ba95145.tsv	(null)	Health
+8103a976-d80c-4651-be28-e64966517d52.tsv	
+2d6925ec-ddeb-41ce-9285-78205572825a.tsv	
+fd5b8dd6-6bf6-4de5-932f-9fb73aca4c9c.tsv	
+f636e822-f697-42ad-a727-926c0fbe6427.tsv	
+fb3cf186-1abb-4510-a10e-fcfe660d114b.tsv	(null)	iGluco
+38f4dd1e-a583-46f5-9912-a4f473272b4e.tsv	(null)	Health
+6caab0a1-7d05-45ed-8f5f-5c5ce2bc768e.tsv	
+fae0c773-e800-4879-af62-5bb050506436.tsv	
+067b577b-6d77-40b1-8e80-bdc0e65235e3.tsv	Health
+bac0c647-b0f3-40dd-a316-eaa8dd6e7119.tsv	
+b2a84523-a423-460d-8186-74241c1b9e27.tsv	
+fbd170c8-6520-44e1-8f81-33ff1464a34b.tsv	
+daff1677-6073-4dc5-b6d7-a1d99340c46f.tsv	
+f25a5f9d-4e11-4c81-889f-1e2e174179eb.tsv	
+5af5d541-a5f9-448c-9e22-b7220c6cbd3e.tsv	
+8f051194-0103-4eb9-96e7-fe275ca611fb.tsv	
+c4ad0daf-dd40-4036-9e9a-cd90859c1d94.tsv	
+07357285-9310-4583-b47f-8e0e7346ab7d.tsv	
+c0bb84ad-2456-4295-bce9-0f1ad124e093.tsv	
+4864410c-a58e-448a-8781-2b5e57ae25d1.tsv	
+f7be2acf-52ef-4a40-a1b1-3a67b0298629.tsv	
+107c11a7-2e83-4396-8cbd-f60887c81a9f.tsv	
+07966d78-a3fc-470e-81d2-03221a44c8af.tsv	
+562c20b8-3ed2-4d29-86b0-ded9417d2ae2.tsv	
+4cb256ab-71f3-4bf7-a22f-de32d5c80cdd.tsv	
+d3a91385-56c7-42e9-b8cc-7fe61c2f206c.tsv	
+f1a55d68-63cf-4313-a19e-c6606c656e4d.tsv	
+a1461e7f-9a77-411f-9698-6dd6e5bed59b.tsv	(null)	Health	DiabetesPilot
+c80f3e3f-54e6-4085-a855-5f8bba436a66.tsv	
+573d48bb-5277-461d-a3eb-c408e7655c0b.tsv	
+b6c13e73-eb9b-4ced-8aac-9937ff605afd.tsv	
+30629115-9b31-498c-adc1-883fdf6231e8.tsv	
+91a5678d-a8dd-44bf-958b-2b2840730e05.tsv	
+be8060a9-1b56-4f42-8ba5-77f9577a5be1.tsv	(null)	Health
+a46dfa38-6c24-435b-aff0-305c508138c1.tsv	
+3c8fc696-ea03-4787-a1e9-b51010609bee.tsv	
+57dacbcd-f0f6-4f19-b8ce-065888cbf8f9.tsv	
+814b8523-de9e-4b3e-a2e6-7493990c0bd2.tsv	
+90248afb-5379-43de-a358-ddcbda6e4cb5.tsv	
+986074d2-885e-497a-8e70-c3f174a65702.tsv	
+9f521f43-7ae6-4f21-86e9-efd93a3670c6.tsv	
+a7ef011a-61bb-41f3-bb4f-53c353c40f15.tsv	
+931985d0-7a70-411f-88da-f7e4c87879aa.tsv	
+2e3b68f9-83ba-4192-bc7f-7a99ca633c54.tsv	
+91aac57d-a486-431e-b4a6-1722ab8921e5.tsv	
+909ada6e-37c9-42ff-96b5-25f21227243e.tsv	
+8b5fb705-cb74-4ae3-b1a6-88f289eb4129.tsv	iGluco
+63e84d20-0104-49cf-8c68-7b05a2a80ff8.tsv	(null)
+6325f4ae-9d33-426e-8f67-e1144f75cf15.tsv	Health
+5f54554a-0804-4d18-b45e-d560a843ba4d.tsv	(null)
+e3317b6e-48c7-40de-b969-82aff6f23f3b.tsv	(null)
+0c9f925e-42cc-4e97-8174-5d0fb623c800.tsv	(null)	Health
+c5d5d9e6-0494-4f70-9cb6-b3a83004c008.tsv	Health
+47c66e9b-0cd1-4c0c-845f-f4b92a9bb8b3.tsv	Health
+d7b8f16e-65e9-42dd-ab02-2faf51111af4.tsv	(null)	Diabetes Kit
+6c069ef6-d7e5-4d8b-b1c0-b6d38423b7cb.tsv	(null)
+3093af45-36f4-4d62-be55-a2ae7ff450d6.tsv	(null)
+5f43a1d4-c712-4447-9dc1-d0d74ff064d4.tsv	(null)
+4f64641d-e373-4a17-a158-becd88ef66e5.tsv	(null)
+816136cd-e17d-45b1-8ad0-777823a372a5.tsv	(null)
+caa5965a-361c-4589-b757-89ef88e0942d.tsv	(null)
+3e6de606-23ea-47f1-a1a9-1eb113a59044.tsv	Health
+1409afdf-3340-4056-b310-baa2b799a897.tsv	(null)
+71d5dd3a-117c-4b27-940e-13209b4cb628.tsv	(null)
+224c6bd2-1a01-46f3-aed9-11b11639aeb1.tsv	Health
+7771833e-585c-40ea-ae5e-66ac6e61ac5c.tsv	(null)
+63b123db-3e87-43bd-8d33-bfe4fc833bbe.tsv	(null)
+8ba40988-1ad5-438e-b71b-a2bfa37ca57b.tsv	(null)
+ab6f9b03-39e0-4cc0-8945-6fe5cac95eb5.tsv	(null)	Health
+730db075-ebc9-4811-bf80-e453f31f6d55.tsv	(null)
+9691b808-3e3c-4bc8-a478-3b5cbce15e81.tsv	(null)
+3776946b-7768-49a2-9e7d-e1630f0a355d.tsv	(null)
+124e5a96-54b2-4633-8ce1-a757a30e7bd8.tsv	(null)
+3e168bda-ddcb-4e8d-82a7-4a3ca3e7bf9e.tsv	(null)
+8a6e8c8c-f5d3-432d-909f-ad0697e9669f.tsv	Salud
+98c6415a-bcbf-4c98-8e2f-e4d1373bb600.tsv	iGluco
+22a775f6-cc37-4a71-88cb-46c9362c6d86.tsv	(null)
+39a94986-1fc9-4245-9645-427070e24686.tsv	Health
+8e05363c-8f3e-483f-acb3-b450c633ce0b.tsv	(null)	Health
+c0c53482-65e0-4787-87a8-bc52e50ecadd.tsv	(null)
+37855be4-d3ca-4efb-875f-14dd16b3fa22.tsv	Salud
+7efabb31-cd7a-4ce0-bc3c-9d447b44b453.tsv	Health
+a4558d76-4f57-4cdf-b39a-1123a0f3412f.tsv	(null)
+b8515d35-df20-47a5-b7cc-4aede24ba9b6.tsv	Health
+e8af7176-71fc-4791-ab8d-2d6eaef66835.tsv	(null)
+a26f29f4-f3a9-4615-a9e7-7d6b9efd5c95.tsv	Health
+670ce464-b660-4785-92af-1680ac804707.tsv	Health
+558fdd31-a574-40ea-a362-60c66c3a0250.tsv	(null)
+9a7346cd-b793-46f1-813d-5fb6d4111e15.tsv	(null)
+2a074019-d2e5-49fb-b8d8-d1a76a4630f1.tsv	(null)	iGluco
+6b8cdb95-4631-4439-8c37-8e683df3b1cc.tsv	(null)
+d82f1435-5f0b-460e-aebe-70cc8f6731c7.tsv	(null)
+cee8696b-c1a4-4a14-9239-d22a437e30bf.tsv	(null)
+d3e66414-e6f5-42bc-9fc4-437f112bcbdd.tsv	Glucose
+09b18a52-3f3b-4dfa-bb24-d2ee8b214b04.tsv	(null)
+ef2d96c2-11c3-457e-9840-63143c6f40ca.tsv	(null)
+de24a8d1-55de-410b-85bf-65cb7e05f71e.tsv	(null)
+7c80a927-bde9-4487-b1e8-55e87a21d75c.tsv	(null)
+d021f51a-bbef-4816-8308-9c0a09c43830.tsv	(null)
+60774fc5-8985-448a-b06d-424c8c07fd3e.tsv	(null)
+9b169b31-02d7-43b3-8d45-fd8213706a22.tsv	(null)
+1c7e1c11-cf26-4b78-9438-c09038b2e379.tsv	Health
+282e4f18-79bf-4499-8301-bceb34e6b153.tsv	Health
+2abc5ac6-3fa9-4595-83a6-76b41d5355d7.tsv	Health
+2e9fb3e4-a83d-4d89-a607-f8fba4b0cc5c.tsv	Health	iGluco
+36bf76ab-2498-4998-889e-69b9c155f5a9.tsv	Health
+38f4dd1e-a583-46f5-9912-a4f473272b4e.tsv	Health
+4cb256ab-71f3-4bf7-a22f-de32d5c80cdd.tsv	Health
+52cb2f4f-b852-4465-87e7-814c91d98638.tsv	Health
+55c371f3-b9c5-40f1-a0bd-abf9d1091328.tsv	iGluco
+5f3dae06-637f-4433-a8f5-6bdfd34d2a24.tsv	Health
+7bbfe704-95fc-43a1-9ada-29d8fc9e842e.tsv	Health
+a46dfa38-6c24-435b-aff0-305c508138c1.tsv	Health
+a8726d64-d682-4d01-92d1-8a796eb68fef.tsv	Health
+a8a90fd9-a154-4902-be29-8c1fa056ca5c.tsv	Health
+ab6f9b03-39e0-4cc0-8945-6fe5cac95eb5.tsv	Health
+bcc23bbf-6b12-4543-8270-6711c4fe8c16.tsv	Health
+be8060a9-1b56-4f42-8ba5-77f9577a5be1.tsv	Health
+c2de8ca4-6361-42c6-a2c8-ae0f741de410.tsv	Health
+e9f5baad-2193-418b-8af0-3e61e512481b.tsv	Health
+3db19df3-ff2b-4207-9770-59545116d0b0.tsv	Health
+ef2946c3-2075-45e9-9bb5-60f37776025f.tsv	Health
+52a9b1a1-c583-4fbe-bca6-c84e18a6f126.tsv	Health
+80f46d2c-aa5f-4ccd-8d2b-a565d58b681e.tsv	Health
+c628164e-43eb-44be-97a4-feb6e73bda4f.tsv	Health
+d2b354dc-eff0-4ef7-a8a0-a067df4527d1.tsv	Blood Glucose
+eb7ec390-e2dc-4d59-8b31-136d6c626e04.tsv	iGluco
+b1769ca3-ece4-4249-b85b-9803d8e66646.tsv	Health
+79980f6c-f5f4-4e4f-adde-e32444fe019e.tsv	Health
+211e9177-22a7-485a-96ae-06b447da128a.tsv	iGluco
+7efabb31-cd7a-4ce0-bc3c-9d447b44b453.tsv	Health
+034be618-a998-4219-913d-66513efc4a80.tsv	Health
+d253ae96-854c-4dbd-800f-5fe30d20a274.tsv	Health
+264b08d9-c4a2-4651-ae2f-87cc7b78ee65.tsv	Health
+1be339d6-b5c8-42ae-ad0f-048d6a7d5021.tsv	Health
+84c11eb5-170a-4b43-a1dc-095b92008f40.tsv	Health
+f448d761-3b6e-4aa5-9221-eee19f381410.tsv	Health
+670ce464-b660-4785-92af-1680ac804707.tsv	Health
+cee8696b-c1a4-4a14-9239-d22a437e30bf.tsv	Health
+88621745-6efc-4ca4-aa4c-1bfeda5b9365.tsv	iGluco
+215449ab-4df5-4245-ad89-74ee096f1864.tsv	Health
+b2a84523-a423-460d-8186-74241c1b9e27.tsv	Health
+c1108187-81a0-47f8-9aa7-0a469285903c.tsv	Health
+7008bee7-5a68-46a9-80a0-0f280df94f6d.tsv	iGluco
+26695e95-1bee-43d6-9eda-40fff57121b9.tsv	Health
+cedbb909-bdb7-4eee-a6f7-bce64a94259f.tsv	Health
+f636e822-f697-42ad-a727-926c0fbe6427.tsv	Health
+fb3cf186-1abb-4510-a10e-fcfe660d114b.tsv	iGluco
+c4ad0daf-dd40-4036-9e9a-cd90859c1d94.tsv	Health
+c0d01112-9844-491d-9208-04f689f3ddde.tsv	Health
+91fd1817-ebc5-48e9-96de-a73fbfce4404.tsv	Health
+0aaed47a-55c2-456b-a5ff-cbd2d9a5a0a7.tsv	Health

@@ -68,3 +68,6 @@ blob_headers['cardiovascular-motionActivityCollector-v1.tsv']="startTime\tActivi
 blob_headers['cardiovascular-HealthKitDataCollector-v1.tsv']="datetime\ttype\tvalue"
 blob_headers['cardiovascular-HealthKitWorkoutCollector-v1.tsv']="startTime\tendTime\ttype\tworkoutType\ttotal distance\tunit\tenergy consumed\tunit\tsource\tsourceIdentifier\tmetadata"
 blob_headers['cardiovascular-HealthKitSleepCollector-v1.tsv']="startTime\ttype\tcategory value\tvalue\tunit\tsource\tsourceIdentifier" 
+
+#IMPUTED AGE & SEX
+imputed=basedir+table_dir+"derived_age_sex_prediction.tsv" 
