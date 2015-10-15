@@ -19,7 +19,12 @@ features<-data.frame(cur_subject=character(),
 
 #############################################################################################
 #extract features for acceleration walk
-accel_walk_dir="/home/anna/scg2/grouped_timeseries/6minute_walk/acceleration_walk/"
+accel_walk_dir="/srv/gsfs0/projects/ashley/common/myheart/grouped_timeseries/6minute_walk/acceleration_walk/"
+accel_rest_dir="/srv/gsfs0/projects/ashley/common/myheart/grouped_timeseries/6minute_walk/acceleration_rest/"
+
+#accel_walk_dir="~/scg2/grouped_timeseries/6minute_walk/acceleration_walk/"
+#accel_rest_dir="~/scg2/grouped_timeseries/6minute_walk/acceleration_rest/"
+
 print("Analyzing motion acceleration data") 
 files <- list.files(path=accel_walk_dir, pattern="*.tsv", full.names=T, recursive=FALSE)
 if (length(args)==0)
@@ -33,12 +38,12 @@ if(endf > length(files))
 endf=length(files) 
 }
 startf=1
-endf=50 
+endf=50
 if(startf<= length(files))
 {
 gotfirst=FALSE
 for (i in startf:endf){
-  data<-na.omit(fread(files[i],header=F))
+  data<-na.omit(fread(files[i],header=T))
   cur_subject<-strsplit(files[i],"/")[[1]]
   cur_subject<-cur_subject[length(cur_subject)]
   cur_subject<-gsub(".tsv","",cur_subject)
@@ -47,6 +52,7 @@ for (i in startf:endf){
   delta<-diff(data$timestamp)
   changepoints<-which(delta %in% subset(delta,abs(delta)>changepoint_thresh))
   changepoints<-c(0,changepoints,length(data$timestamp))
+  
   for (j in 1:(length(changepoints)-1))
   {cur_segment=data[changepoints[j]:changepoints[j+1],]
 
@@ -65,7 +71,6 @@ for (i in startf:endf){
     #concatenate data frame for subjects 
     if(gotfirst==FALSE)
     {
-      browser() 
     walk_result_arima<-arima_features_multi(axis_data,cur_subject)
     walk_result_timeseries<-ts_features_multi(axis_data,fs,duration,cur_subject)
     walk_result_fourier<-fourier_transform_features_multi(axis_data,fs,duration,cur_subject) 
@@ -125,7 +130,7 @@ for (i in startf:endf){
   cur_subject<-cur_subject[length(cur_subject)]
   cur_subject<-gsub(".tsv","",cur_subject)
   print(cur_subject) 
-  setnames(data,c("V1","V2","V3","V4"),c("timestamp","x","y","z"))
+  #setnames(data,c("V1","V2","V3","V4"),c("timestamp","x","y","z"))
   #CHECK FOR THE CHANGEPOINTS 
   delta<-diff(data$timestamp)
   changepoints<-which(delta %in% subset(delta,abs(delta)>changepoint_thresh))

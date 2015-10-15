@@ -41,7 +41,7 @@ def parse_blob(blob_hash):
 
 #function to parse the table 'cardiovascular-6MWT Displacement Data-v1.tsv'
 def parse_6min_disp(data):
-        header="timestamp,direction,directionUnit,displacement,displacementUnit,altitude,horizontalAccuracy,verticalAccuracy" 
+        header="timestamp\tdirection\tdirectionUnit\tdisplacement\tdisplacementUnit\taltitude\thorizontalAccuracy\tverticalAccuracy" 
         subject_dict=dict() 
         for line1 in data:
                 #print str(line1) 
@@ -93,7 +93,7 @@ def parse_subject(subject,lines):
                         continue 
                 subject=line1[2] 
                 #get all 7 blobs 
-		print str(line1) -
+		print str(line1) 
                 ped_blob=line1[8]
                 accel_walk_blob=line1[9] 
                 dev_mo_walk_blob=line1[10] 
@@ -168,7 +168,7 @@ def parse_subject(subject,lines):
                                     x=str(entry.get("x"))
                                     y=str(entry.get("y")) 
                                     z=str(entry.get("z")) 
-                                    string_entry=','.join([timestamp,x,y,z])
+                                    string_entry='\t'.join([timestamp,x,y,z])
                                     acceleration_walk_list.append(string_entry)
                 except: 
                         #print "did not parse blob:"+str(accel_walk_blob) 

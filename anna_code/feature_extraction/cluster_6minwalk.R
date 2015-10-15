@@ -1,0 +1,5 @@
+library(data.table)
+library(ggplot2)
+load('6minwalk_merged_df')
+meta=data.frame(read.table("NonTimeSeries.txt",header=T,sep='\t'))
+c=kmeans(merged_df,6,iter.max=10)
