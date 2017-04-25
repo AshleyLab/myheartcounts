@@ -21,23 +21,25 @@ rm cleanup.sh.o*
 #REFORMAT AND CONCATENATE DATA FOR SUBJECTS 
 python split_tables_for_concat.py
 
-for i in `find 6minwalktables/ subset*`
+for i in `find 6minwalktables/subset*`
 do
 qsub -cwd -v fname=$i -V  concat_6min_walk_and_displacement.sh
 done 
 
 
-for i in `find healthkittables/ cardiovascular*`
+for i in `find healthkittables/cardiovascular*`
 do
 qsub -cwd -v fname=$i -V concat_healthkit.sh 
 done 
 
-for i in `find motiontrackertables/ cardiovascular*`
+for i in `find motiontrackertables/cardiovascular*`
 do
 qsub -cwd -v fname=$i -V concat_motiontracker.sh
 done
 
-for i in `find carddisptables/ cardiovascular*`
+for i in `find carddisptables/cardiovascular*`
 do
 qsub -cwd -v fname=$i -V concat_card_displacement.sh
 done 
+
+
