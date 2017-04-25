@@ -1,65 +1,105 @@
 rm(list=ls())
 library(data.table)
 library(ggplot2)
+source('helpers.R')
 data_sit=data.frame(read.table('diff_hr_sit',header=T,sep='\t'))
 dropout_sit=data.frame(read.table('dropped_hr_sit',header=T,sep='\t'))
+data_sit_batch2=data.frame(read.table('diff_hr_batch2_sit',header=T,sep='\t'))
+dropout_sit_batch2=data.frame(read.table('dropped_hr_batch2_sit',header=T,sep='\t'))
+data_sit=merge(data_sit,data_sit_batch2,by.x="row.names",by.y="row.names",all=TRUE)
+data_sit$Row.names=NULL 
+data_sit[data_sit>0.5]=0.5
+data_sit[data_sit< -0.5]=-0.5
+
+#dropout_sit
 
 data_walk=data.frame(read.table('diff_hr_walk',header=T,sep='\t'))
 dropout_walk=data.frame(read.table('dropped_hr_walk',header=T,sep='\t'))
+data_walk_batch2=data.frame(read.table('diff_hr_batch2_walk',header=T,sep='\t'))
+dropout_walk_batch2=data.frame(read.table('dropped_hr_batch2_walk',header=T,sep='\t'))
+data_walk=merge(data_walk,data_walk_batch2,by.x="row.names",by.y="row.names",all=TRUE)
+data_walk$Row.names=NULL 
+data_walk[data_walk>0.5]=0.5
+data_walk[data_walk< -0.5]=-0.5
+
 
 data_run=data.frame(read.table('diff_hr_run',header=T,sep='\t'))
 dropout_run=data.frame(read.table('dropped_hr_run',header=T,sep='\t'))
+data_run_batch2=data.frame(read.table('diff_hr_batch2_run',header=T,sep='\t'))
+dropout_run_batch2=data.frame(read.table('dropped_hr_batch2_run',header=T,sep='\t'))
+data_run=merge(data_run,data_run_batch2,by.x="row.names",by.y="row.names",all=TRUE)
+data_run$Row.names=NULL 
+data_run[data_run>0.5]=0.5
+data_run[data_run< -0.5]=-0.5
 
 data_bike=data.frame(read.table('diff_hr_bike',header=T,sep='\t'))
 dropout_bike=data.frame(read.table('dropped_hr_bike',header=T,sep='\t'))
+data_bike_batch2=data.frame(read.table('diff_hr_batch2_bike',header=T,sep='\t'))
+dropout_bike_batch2=data.frame(read.table('dropped_hr_batch2_bike',header=T,sep='\t'))
+data_bike=merge(data_bike,data_bike_batch2,by.x="row.names",by.y="row.names",all=TRUE)
+data_bike$Row.names=NULL 
+data_bike[data_bike>0.5]=0.5
+data_bike[data_bike< -0.5]=-0.5
+
 
 data_max=data.frame(read.table('diff_hr_max',header=T,sep='\t'))
 dropout_max=data.frame(read.table('dropped_hr_max',header=T,sep='\t'))
+data_max_batch2=data.frame(read.table('diff_hr_batch2_max',header=T,sep='\t'))
+dropout_max_batch2=data.frame(read.table('dropped_hr_batch2_max',header=T,sep='\t'))
+data_max=merge(data_max,data_max_batch2,by.x="row.names",by.y="row.names",all=TRUE)
+data_max$Row.names=NULL 
+data_max[data_max>0.5]=0.5
+data_max[data_max< -0.5]=-0.5
 
-# Notched box plot
-par(mfrow=c(2,5))
+data_sit=melt(data_sit) 
+data_walk=melt(data_walk)
+data_run=melt(data_run) 
+data_bike=melt(data_bike)
+data_max=melt(data_max)
+p1<-ggplot(data_sit,aes(variable,value))+
+  geom_boxplot()+
+  ylim(-0.5,0.5)+
+  theme_bw(20)+ 
+  xlab('Device')+
+  ylab('(Steady State BPM - Gold Std.)/Gold Std.')+
+  ggtitle("Heart Rate, Sit")+
+  theme(axis.text.x=element_text(angle = -90, hjust = 0))
 
-boxplot(data_sit,xlab="Device",ylab='Steady State BPM - Gold Std.',main="Heart Rate, Sit")
-boxplot(data_walk,xlab="Device",ylab='Steady State BPM - Gold Std.',main="Heart Rate, Walk")
-boxplot(data_run,xlab="Device",ylab='Steady State BPM - Gold Std.',main="Heart Rate, Run")
-boxplot(data_bike,xlab="Device",ylab='Steady State BPM - Gold Std.',main="Heart Rate, Bike")
-boxplot(data_max,xlab="Device",ylab='Steady State BPM - Gold Std.',main="Heart Rate, Max Test")
 
-boxplot(dropout_sit,xlab="Device",ylab='Fraction of time with lost data (per subject)',main="Data Loss, Sit")
-boxplot(dropout_walk,xlab="Device",ylab='Fraction of time with lost data (per subject)',main="Data Loss, Walk")
-boxplot(dropout_run,xlab="Device",ylab='Fraction of time with lost data (per subject)',main="Data Loss, Run")
-boxplot(dropout_bike,xlab="Device",ylab='Fraction of time with lost data (per subject)',main="Data Loss, Bike")
-boxplot(dropout_max,xlab="Device",ylab='Fraction of time with lost data (per subject)',main="Data Loss, Max")
+p2<-ggplot(data_walk,aes(variable,value))+
+  geom_boxplot()+
+  ylim(-0.5,0.5)+
+  theme_bw(20)+ 
+  xlab('Device')+
+  ylab('(Steady State BPM - Gold Std.)/Gold Std.')+
+  ggtitle("Heart Rate, walk")+
+  theme(axis.text.x=element_text(angle = -90, hjust = 0))
 
+p3<-ggplot(data_run,aes(variable,value))+
+  geom_boxplot()+
+  ylim(-0.5,0.5)+
+  theme_bw(20)+ 
+  xlab('Device')+
+  ylab('(Steady State BPM - Gold Std.)/Gold Std.')+
+  ggtitle("Heart Rate, run")+
+  theme(axis.text.x=element_text(angle = -90, hjust = 0))
 
-#ENERGY!
-data_sit=data.frame(read.table('diff_energy_sit',header=T,sep='\t'))
-dropout_sit=data.frame(read.table('dropped_energy_sit',header=T,sep='\t'))
+p4<-ggplot(data_bike,aes(variable,value))+
+  geom_boxplot()+
+  ylim(-0.5,0.5)+
+  theme_bw(20)+ 
+  xlab('Device')+
+  ylab('(Steady State BPM - Gold Std.)/Gold Std.')+
+  ggtitle("Heart Rate, bike")+
+  theme(axis.text.x=element_text(angle = -90, hjust = 0))
 
-data_walk=data.frame(read.table('diff_energy_walk',header=T,sep='\t'))
-dropout_walk=data.frame(read.table('dropped_energy_walk',header=T,sep='\t'))
+p5<-ggplot(data_max,aes(variable,value))+
+  geom_boxplot()+
+  ylim(-0.5,0.5)+
+  theme_bw(20)+ 
+  xlab('Device')+
+  ylab('(Steady State BPM - Gold Std.)/Gold Std.')+
+  ggtitle("Heart Rate, max")+
+  theme(axis.text.x=element_text(angle = -90, hjust = 0))
 
-data_run=data.frame(read.table('diff_energy_run',header=T,sep='\t'))
-dropout_run=data.frame(read.table('dropped_energy_run',header=T,sep='\t'))
-
-data_bike=data.frame(read.table('diff_energy_bike',header=T,sep='\t'))
-dropout_bike=data.frame(read.table('dropped_energy_bike',header=T,sep='\t'))
-
-data_max=data.frame(read.table('diff_energy_max',header=T,sep='\t'))
-dropout_max=data.frame(read.table('dropped_energy_max',header=T,sep='\t'))
-
-# Notched box plot
-par(mfrow=c(2,5))
-
-boxplot(data_sit,xlab="Device",ylab='Steady State Kcal - Gold Std.',main="Kcal, Sit")
-boxplot(data_walk,xlab="Device",ylab='Steady State Kcal - Gold Std.',main="Kcal, Walk")
-boxplot(data_run,xlab="Device",ylab='Steady State Kcal - Gold Std.',main="Kcal, Run")
-boxplot(data_bike,xlab="Device",ylab='Steady State Kcal - Gold Std.',main="Kcal, Bike")
-boxplot(data_max,xlab="Device",ylab='Steady State Kcal - Gold Std.',main="Kcal, Max Test")
-
-boxplot(dropout_sit,xlab="Device",ylab='Fraction of time with lost data (per subject)',main="Data Loss, Sit")
-boxplot(dropout_walk,xlab="Device",ylab='Fraction of time with lost data (per subject)',main="Data Loss, Walk")
-boxplot(dropout_run,xlab="Device",ylab='Fraction of time with lost data (per subject)',main="Data Loss, Run")
-boxplot(dropout_bike,xlab="Device",ylab='Fraction of time with lost data (per subject)',main="Data Loss, Bike")
-boxplot(dropout_max,xlab="Device",ylab='Fraction of time with lost data (per subject)',main="Data Loss, Max")
-
+multiplot(p1,p2,p3,p4,p5,cols=5)

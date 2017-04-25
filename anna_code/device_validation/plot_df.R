@@ -2,8 +2,8 @@ rm(list=ls())
 library(ggplot2)
 library(data.table)
 library(reshape2)
-fname="~/scg3/subject23/combined_23.tsv"
-state_name="~/scg3/subject23/states_23.tsv"
+fname="~/scg3/subject9_2/combined_9_2.tsv"
+state_name="~/scg3/subject9_2/DVSTUDY9_2.csv.STATES"
 Sys.setenv(TZ='GMT')
 #first=as.POSIXct(strptime(as.character("20150828070000"),"%Y%m%d%H%M%S"),tz="PDT")
 #last=as.POSIXct(strptime(as.character ("20150828083000"),"%Y%m%d%H%M%S"),tz="PDT")
@@ -27,7 +27,7 @@ p=ggplot(data=mdf,
         legend.key = element_rect(fill = "navy"),
         legend.text=element_text(size=18),
         legend.background = element_rect(fill = "white"),
-        legend.position = c(0.14, 0.80),
+        legend.position = c(0.10, 0.70),
         panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
         axis.title=element_text(size=18,face="bold"))+
@@ -51,7 +51,7 @@ p=ggplot(data=mdf,
         legend.key = element_rect(fill = "navy"),
         legend.text=element_text(size=18),
         legend.background = element_rect(fill = "white"),
-        legend.position = c(0.14, 0.80),
+        legend.position = c(0.14, 0.70),
         panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
         axis.title=element_text(size=18,face="bold"))+
@@ -74,7 +74,7 @@ p=ggplot(data=mdf,
         legend.key = element_rect(fill = "navy"),
         legend.text=element_text(size=18),
         legend.background = element_rect(fill = "white"),
-        legend.position = c(0.14, 0.80),
+        legend.position = c(0.14, 0.70),
         panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
         axis.title=element_text(size=18,face="bold"))+

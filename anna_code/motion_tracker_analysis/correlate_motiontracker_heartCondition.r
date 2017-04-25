@@ -1,7 +1,7 @@
 rm(list=ls()) 
 #LOAD THE HIERARCHICAL AND K-MEANS CLUSTERING OBJECTS 
-load("object_hc.d") 
-load("object_hc.delta") 
+#load("object_hc.d") 
+#load("object_hc.delta") 
 load("object_km.d") 
 load("object_km.delta") 
 

@@ -1,6 +1,7 @@
 rm(list=ls())
 library(data.table)
 library(ggplot2)
+
 predicted=data.frame(read.table('NonTimeSeries.txt',header=T,sep='\t'))
 observed=data.frame(read.table("Activity_states_weekday_weekend_total.tsv",header=T,sep='\t'))
 merged=merge(predicted,observed,by="Subject")

@@ -1,6 +1,7 @@
 import numpy
-
-data=open('all','r').read().split('\n')
+import sys 
+#data=open('all','r').read().split('\n')
+data=open(sys.argv[1],'r').read().split('\n') 
 while '' in data:
     data.remove('')
 
@@ -33,7 +34,7 @@ for i in range(1,len(data)):
     line=data[i]
     line=line.split('\t')
     #print str(line) 
-    subject=int(line[1])
+    subject=line[1]
     subjects.add(subject) 
 
     rawstate=line[2]
@@ -103,7 +104,8 @@ for i in range(1,len(data)):
     if gs_hr!="NA":
         if steady==True: 
             outf_steady.write('\t'.join(line)+'\n')
-
+        print str(line) 
+        print str(gs_hr) 
         gs_hr=float(gs_hr) 
         if hr_apple=="NA":
             state_to_dropout['apple'][subject][state]+=1
@@ -112,6 +114,9 @@ for i in range(1,len(data)):
                 state_to_diff['apple'][state].append('NA') 
             else: 
                 diffval=float(hr_apple)-gs_hr
+                #diffval=1
+                #if gs_hr > 0: 
+                #    diffval=(float(hr_apple)-gs_hr)/gs_hr
                 state_to_diff['apple'][state].append(diffval)
                 if diffval > 5:
                     beats_five['apple'][state]+=1
@@ -128,6 +133,9 @@ for i in range(1,len(data)):
                 state_to_diff['basis'][state].append('NA') 
             else: 
                 diffval=float(hr_basis)-gs_hr
+                #diffval=1
+                #if gs_hr >0: 
+                #    diffval=(float(hr_basis)-gs_hr)/gs_hr
                 state_to_diff['basis'][state].append(diffval)
                 if diffval > 5:
                     beats_five['basis'][state]+=1
@@ -137,15 +145,18 @@ for i in range(1,len(data)):
                 elif diffval/float(gs_hr)> 0.05:
                     beats_five_percent['basis'][state]+=1
                 
-        if (hr_fitbit=="NA") and (subject not in [1]):
+        if (hr_fitbit=="NA") and (subject not in ['1']):
             state_to_dropout['fitbit'][subject][state]+=1
-        if (subject not in [1]) and (steady==True): 
+        if (subject not in ['1']) and (steady==True): 
             if hr_fitbit=="NA": 
                 state_to_diff['fitbit'][state].append('NA') 
             else: 
                 #print "hr_fitbit:"+str(hr_fitbit) 
                 #print "gs_hr:"+str(gs_hr) 
                 diffval=float(hr_fitbit)-gs_hr
+                #diffval=1
+                #if gs_hr > 0: 
+                #    diffval=(float(hr_fitbit)-gs_hr)/gs_hr
                 state_to_diff['fitbit'][state].append(diffval)
                 if diffval >5:
                     beats_five['fitbit'][state]+=1
@@ -156,13 +167,16 @@ for i in range(1,len(data)):
                     beats_five_percent['fitbit'][state]+=1
         
     
-        if (hr_microsoft=="NA") and (subject not in [1,3]):
+        if (hr_microsoft=="NA") and (subject not in ['1','3']):
             state_to_dropout['microsoft'][subject][state]+=1
-        elif (subject not in [1,3]) and (steady==True): 
+        elif (subject not in ['1','3']) and (steady==True): 
             if hr_microsoft=="NA": 
                 state_to_diff['microsoft'][state].append('NA') 
             else: 
                 diffval=float(hr_microsoft)-gs_hr
+                #diffval=1
+                #if gs_hr >0: 
+                #    diffval=(float(hr_microsoft)-gs_hr)/gs_hr
                 state_to_diff['microsoft'][state].append(diffval)
                 if diffval > 5:
                     beats_five['microsoft'][state]+=1

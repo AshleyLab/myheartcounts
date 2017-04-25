@@ -106,6 +106,7 @@ def parse_inputs():
     
     for line in data[2::]: 
         line=line.split('\t') 
+        print str(line) 
         subject=line[0]
         subdict=dict()
         skip=False 
@@ -125,7 +126,7 @@ def parse_inputs():
                     continue # not sure how to handle individuals who identify as "Other"
             #make sure the values are within the allowed limits for analysis!!
             if label=="age":
-                value=int(value) 
+                value=int(round(float(value))) 
                 value=max([value,limits['age'][0]])
                 value=min([value,limits['age'][1]])
             elif label=="totalchol":

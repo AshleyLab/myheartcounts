@@ -6,11 +6,11 @@ library(scales)
 Sys.setenv(TZ='GMT')
 
 #THESE GET MODIFIED: 
-subjectnum="26"
+subjectnum="32"
 subject_dir=paste("/home/anna/scg3/subject",subjectnum,"/",sep="")
 fname=paste("export_",subjectnum,".xml",sep="")
-first=as.POSIXct(strptime(as.character("20151003120000"),"%Y%m%d%H%M%S"),tz="PDT")
-last=as.POSIXct(strptime(as.character( "20151003133000"),"%Y%m%d%H%M%S"),tz="PDT")
+first=as.POSIXct(strptime(as.character("20151007070000"),"%Y%m%d%H%M%S"),tz="PDT")
+last=as.POSIXct(strptime(as.character( "20151007083000"),"%Y%m%d%H%M%S"),tz="PDT")
 
 
 #READ IN APPLE DATA

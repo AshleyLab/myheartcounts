@@ -44,3 +44,28 @@ p<-ggplot(varvals,aes(factor(heart_disease),V2))+geom_boxplot()+theme_bw(20)+xla
 
 
 p<-ggplot(ma,aes(cluster,run))+geom_boxplot()+theme_bw(20)+xlab("Activity Cluster")+ylab("Running Heart Rate (bpm)")+scale_x_discrete(labels=c("Active","State Changer","Week. War.","Weekday Active","Couch Pot.","Couch Pot.","NA"))
+
+
+##GET THE EFFECT SIZES## 
+nontime$V1=row.names(nontime)
+df=merge(nontime,varvals,by="V1")
+df$heartAgeDataHypertension=factor(df$heartAgeDataHypertension)
+aov1=aov(V2~heartAgeDataHypertension,data=df)
+tk=TukeyHSD(aov1)
+
+df$vascular=factor(df$vascular)
+aov1=aov(V2~vascular,data=df)
+tk=TukeyHSD(aov1)
+
+
+df$jointProblem=factor(df$jointProblem)
+aov1=aov(V2~jointProblem,data=df)
+tk=TukeyHSD(aov1)
+
+df$chestPain=factor(df$chestPain)
+aov1=aov(V2~chestPain,data=df)
+tk=TukeyHSD(aov1)
+
+df$heart_disease=factor(df$heart_disease)
+aov1=aov(V2~heart_disease,data=df)
+tk=TukeyHSD(aov1)

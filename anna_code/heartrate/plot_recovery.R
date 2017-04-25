@@ -8,6 +8,6 @@ merged$jointProblem[merged$jointProblem %in% NA]=FALSE
 reversed=merged$delta1*-1
 merged$delta1[merged$delta1 > 0]=reversed[merged$delta1 > 0]
 
-p<-ggplot(merged,aes(factor(heartCondition),delta1))+geom_boxplot()+theme_bw(20)+xlab("Heart Condition (P=0.04)")+ylab("6 Min Walk Recovery HR")
+p<-ggplot(merged,aes(factor(heartCondition),delta1))+geom_boxplot()+theme_bw(20)+xlab("Heart Condition")+ylab("6 Min Walk Recovery HR")
 browser() 
-p<-ggplot(merged,aes(factor(jointProblem),delta1))+geom_boxplot()+theme_bw(20)+xlab("Joint Problem  (P=5.70e-3)")+ylab("6 Min Walk Recovery HR")
+p<-ggplot(merged,aes(factor(jointProblem),delta1))+geom_boxplot()+theme_bw(20)+xlab("Joint Problem")+ylab("6 Min Walk Recovery HR")

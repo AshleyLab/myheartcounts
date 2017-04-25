@@ -34,8 +34,9 @@ for i in range(1,len(data)):
     line=data[i]
     line=line.split('\t')
     print str(line) 
-    subject=int(line[1])
-    
+    #subject=int(line[1])
+    subject=line[1] 
+
     state=line[2]
     if state=="transition":
         continue 
@@ -73,9 +74,9 @@ for i in range(1,len(data)):
     
     if gs_hr!="NA":
         gs_hr=float(gs_hr) 
-        if hr_apple=="NA":
+        if (hr_apple=="NA") and (subject not in ["1_2","3_2"]):
             state_to_dropout['apple'][state]+=1
-        else:
+        elif (subject not in ["1_2","3_2"]):
             if steady==True:
                 diffval=abs(float(hr_apple)-gs_hr)
                 state_to_diff['apple'][state].append(diffval)
@@ -84,9 +85,9 @@ for i in range(1,len(data)):
                 if diffval/float(gs_hr)> 0.05:
                     beats_five_percent['apple'][state]+=1
         
-        if hr_basis=="NA":
+        if (hr_basis=="NA") and (subject not in ["1_2","3_2"]):
             state_to_dropout['basis'][state]+=1
-        else:
+        elif (subject not in ["1_2","3_2"]):
             if steady==True:
                 diffval=abs(float(hr_basis)-gs_hr)
                 state_to_diff['basis'][state].append(diffval)
@@ -95,9 +96,9 @@ for i in range(1,len(data)):
                 if diffval/float(gs_hr)> 0.05:
                     beats_five_percent['basis'][state]+=1
                 
-        if (hr_fitbit=="NA") and (subject not in [1]):
+        if (hr_fitbit=="NA") and (subject not in ["1","3_2"]):
             state_to_dropout['fitbit'][state]+=1
-        elif (subject not in [1]): 
+        elif (subject not in ["1","3_2"]): 
             if steady==True:
                 diffval=abs(float(hr_fitbit)-gs_hr)
                 state_to_diff['fitbit'][state].append(diffval)
@@ -107,9 +108,9 @@ for i in range(1,len(data)):
                     beats_five_percent['fitbit'][state]+=1
         
     
-        if (hr_microsoft=="NA") and (subject not in [1,3]):
+        if (hr_microsoft=="NA") and (subject not in ["1","3"]):
             state_to_dropout['microsoft'][state]+=1
-        elif (subject not in [1,3]): 
+        elif (subject not in ["1","3"]): 
             if steady==True:
                 diffval=abs(float(hr_microsoft)-gs_hr)
                 state_to_diff['microsoft'][state].append(diffval)
@@ -117,6 +118,7 @@ for i in range(1,len(data)):
                     beats_five['microsoft'][state]+=1
                 if diffval/float(gs_hr)> 0.05: 
                     beats_five_percent['microsoft'][state]+=1
+
 
 #WRITE THE RESULTS
 outf=open('diff_hr','w')
