@@ -97,23 +97,25 @@ def parse_healthkit_steps(file_path):
         return {}
     #get the duration of each activity by day
     tally_dict=dict()
-    for row in range(len(data)):
-        day=data['startTime'][row].date()
-        value=data['value'][row]
-        datatype=data['type'][row]
-        if day not in tally_dict:
-            tally_dict[day]=dict()
-        if datatype not in tally_dict[day]:
-            tally_dict[day][datatype]=value
-        else:
-            tally_dict[day][datatype]+=value
-    return tally_dict
-
+    try:
+        for row in range(len(data)):
+            day=data['startTime'][row].date()
+            value=data['value'][row]
+            datatype=data['type'][row]
+            if day not in tally_dict:
+                tally_dict[day]=dict()
+            if datatype not in tally_dict[day]:
+                tally_dict[day][datatype]=value
+            else:
+                tally_dict[day][datatype]+=value
+        return tally_dict
+    except:
+        return tally_dict 
 if __name__=="__main__":
     #TESTS for sherlock
     import pdb
     base_dir="/scratch/PI/euan/projects/mhc/data/synapseCache_v2/"
-    [motion_tracker_duration,motion_tracker_fractions]=parse_motion_activity(base_dir+"638/14145638/data-054aa9f4-cb94-4663-b3df-e98ef3421dcb.csv")
+    #[motion_tracker_duration,motion_tracker_fractions]=parse_motion_activity(base_dir+"638/14145638/data-054aa9f4-cb94-4663-b3df-e98ef3421dcb.csv")
     health_kit_data=parse_healthkit_steps(base_dir+"661/13540661/data-cdf78ca9-1094-46ff-b7b4-94b75aafc7fb.csv")
     pdb.set_trace() 
 

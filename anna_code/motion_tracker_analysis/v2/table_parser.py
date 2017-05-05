@@ -96,6 +96,8 @@ def parse_healthkit_data_collector(table_path,synapseCacheDir,subjects):
             continue
         else:
             blob_name=data_table['data'][row]
+            if blob_name=="NA":
+                continue
             synapseCacheFile=get_synapse_cache_entry(synapseCacheDir,blob_name)
             health_kit_distance=parse_healthkit_steps(synapseCacheFile)
             if cur_subject not in subject_distance_vals:
