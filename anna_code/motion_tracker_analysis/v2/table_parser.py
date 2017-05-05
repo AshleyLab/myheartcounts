@@ -124,8 +124,8 @@ if __name__=="__main__":
     subject_motion=parse_motion_tracker(table_path,synapseCacheDir,subjects)
     subject_motion_duration=subject_motion[0]
     subject_motion_fractions=subject_motion[1]
-    #table_path="/scratch/PI/euan/projects/mhc/data/tables/v2_data_subset/cardiovascular-HealthKitDataCollector-v1.tsv"
-    #subject_health_kit_distance=parse_healthkit_data_collector(table_path,synapseCacheDir,subjects) 
+    table_path="/scratch/PI/euan/projects/mhc/data/tables/v2_data_subset/cardiovascular-HealthKitDataCollector-v1.tsv"
+    subject_health_kit_distance=parse_healthkit_data_collector(table_path,synapseCacheDir,subjects) 
     pdb.set_trace()
     
 

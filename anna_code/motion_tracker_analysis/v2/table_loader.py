@@ -53,14 +53,17 @@ def load_abtest(table_path):
                            'S36',
                            'S36',
                            'f')
+    data=np.genfromtxt(table_path,
+                   dtype=dtype_dict['formats'],
+                   names=dtype_dict['names'],
+                   delimiter='\t',
+                   skip_header=True,
+                   loose=True,
+                   invalid_raise=False,
+                   converters={4:convert_datetime,
+                               8:convert_datetime,
+                               13:convert_int})
 
-    data=np.loadtxt(table_path,
-                    dtype=dtype_dict,
-                    delimiter='\t',
-                    skiprows=1,
-                    converters={4:convert_datetime,
-                                8:convert_datetime,
-                                13:convert_int})
     return data
 
 def load_motion_tracker(table_path):
@@ -89,13 +92,15 @@ def load_motion_tracker(table_path):
                            'S36',
                            'S36',
                            'S36')
-                          
-    data=np.loadtxt(table_path,
-                    dtype=dtype_dict,
-                    delimiter='\t',
-                    converters={4: convert_datetime,
-                                8: convert_datetime},
-                    skiprows=1)
+    data=np.genfromtxt(table_path,
+                       dtype=dtype_dict['formats'],
+                       names=dtype_dict['names'],
+                       delimiter='\t',
+                       converters={4: convert_datetime,
+                                   8: convert_datetime},
+                       skip_header=True,
+                       loose=True,
+                       invalid_raise=False)
     return data
 
 
@@ -125,19 +130,24 @@ def load_health_kit(table_path):
                            'S36',
                            'S36',
                            'S36')
-                          
-    data=np.loadtxt(table_path,
-                    dtype=dtype_dict,
-                    delimiter='\t',
-                    converters={4: convert_datetime,
-                                8: convert_datetime},
-                    skiprows=1)
+    data=np.genfromtxt(table_path,
+                       dtype=dtype_dict['formats'],
+                       names=dtype_dict['names'],
+                       delimiter='\t',
+                       converters={4: convert_datetime,
+                                   8: convert_datetime},
+                       skip_header=True,
+                       loose=True,
+                       invalid_raise=False)
+
     return data 
 
 if __name__=="__main__":
     #TESTS for sherlock
     import pdb
     base_dir="/scratch/PI/euan/projects/mhc/data/tables/v2_data_subset/"
-    #abtest_data=load_abtest(base_dir+"cardiovascular-ABTestResults-v1.tsv")
+    abtest_data=load_abtest(base_dir+"cardiovascular-ABTestResults-v1.tsv")
     motionactivity_data=load_motion_tracker(base_dir+"cardiovascular-motionActivityCollector-v1.tsv")
-    #healthkit_data=load_healthkit(base_dir+"cardiovascular-HealthKitDataCollector-v1.tsv")
+    healthkit_data=load_health_kit(base_dir+"cardiovascular-HealthKitDataCollector-v1.tsv")
+    pdb.set_trace()
+    
