@@ -8,27 +8,31 @@ def parse_args():
     return parser.parse_args()
 
 #handles the case when the header is 1 field shorter than the body of the table 
-def get_health_code_index(data_table):
+def get_health_code_index(data_table,table_name):
     tokens=data_table[0].split('\t')
-    if len(data_table)==1:
-        return tokens.index("healthCode")
-    else:
-        first_entry=data_table[1].split('\t')
-        if len(tokens)==len(first_entry):
-            return tokens.index("healthCode"),0 
+    try:
+        if len(data_table)==1:
+            return [tokens.index("healthCode"),0]
         else:
-            return tokens.index("healthCode")+1,1
+            first_entry=data_table[1].split('\t')
+            if len(tokens)==len(first_entry):
+                return [tokens.index("healthCode"),0]
+            else:
+                return [tokens.index("healthCode")+1,1]
+    except:
+        print("Failed to get healthCode index for table:"+table_name)
+        exit() 
+        
 def main():
     args=parse_args()
-
+    print(args.table)
     subjects=open(args.subjects_file,'r').read().strip().split('\n')
     subject_dict=dict()
     for subject in subjects:
         subject_dict[subject]=1
         
     data_table=open(args.table,'r').read().strip().split('\n')
-    health_code_col,offset=get_health_code_index(data_table)
-    print(str(health_code_col))
+    [health_code_col,offset]=get_health_code_index(data_table,args.table)
     header=data_table[0].split('\t')  
     field_index=dict()
     field_tally=dict()
@@ -37,8 +41,7 @@ def main():
         cur_field=header[i]
         if cur_field not in args.fields_to_ignore:
             field_index[cur_field]=i+offset
-            field_tally[cur_field]=0
-    print(str(field_tally))
+            field_tally[cur_field]=set([])
     for row in data_table[1::]:
         tokens=row.split('\t')
         subject=tokens[health_code_col]
@@ -48,10 +51,10 @@ def main():
                 cur_index=field_index[field]
                 cur_value=tokens[cur_index]
                 if (cur_value!="NA") and (cur_value!=""):
-                    field_tally[field]+=1
+                    field_tally[field].add(subject)
     #print the table name & field counts
     for field in field_tally:
-        print(args.table+":"+field+":"+str(field_tally[field]))
+        print(args.table+":"+field+":"+str(len(field_tally[field])))
         
 if __name__=="__main__":
     main()
