@@ -16,7 +16,9 @@ def parse_args():
 
 def main():
     args=parse_args()
-    intervention_metada=load_abtest(args.intervention_metadata) 
+    intervention_metadata=load_abtest(args.intervention_metadata)
+    motionactivity_metdata=load_motion_activity(args.table)
+    
     for table in tables:
         
 
