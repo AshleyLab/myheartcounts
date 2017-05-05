@@ -36,37 +36,41 @@ def parse_motion_activity(file_path):
     
     #get the duration of each activity by day 
     duration_dict=dict()
+    fraction_dict=dict() 
     first_row=0
-    cur_time=data['startTime'][first_row]
-    cur_day=data['startTime'][first_row].date() 
-    cur_activity=data['activityType'][first_row]
-    while cur_activity=="not available":
-        first_row+=1
+    try: 
         cur_time=data['startTime'][first_row]
         cur_day=data['startTime'][first_row].date() 
         cur_activity=data['activityType'][first_row]
-    for row in range(first_row+1,len(data)):
-        new_activity=data['activityType'][row]
-        new_time=data['startTime'][row]
-        new_day=data['startTime'][row].date()
-        if(new_time-cur_time)<=sample_gap_thresh:
-            if new_activity=="not available":
-                #carry forward from the previous activity 
-                new_activity=cur_activity
-            duration=new_time-cur_time
-            if cur_day not in duration_dict:
-                duration_dict[cur_day]=dict()
-            if cur_activity not in duration_dict[cur_day]:
-                duration_dict[cur_day][cur_activity]=duration
-            else:
-                duration_dict[cur_day][cur_activity]+=duration
-        cur_activity=new_activity
-        cur_time=new_time
-        cur_day=new_day
-    #get the activity fractions relative to total duration
-    fraction_dict=get_activity_fractions_from_duration(duration_dict)
-    return [duration_dict,fraction_dict]
-
+        while cur_activity=="not available":
+            first_row+=1
+            cur_time=data['startTime'][first_row]
+            cur_day=data['startTime'][first_row].date() 
+            cur_activity=data['activityType'][first_row]
+        for row in range(first_row+1,len(data)):
+            new_activity=data['activityType'][row]
+            new_time=data['startTime'][row]
+            new_day=data['startTime'][row].date()
+            if(new_time-cur_time)<=sample_gap_thresh:
+                if new_activity=="not available":
+                    #carry forward from the previous activity 
+                    new_activity=cur_activity
+                duration=new_time-cur_time
+                if cur_day not in duration_dict:
+                    duration_dict[cur_day]=dict()
+                if cur_activity not in duration_dict[cur_day]:
+                    duration_dict[cur_day][cur_activity]=duration
+                else:
+                    duration_dict[cur_day][cur_activity]+=duration
+            cur_activity=new_activity
+            cur_time=new_time
+            cur_day=new_day
+        #get the activity fractions relative to total duration
+        fraction_dict=get_activity_fractions_from_duration(duration_dict)
+        return [duration_dict,fraction_dict]
+    except:
+        print("skipping!:"+file_path) 
+        return [duration_dict,fraction_dict]
         
 def parse_healthkit_steps(file_path):
     #read in the data
