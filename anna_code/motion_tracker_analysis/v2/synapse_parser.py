@@ -14,8 +14,9 @@ def get_activity_fractions_from_duration(duration_dict):
         for activity in duration_dict[day]:
             total_duration+=duration_dict[day][activity]
         total_duration=total_duration.total_seconds()
-        for entry in duration_dict[day]:
-            fraction_dict[day][entry]=duration_dict[day][entry].total_seconds()/total_duration
+        if total_duration> 0:
+            for entry in duration_dict[day]:
+                fraction_dict[day][entry]=duration_dict[day][entry].total_seconds()/total_duration
     return fraction_dict
 
 def parse_motion_activity(file_path):    
@@ -84,13 +85,16 @@ def parse_healthkit_steps(file_path):
                            'S36',
                            'S36',
                            'S36')
-    data=np.loadtxt(file_path,
-                    dtype=dtype_dict,
-                    delimiter=',',
-                    skiprows=1,
-                    converters={0:lambda x: parse(x),
-                                1:lambda x: parse(x)})
-    
+    try:
+        data=np.loadtxt(file_path,
+                        dtype=dtype_dict,
+                        delimiter=',',
+                        skiprows=1,
+                        converters={0:lambda x: parse(x),
+                                    1:lambda x: parse(x)})
+    except:
+        print("COULD NOT PARSE:"+str(file_path))
+        return {}
     #get the duration of each activity by day
     tally_dict=dict()
     for row in range(len(data)):
