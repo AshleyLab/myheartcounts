@@ -14,14 +14,17 @@ def get_activity_fractions_from_duration(duration_dict):
         for activity in duration_dict[day]:
             total_duration+=duration_dict[day][activity]
         total_duration=total_duration.total_seconds()
-        if total_duration> 0:
+        total_duration=abs(total_duration) 
+        if total_duration > 0:
             for entry in duration_dict[day]:
                 fraction_dict[day][entry]=duration_dict[day][entry].total_seconds()/total_duration
+                
     return fraction_dict
 
 def parse_motion_activity(file_path):
     duration_dict=dict()
-    fraction_dict=dict() 
+    fraction_dict=dict()
+    numentries=dict() 
 
     #read in the data
     dtype_dict=dict()
@@ -41,7 +44,7 @@ def parse_motion_activity(file_path):
                            invalid_raise=False,
                            converters={0:lambda x: parse(x)})
     except:
-        return [duration_dict,fraction_dict]
+        return [duration_dict,fraction_dict,numentries]
     
     #get the duration of each activity by day 
     first_row=0
@@ -70,10 +73,13 @@ def parse_motion_activity(file_path):
                 duration=new_time-cur_time
                 if cur_day not in duration_dict:
                     duration_dict[cur_day]=dict()
+                    numentries[cur_day]=0
                 if cur_activity not in duration_dict[cur_day]:
                     duration_dict[cur_day][cur_activity]=duration
+                    
                 else:
                     duration_dict[cur_day][cur_activity]+=duration
+                numentries[cur_day]+=1  
             cur_activity=new_activity
             cur_time=new_time
             cur_day=new_day
@@ -81,7 +87,7 @@ def parse_motion_activity(file_path):
             continue
     #get the activity fractions relative to total duration
     fraction_dict=get_activity_fractions_from_duration(duration_dict)
-    return [duration_dict,fraction_dict]
+    return [duration_dict,fraction_dict,numentries]
         
 def parse_healthkit_steps(file_path):
     tally_dict=dict()

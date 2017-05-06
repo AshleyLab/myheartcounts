@@ -17,6 +17,7 @@ def parse_args():
     parser.add_argument("--subjects",default="all")
     parser.add_argument("--data_types",nargs="+",help="allowed values are \"motion_tracker\",\"health_kit_data_collector\"")
     parser.add_argument("--intervention_metadata")
+    parser.add_argument("--pickle_dict",default=False) 
     return parser.parse_args()
 
 def main():
@@ -37,14 +38,13 @@ def main():
         days_in_study=intervention_metadata['ABTestResultdays_in_study'][row]
         days_in_study_dict[subject]=days_in_study
         intervention_order[subject]=order.split(',')
-    print("loaded intervention metdata")
-
     #parse all tables 
     for i in range(len(args.tables)):
         #get daily values
         print(str(i))
         subject_daily_vals=table_parser_choices[args.data_types[i]](args.tables[i],args.synapseCacheDir,args.subjects)
-        pickle.dump(subject_daily_vals,open(args.out_prefixes[i]+".p",'wb'))
+        if args.pickle_dict==True: 
+            pickle.dump(subject_daily_vals,open(args.out_prefixes[i]+".p",'wb'))
         #aggregate results
         aggregation_choices[args.data_types[i]](subject_daily_vals,days_in_study_dict,intervention_order,args.out_prefixes[i])       
 

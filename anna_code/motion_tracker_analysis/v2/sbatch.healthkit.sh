@@ -1,1 +1,4 @@
-sbatch -J "healthkit" -o healthkit.o -e healthkit.e -p euan,owners get_activity_fraction_and_duration_appv2.sh
+for subject_subset in `seq 0 135`
+do
+    sbatch -J "healthkit$subject_subset" -o logs/healthkit.$subject_subset.o -e logs/healthkit.$subject_subset.e -p euan,owners get_activity_fraction_and_duration_appv2.healthkit.sh $subject_subset
+done

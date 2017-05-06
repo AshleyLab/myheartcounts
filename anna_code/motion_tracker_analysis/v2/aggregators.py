@@ -29,22 +29,24 @@ def get_weekday_or_weekend_label(days,first_day):
 def aggregate_motion_tracker(subject_daily_vals,days_in_study,intervention_order,outf_prefix):
     duration_vals=subject_daily_vals[0]
     fraction_vals=subject_daily_vals[1]
+    numentries=subject_daily_vals[2]
+    
     outf=open(outf_prefix,'w')
-    outf.write('Subject\tDaysInStudy\tIntervention\tDayIndex\tDayType\tActivity\tDuration\tFraction\n')
+    outf.write('Subject\tDaysInStudy\tIntervention\tDayIndex\tDayType\tActivity\tDuration_in_Minutes\tFraction\tNumentries\n')
     for subject in duration_vals:
         try:
             cur_days_in_study=days_in_study[subject]
         except:
             cur_days_in_study='NA'
         try:
-            interventions=intervention_order[subject].split(',')
+            interventions=intervention_order[subject]
         except:
             interventions=["NA"]*4
         #map day index to the applied intervention 
         day_index_to_intervention=get_day_index_to_intervention(interventions)
         cur_duration_vals=duration_vals[subject]
         cur_fraction_vals=fraction_vals[subject]
-
+        cursubject_numentries=numentries[subject]
         #sort the days!
         subject_days=cur_duration_vals.keys()
         subject_days.sort()
@@ -52,7 +54,7 @@ def aggregate_motion_tracker(subject_daily_vals,days_in_study,intervention_order
         weekday_or_weekend=get_weekday_or_weekend_label(subject_days,first_day)
         for day in subject_days:
             day_index=(day - first_day).days
-            
+            cursubject_day_numentries=cursubject_numentries[day] 
             #handle the case when the subject has been in the study longer than 35 days 
             if day_index not in day_index_to_intervention:
                 cur_intervention=interventions[-1]
@@ -61,7 +63,10 @@ def aggregate_motion_tracker(subject_daily_vals,days_in_study,intervention_order
             cur_weekday_or_weekend=weekday_or_weekend[day_index]
             for activity in cur_duration_vals[day]:
                 cur_activity_duration=cur_duration_vals[day][activity].total_seconds()/60.0
-                cur_activity_fraction=cur_fraction_vals[day][activity]
+                if activity in cur_fraction_vals[day]:
+                    cur_activity_fraction=cur_fraction_vals[day][activity]
+                else:
+                    cur_activity_fraction=0
                 outf.write(subject+\
                            '\t'+str(cur_days_in_study)+\
                            '\t'+str(cur_intervention)+\
@@ -70,20 +75,20 @@ def aggregate_motion_tracker(subject_daily_vals,days_in_study,intervention_order
                            '\t'+activity+\
                            '\t'+str(round(cur_activity_duration,3))+\
                            '\t'+str(round(cur_activity_fraction,3))+\
+                           '\t'+str(cursubject_day_numentries)+\
                            '\n')
             
         
 def aggregate_healthkit_data_collector(subject_daily_vals,days_in_study,intervention_order,outf_prefix):
-    distance_key='HKQuantityTypeIdentifierDistanceWalk'
     outf=open(outf_prefix,'w')
-    outf.write('Subject\tDaysInStudy\tIntervention\tDayIndext\DayType\tDistance\n')
+    outf.write('Subject\tDaysInStudy\tIntervention\tDayIndex\tDayType\tMetric\tValue\n')
     for subject in subject_daily_vals:
         try:
             cur_days_in_study=days_in_study[subject]
         except:
             cur_days_in_study='NA'
         try:
-            interventions=intervention_order[subject].split(',')
+            interventions=intervention_order[subject]
         except:
             interventions=["NA"]*4
 
@@ -106,13 +111,14 @@ def aggregate_healthkit_data_collector(subject_daily_vals,days_in_study,interven
             else:
                 cur_intervention=day_index_to_intervention[day_index]
             cur_weekday_or_weekend=weekday_or_weekend[day_index]
-            if distance_key in cur_subject_daily_vals:
-                cur_distance=cur_subject_daily_vals[distance_key]
+            for key in cur_subject_daily_vals[day]:
+                cur_value=cur_subject_daily_vals[day][key]
                 outf.write(subject+\
                            '\t'+str(cur_days_in_study)+\
                            '\t'+str(cur_intervention)+\
                            '\t'+str(day_index)+\
                            '\t'+str(cur_weekday_or_weekend)+\
-                           '\t'+str(round(cur_distance,3))+\
+                           '\t'+key+\
+                           '\t'+str(round(cur_value,3))+\
                            '\n')
     
