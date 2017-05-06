@@ -19,7 +19,10 @@ def get_activity_fractions_from_duration(duration_dict):
                 fraction_dict[day][entry]=duration_dict[day][entry].total_seconds()/total_duration
     return fraction_dict
 
-def parse_motion_activity(file_path):    
+def parse_motion_activity(file_path):
+    duration_dict=dict()
+    fraction_dict=dict() 
+
     #read in the data
     dtype_dict=dict()
     dtype_dict['names']=('startTime',
@@ -28,55 +31,60 @@ def parse_motion_activity(file_path):
     dtype_dict['formats']=(datetime,
                            'S36',
                            'i')
-    
-    data=np.genfromtxt(file_path,
-                       dtype=dtype_dict['formats'],
-                       names=dtype_dict['names'],
-                       delimiter=',',
-                       skip_header=True,
-                       loose=True,
-                       invalid_raise=False,
-                       converters={0:lambda x: parse(x)})
+    try:
+        data=np.genfromtxt(file_path,
+                           dtype=dtype_dict['formats'],
+                           names=dtype_dict['names'],
+                           delimiter=',',
+                           skip_header=True,
+                           loose=True,
+                           invalid_raise=False,
+                           converters={0:lambda x: parse(x)})
+    except:
+        return [duration_dict,fraction_dict]
     
     #get the duration of each activity by day 
-    duration_dict=dict()
-    fraction_dict=dict() 
     first_row=0
     try:
         num_rows=len(data)
-    except:
-        return[duration_dict,fraction_dict]
-    cur_time=data['startTime'][first_row]
-    cur_day=data['startTime'][first_row].date() 
-    cur_activity=data['activityType'][first_row]
-    while (cur_activity=="not available") and (first_row <(num_rows-1)):
-        first_row+=1
         cur_time=data['startTime'][first_row]
         cur_day=data['startTime'][first_row].date() 
         cur_activity=data['activityType'][first_row]
+        while (cur_activity=="not available") and (first_row <(num_rows-1)):
+            first_row+=1
+            cur_time=data['startTime'][first_row]
+            cur_day=data['startTime'][first_row].date() 
+            cur_activity=data['activityType'][first_row]
+    except:
+        return[duration_dict,fraction_dict]
+
     for row in range(first_row+1,len(data)):
-        new_activity=data['activityType'][row]
-        new_time=data['startTime'][row]
-        new_day=data['startTime'][row].date()
-        if(new_time-cur_time)<=sample_gap_thresh:
-            if new_activity=="not available":
-                #carry forward from the previous activity 
-                new_activity=cur_activity
-            duration=new_time-cur_time
-            if cur_day not in duration_dict:
-                duration_dict[cur_day]=dict()
-            if cur_activity not in duration_dict[cur_day]:
-                duration_dict[cur_day][cur_activity]=duration
-            else:
-                duration_dict[cur_day][cur_activity]+=duration
-        cur_activity=new_activity
-        cur_time=new_time
-        cur_day=new_day
+        try:
+            new_activity=data['activityType'][row]
+            new_time=data['startTime'][row]
+            new_day=data['startTime'][row].date()
+            if(new_time-cur_time)<=sample_gap_thresh:
+                if new_activity=="not available":
+                    #carry forward from the previous activity 
+                    new_activity=cur_activity
+                duration=new_time-cur_time
+                if cur_day not in duration_dict:
+                    duration_dict[cur_day]=dict()
+                if cur_activity not in duration_dict[cur_day]:
+                    duration_dict[cur_day][cur_activity]=duration
+                else:
+                    duration_dict[cur_day][cur_activity]+=duration
+            cur_activity=new_activity
+            cur_time=new_time
+            cur_day=new_day
+        except:
+            continue
     #get the activity fractions relative to total duration
     fraction_dict=get_activity_fractions_from_duration(duration_dict)
     return [duration_dict,fraction_dict]
         
 def parse_healthkit_steps(file_path):
+    tally_dict=dict()
     #read in the data
     dtype_dict=dict()
     dtype_dict['names']=('startTime',
@@ -93,31 +101,36 @@ def parse_healthkit_steps(file_path):
                            'S36',
                            'S36',
                            'S36')
-    data=np.genfromtxt(file_path,
-                       dtype=dtype_dict['formats'],
-                       names=dtype_dict['names'],
-                       delimiter=',',
-                       skip_header=True,
-                       loose=True,
-                       invalid_raise=False,
-                       converters={0:lambda x: parse(x),
-                                   1:lambda x: parse(x)})
+    try:
+        data=np.genfromtxt(file_path,
+                           dtype=dtype_dict['formats'],
+                           names=dtype_dict['names'],
+                           delimiter=',',
+                           skip_header=True,
+                           loose=True,
+                           invalid_raise=False,
+                           converters={0:lambda x: parse(x),
+                                       1:lambda x: parse(x)})
+    except:
+        return tally_dict
     #get the duration of each activity by day
-    tally_dict=dict()
     try:
         num_rows=len(data)
     except:
         return tally_dict
     for row in range(len(data)):
-        day=data['startTime'][row].date()
-        value=data['value'][row]
-        datatype=data['type'][row]
-        if day not in tally_dict:
-            tally_dict[day]=dict()
-        if datatype not in tally_dict[day]:
-            tally_dict[day][datatype]=value
-        else:
-            tally_dict[day][datatype]+=value
+        try:
+            day=data['startTime'][row].date()
+            value=data['value'][row]
+            datatype=data['type'][row]
+            if day not in tally_dict:
+                tally_dict[day]=dict()
+            if datatype not in tally_dict[day]:
+                tally_dict[day][datatype]=value
+            else:
+                tally_dict[day][datatype]+=value
+        except:
+            continue
     return tally_dict
 if __name__=="__main__":
     #TESTS for sherlock

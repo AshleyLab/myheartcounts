@@ -1,6 +1,6 @@
 from datetime import datetime,timedelta
 from dateutil.parser import parse
-
+import pdb 
 #assign day index to applied intervention 
 def get_day_index_to_intervention(interventions):
     day_index_to_intervention=dict()
@@ -17,10 +17,12 @@ def get_day_index_to_intervention(interventions):
     return day_index_to_intervention
 
 #label each day as a weekend or weekday 
-def get_weekday_or_weekend_label(days):
+def get_weekday_or_weekend_label(days,first_day):
     index_to_type={}
     for i in range(len(days)):
-        index_to_type[i]=days[i].weekday()
+        cur_day=days[i]
+        cur_index=(cur_day-first_day).days
+        index_to_type[cur_index]=cur_day.weekday()
     return index_to_type
 
 
@@ -30,9 +32,14 @@ def aggregate_motion_tracker(subject_daily_vals,days_in_study,intervention_order
     outf=open(outf_prefix,'w')
     outf.write('Subject\tDaysInStudy\tIntervention\tDayIndex\tDayType\tActivity\tDuration\tFraction\n')
     for subject in duration_vals:
-        cur_days_in_study=days_in_study[subject]
-        interventions=intervention_order[subject]
-
+        try:
+            cur_days_in_study=days_in_study[subject]
+        except:
+            cur_days_in_study='NA'
+        try:
+            interventions=intervention_order[subject].split(',')
+        except:
+            interventions=["NA"]*4
         #map day index to the applied intervention 
         day_index_to_intervention=get_day_index_to_intervention(interventions)
         cur_duration_vals=duration_vals[subject]
@@ -41,10 +48,8 @@ def aggregate_motion_tracker(subject_daily_vals,days_in_study,intervention_order
         #sort the days!
         subject_days=cur_duration_vals.keys()
         subject_days.sort()
-
-        weekday_or_weekend=get_weekday_or_weekend_label(subject_days)
-
         first_day=subject_days[0]
+        weekday_or_weekend=get_weekday_or_weekend_label(subject_days,first_day)
         for day in subject_days:
             day_index=(day - first_day).days
             
@@ -55,15 +60,16 @@ def aggregate_motion_tracker(subject_daily_vals,days_in_study,intervention_order
                 cur_intervention=day_index_to_intervention[day_index]
             cur_weekday_or_weekend=weekday_or_weekend[day_index]
             for activity in cur_duration_vals[day]:
-                cur_activity_duration=cur_duration_vals[day][activity]
+                cur_activity_duration=cur_duration_vals[day][activity].total_seconds()/60.0
                 cur_activity_fraction=cur_fraction_vals[day][activity]
                 outf.write(subject+\
                            '\t'+str(cur_days_in_study)+\
                            '\t'+str(cur_intervention)+\
                            '\t'+str(day_index)+\
+                           '\t'+str(cur_weekday_or_weekend)+\
                            '\t'+activity+\
-                           '\t'+str(cur_activity_duration)+\
-                           '\t'+str(cur_activity_fraction)+\
+                           '\t'+str(round(cur_activity_duration,3))+\
+                           '\t'+str(round(cur_activity_fraction,3))+\
                            '\n')
             
         
@@ -71,9 +77,15 @@ def aggregate_healthkit_data_collector(subject_daily_vals,days_in_study,interven
     distance_key='HKQuantityTypeIdentifierDistanceWalk'
     outf=open(outf_prefix,'w')
     outf.write('Subject\tDaysInStudy\tIntervention\tDayIndext\DayType\tDistance\n')
-    for subject in duration_vals:
-        cur_days_in_study=days_in_study[subject]
-        interventions=intervention_order[subject]
+    for subject in subject_daily_vals:
+        try:
+            cur_days_in_study=days_in_study[subject]
+        except:
+            cur_days_in_study='NA'
+        try:
+            interventions=intervention_order[subject].split(',')
+        except:
+            interventions=["NA"]*4
 
         #map day index to the applied intervention 
         day_index_to_intervention=get_day_index_to_intervention(interventions)
@@ -82,9 +94,9 @@ def aggregate_healthkit_data_collector(subject_daily_vals,days_in_study,interven
         #sort the days!
         subject_days=cur_subject_daily_vals.keys()
         subject_days.sort()
-
-        weekday_or_weekend=get_weekday_or_weekend_label(subject_days)
+        
         first_day=subject_days[0]
+        weekday_or_weekend=get_weekday_or_weekend_label(subject_days,first_day)
         for day in subject_days:
             day_index=(day - first_day).days
             
@@ -100,6 +112,7 @@ def aggregate_healthkit_data_collector(subject_daily_vals,days_in_study,interven
                            '\t'+str(cur_days_in_study)+\
                            '\t'+str(cur_intervention)+\
                            '\t'+str(day_index)+\
-                           '\t'+cur_distance+\
+                           '\t'+str(cur_weekday_or_weekend)+\
+                           '\t'+str(round(cur_distance,3))+\
                            '\n')
     

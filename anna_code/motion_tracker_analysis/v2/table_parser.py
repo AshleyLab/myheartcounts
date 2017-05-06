@@ -75,6 +75,8 @@ def parse_motion_tracker(table_path,synapseCacheDir,subjects):
         else:
             #print("Not skipping!") 
             blob_name=data_table['data'][row]
+            if blob_name.endswith('NA'):
+                continue 
             synapseCacheFile=get_synapse_cache_entry(synapseCacheDir,blob_name)
             [motion_tracker_duration,motion_tracker_fractions]=parse_motion_activity(synapseCacheFile)
             if cur_subject not in subject_duration_vals:
@@ -104,14 +106,17 @@ def parse_healthkit_data_collector(table_path,synapseCacheDir,subjects):
             continue
         else:
             blob_name=data_table['data'][row]
-            if blob_name=="NA":
+            if blob_name.endswith("NA"):
                 continue
             synapseCacheFile=get_synapse_cache_entry(synapseCacheDir,blob_name)
-            health_kit_distance=parse_healthkit_steps(synapseCacheFile)
-            if cur_subject not in subject_distance_vals:
-                subject_distance_vals[cur_subject]=health_kit_distance
-            else: 
-                subject_distance_vals[cur_subject]=merge_duration_dict(subject_distance_vals[cur_subject],health_kit_distance)
+            try:
+                health_kit_distance=parse_healthkit_steps(synapseCacheFile)
+                if cur_subject not in subject_distance_vals:
+                    subject_distance_vals[cur_subject]=health_kit_distance
+                else: 
+                    subject_distance_vals[cur_subject]=merge_duration_dict(subject_distance_vals[cur_subject],health_kit_distance)
+            except:
+                continue 
     return subject_distance_vals 
         
 
@@ -121,9 +126,9 @@ if __name__=="__main__":
     table_path="/scratch/PI/euan/projects/mhc/data/tables/v2_data_subset/cardiovascular-motionActivityCollector-v1.tsv"
     synapseCacheDir="/scratch/PI/euan/projects/mhc/data/synapseCache_v2/"
     subjects="subjects_for_test.txt"
-    subject_motion=parse_motion_tracker(table_path,synapseCacheDir,subjects)
-    subject_motion_duration=subject_motion[0]
-    subject_motion_fractions=subject_motion[1]
+    #subject_motion=parse_motion_tracker(table_path,synapseCacheDir,subjects)
+    #subject_motion_duration=subject_motion[0]
+    #subject_motion_fractions=subject_motion[1]
     table_path="/scratch/PI/euan/projects/mhc/data/tables/v2_data_subset/cardiovascular-HealthKitDataCollector-v1.tsv"
     subject_health_kit_distance=parse_healthkit_data_collector(table_path,synapseCacheDir,subjects) 
     pdb.set_trace()
