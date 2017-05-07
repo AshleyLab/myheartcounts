@@ -20,9 +20,8 @@ def convert_float(x):
     if x=="NA":
         return np.nan
     else:
-        return float(x) 
-
-
+        return float(x)     
+    
 def load_abtest(table_path):
     dtype_dict=dict()
     dtype_dict['names']=('ID',

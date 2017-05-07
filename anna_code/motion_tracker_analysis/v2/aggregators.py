@@ -1,7 +1,7 @@
 from datetime import datetime,timedelta
 from dateutil.parser import parse
 import pdb 
-#assign day index to applied intervention 
+#assign day index to applied intervention
 def get_day_index_to_intervention(interventions):
     day_index_to_intervention=dict()
     for day_index in range(7):
