@@ -59,7 +59,7 @@ def parse_motion_activity(file_path):
             cur_day=data['startTime'][first_row].date() 
             cur_activity=data['activityType'][first_row]
     except:
-        return[duration_dict,fraction_dict]
+        return[duration_dict,fraction_dict,numentries]
 
     for row in range(first_row+1,len(data)):
         try:

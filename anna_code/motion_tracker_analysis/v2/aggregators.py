@@ -50,6 +50,8 @@ def aggregate_motion_tracker(subject_daily_vals,days_in_study,intervention_order
         #sort the days!
         subject_days=cur_duration_vals.keys()
         subject_days.sort()
+        if len(subject_days)==0:
+            continue 
         first_day=subject_days[0]
         weekday_or_weekend=get_weekday_or_weekend_label(subject_days,first_day)
         for day in subject_days:
@@ -99,7 +101,8 @@ def aggregate_healthkit_data_collector(subject_daily_vals,days_in_study,interven
         #sort the days!
         subject_days=cur_subject_daily_vals.keys()
         subject_days.sort()
-        
+        if len(subject_days)==0:
+            continue 
         first_day=subject_days[0]
         weekday_or_weekend=get_weekday_or_weekend_label(subject_days,first_day)
         for day in subject_days:

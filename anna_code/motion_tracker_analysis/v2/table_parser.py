@@ -41,7 +41,18 @@ def merge_fraction_dict(d1,d2):
         else:
             d3[entry]=d2[entry]
     return d3
-    
+
+def merge_numentries_dict(d1,d2):
+    d3=dict()
+    for entry in d1:
+        d3[entry]=d1[entry]
+    for entry in d2:
+        if entry in d3:
+            d3[entry]=d3[entry]+d2[entry]
+        else:
+            d3[entry]=d2[entry]
+    return d3
+
 def get_synapse_cache_entry(synapseCacheDir,blob_name):
     #print(str(blob_name)) 
     parent_dir=blob_name[-3::].lstrip('0')
@@ -64,6 +75,8 @@ def parse_motion_tracker(table_path,synapseCacheDir,subjects):
             subject_dict[subject]=1
     subject_duration_vals=dict()
     subject_fraction_vals=dict()
+    subject_numentries=dict()
+    
     total_rows=len(data_table)
     for row in range(total_rows):
         if row%100==0:
@@ -78,16 +91,22 @@ def parse_motion_tracker(table_path,synapseCacheDir,subjects):
             if blob_name.endswith('NA'):
                 continue 
             synapseCacheFile=get_synapse_cache_entry(synapseCacheDir,blob_name)
-            [motion_tracker_duration,motion_tracker_fractions]=parse_motion_activity(synapseCacheFile)
+            [motion_tracker_duration,motion_tracker_fractions,numentries]=parse_motion_activity(synapseCacheFile)
             if cur_subject not in subject_duration_vals:
                 subject_duration_vals[cur_subject]=motion_tracker_duration
             else: 
                 subject_duration_vals[cur_subject]=merge_duration_dict(subject_duration_vals[cur_subject],motion_tracker_duration)
+                
             if cur_subject not in subject_fraction_vals:
                 subject_fraction_vals[cur_subject]=motion_tracker_fractions
             else: 
-                subject_fraction_vals[cur_subject]=merge_fraction_dict(subject_fraction_vals[cur_subject],motion_tracker_fractions)        
-    return [subject_duration_vals,subject_fraction_vals]
+                subject_fraction_vals[cur_subject]=merge_fraction_dict(subject_fraction_vals[cur_subject],motion_tracker_fractions)
+            if cur_subject not in subject_numentries:
+                subject_numentries[cur_subject]=numentries
+            else:
+                subject_numentries[cur_subject]=merge_numentries_dict(subject_numentries[cur_subject],numentries)
+                
+    return [subject_duration_vals,subject_fraction_vals,subject_numentries]
 
 def parse_healthkit_data_collector(table_path,synapseCacheDir,subjects):
     data_table=load_health_kit(table_path)
@@ -126,11 +145,13 @@ if __name__=="__main__":
     table_path="/scratch/PI/euan/projects/mhc/data/tables/v2_data_subset/cardiovascular-motionActivityCollector-v1.tsv"
     synapseCacheDir="/scratch/PI/euan/projects/mhc/data/synapseCache_v2/"
     subjects="subjects_for_test.txt"
-    #subject_motion=parse_motion_tracker(table_path,synapseCacheDir,subjects)
-    #subject_motion_duration=subject_motion[0]
-    #subject_motion_fractions=subject_motion[1]
-    table_path="/scratch/PI/euan/projects/mhc/data/tables/v2_data_subset/cardiovascular-HealthKitDataCollector-v1.tsv"
-    subject_health_kit_distance=parse_healthkit_data_collector(table_path,synapseCacheDir,subjects) 
+    subject_motion=parse_motion_tracker(table_path,synapseCacheDir,subjects)
+    subject_motion_duration=subject_motion[0]
+    subject_motion_fractions=subject_motion[1]
+    subject_motion_numentries=subject_motion[2]
+    
+    #table_path="/scratch/PI/euan/projects/mhc/data/tables/v2_data_subset/cardiovascular-HealthKitDataCollector-v1.tsv"
+    #subject_health_kit_distance=parse_healthkit_data_collector(table_path,synapseCacheDir,subjects) 
     pdb.set_trace()
     
 
