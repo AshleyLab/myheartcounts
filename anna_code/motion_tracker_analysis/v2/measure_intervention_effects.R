@@ -71,7 +71,7 @@ active_plot_duration=ggplot(active_subset,aes(active_subset$Intervention,active_
   ggtitle("Active Minutes/Day")+
   theme_bw(20)
 png("active_plot_duration.png")
-stationary_plot_duration
+active_plot_duration
 dev.off() 
 aov_active_duration<-aov(Duration_in_Minutes~Intervention,data=active_subset)
 capture.output(summary(aov_active_duration), file = "active_duration.aov.txt")
