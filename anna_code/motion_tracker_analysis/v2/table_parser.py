@@ -1,6 +1,7 @@
 #parses data tables
 from table_loader import *
-from synapse_parser import * 
+from synapse_parser import *
+from datetime import datetime,timedelta
 import pdb
 from os import listdir
 from os.path import isfile, join
@@ -9,6 +10,7 @@ from os.path import isfile, join
 #but this is possible in the app, so we handle it: 
 #sum minute durations together if there is a key conflict for a given day 
 def merge_duration_dict(d1,d2):
+    #merge duration values 
     d3=dict()
     for entry in d1:
         d3[entry]=d1[entry]
@@ -22,25 +24,22 @@ def merge_duration_dict(d1,d2):
                     d3[entry][key]=d2[entry][key]
         else:
             d3[entry]=d2[entry]
-    return d3
+    #update fraction values
+    d_total=dict()
+    for entry in d3:
+        d_total[entry]=timedelta(seconds=0)
+        for key in d3[entry]:
+            d_total[entry]+=d3[entry][key]
+    d_fract=dict()
+    for entry in d3:
+        d_fract[entry]=dict()
+        for key in d3[entry]:
+            if d_total[entry].total_seconds()==0:
+                d_fract[entry][key]=0
+            else: 
+                d_fract[entry][key]=d3[entry][key].total_seconds()/d_total[entry].total_seconds()
+    return d3,d_fract
 
-#calculate average of fractions by day 
-def merge_fraction_dict(d1,d2):
-    d3=dict()
-    for entry in d1:
-        d3[entry]=d1[entry]
-    for entry in d2:
-        if entry in d3:
-        #average by key
-            for key in d2[entry]:
-                if key in d3[entry]:
-                    d3[entry][key]+=d2[entry][key]
-                    d3[entry][key]=0.5*d3[entry][key]
-                else:
-                    d3[entry][key]=d2[entry][key]
-        else:
-            d3[entry]=d2[entry]
-    return d3
 
 def merge_numentries_dict(d1,d2):
     d3=dict()
@@ -94,13 +93,11 @@ def parse_motion_tracker(table_path,synapseCacheDir,subjects):
             [motion_tracker_duration,motion_tracker_fractions,numentries]=parse_motion_activity(synapseCacheFile)
             if cur_subject not in subject_duration_vals:
                 subject_duration_vals[cur_subject]=motion_tracker_duration
-            else: 
-                subject_duration_vals[cur_subject]=merge_duration_dict(subject_duration_vals[cur_subject],motion_tracker_duration)
-                
-            if cur_subject not in subject_fraction_vals:
                 subject_fraction_vals[cur_subject]=motion_tracker_fractions
-            else: 
-                subject_fraction_vals[cur_subject]=merge_fraction_dict(subject_fraction_vals[cur_subject],motion_tracker_fractions)
+            else:
+                [merged_duration,merged_fractions]=merge_duration_dict(subject_duration_vals[cur_subject],motion_tracker_duration)
+                subject_duration_vals[cur_subject]=merged_duration
+                subject_fraction_vals[cur_subject]=merged_fractions
             if cur_subject not in subject_numentries:
                 subject_numentries[cur_subject]=numentries
             else:

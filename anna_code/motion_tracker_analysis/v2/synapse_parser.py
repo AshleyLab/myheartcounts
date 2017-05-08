@@ -12,9 +12,8 @@ def get_activity_fractions_from_duration(duration_dict):
         fraction_dict[day]=dict()
         total_duration=timedelta(minutes=0)
         for activity in duration_dict[day]:
-            total_duration+=duration_dict[day][activity]
+            total_duration+=abs(duration_dict[day][activity])
         total_duration=total_duration.total_seconds()
-        total_duration=abs(total_duration) 
         if total_duration > 0:
             for entry in duration_dict[day]:
                 fraction_dict[day][entry]=duration_dict[day][entry].total_seconds()/total_duration
@@ -70,7 +69,7 @@ def parse_motion_activity(file_path):
                 if new_activity=="not available":
                     #carry forward from the previous activity 
                     new_activity=cur_activity
-                duration=new_time-cur_time
+                duration=abs(new_time-cur_time)
                 if cur_day not in duration_dict:
                     duration_dict[cur_day]=dict()
                     numentries[cur_day]=0
@@ -142,7 +141,7 @@ if __name__=="__main__":
     #TESTS for sherlock
     import pdb
     base_dir="/scratch/PI/euan/projects/mhc/data/synapseCache_v2/"
-    [motion_tracker_duration,motion_tracker_fractions]=parse_motion_activity(base_dir+"638/14145638/data-054aa9f4-cb94-4663-b3df-e98ef3421dcb.csv")
+    [motion_tracker_duration,motion_tracker_fractions,num_entries]=parse_motion_activity(base_dir+"638/14145638/data-054aa9f4-cb94-4663-b3df-e98ef3421dcb.csv")
     health_kit_data=parse_healthkit_steps(base_dir+"661/13540661/data-cdf78ca9-1094-46ff-b7b4-94b75aafc7fb.csv")
     pdb.set_trace() 
 
