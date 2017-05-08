@@ -45,6 +45,38 @@ capture.output(summary(aov_stationary_duration), file = "stationary_duration.aov
 tk_stationary_duration<-TukeyHSD(aov_stationary_duration,conf.level=0.95)
 capture.output(tk_stationary_duration, file = "stationary_duration.tukey.txt")
 
+#automotive fractions
+automotive_plot_fractions=ggplot(automotive_subset,aes(automotive_subset$Intervention,automotive_subset$Fraction))+
+  geom_boxplot() + 
+  ylim(c(0,1))+
+  xlab("Intervention")+
+  ylab("Fraction of Activity Spent in automotive State")+
+  ggtitle("automotive Fractions")+
+  theme_bw(20)
+png("automotive_plot_fractions.png")
+automotive_plot_fractions
+dev.off() 
+aov_automotive_fractions<-aov(Fraction~Intervention,data=automotive_subset)
+capture.output(summary(aov_automotive_fractions), file = "automotive_fractions.aov.txt")
+tk_automotive_fractions<-TukeyHSD(aov_automotive_fractions,conf.level=0.95)
+capture.output(tk_automotive_fractions, file = "automotive_fractions.tukey.txt")
+
+#automotive duration 
+automotive_plot_duration=ggplot(automotive_subset,aes(automotive_subset$Intervention,automotive_subset$Duration_in_Minutes))+
+  geom_boxplot() + 
+  ylim(c(0,1440))+
+  xlab("Intervention")+
+  ylab("Minutes/Day Spent in automotive State")+
+  ggtitle("automotive Minutes/Day")+
+  theme_bw(20)
+png("automotive_plot_duration.png")
+automotive_plot_duration
+dev.off() 
+aov_automotive_duration<-aov(Duration_in_Minutes~Intervention,data=automotive_subset)
+capture.output(summary(aov_automotive_duration), file = "automotive_duration.aov.txt")
+tk_automotive_duration<-TukeyHSD(aov_automotive_duration,conf.level=0.95)
+capture.output(tk_automotive_duration, file = "automotive_duration.tukey.txt")
+
 
 #active fractions
 active_plot_fractions=ggplot(active_subset,aes(active_subset$Intervention,active_subset$Fraction))+
