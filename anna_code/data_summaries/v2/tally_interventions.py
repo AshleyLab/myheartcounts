@@ -96,21 +96,34 @@ for day_thresh in min_days_of_data:
     any_healthkit_distance=0
     for subject in motion_subject_dict:
         for intervention in motion_subject_dict[subject]:
+            if intervention=="None":
+                continue
+            if intervention=="NA":
+                continue 
             curval=motion_subject_dict[subject][intervention]
             if curval >=day_thresh:
                 any_motion+=1
                 break
     for subject in healthkit_step_dict:
         for intervention  in healthkit_step_dict[subject]:
+            if intervention=="None":
+                continue
+            if intervention=="NA":
+                continue 
             curval=healthkit_step_dict[subject][intervention]
             if curval >=day_thresh:
                  any_healthkit_steps+=1
                  break
     for subject in healthkit_distance_dict:
         for intervention in healthkit_distance_dict[subject]:
+            if intervention=="None":
+                continue
+            if intervention=="NA":
+                continue 
             curval=healthkit_distance_dict[subject][intervention]
             if curval>=day_thresh:
                 any_healthkit_distance+=1
+                break
     outf.write('Any'+\
                '\t'+str(day_thresh)+\
                '\t'+str(any_motion)+\
