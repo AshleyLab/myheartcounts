@@ -66,6 +66,7 @@ def get_features_for_clustering(data):
                 outf.write('\t'+str(summary[subject][activity]))
             else:
                 outf.write('\t0')
+                summary[subject][activity]=0
         outf.write('\n') 
     return summary,activities,subjects
 
