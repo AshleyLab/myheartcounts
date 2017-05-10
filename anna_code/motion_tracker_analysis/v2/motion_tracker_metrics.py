@@ -1,4 +1,5 @@
-def get_features_for_clustering(data,outf):
+import numpy as np 
+def get_features_for_clustering(data):
     #percent of time spent in each state on weekdays & weekends
     summary=dict()
     total_weekday=dict() #total minutes per subject (denominator for average)
@@ -54,7 +55,7 @@ def get_features_for_clustering(data,outf):
             else:
                 summary[subject][activity]=summary[subject][activity]/total[subject]
     #generate the output file
-    outf=open(outf,'w')
+    outf=open('tmp','w')
     activities=list(activities)
     outf.write('Subject\t'+'\t'.join(activities)+'\n')
     subjects=summary.keys() 
@@ -68,9 +69,9 @@ def get_features_for_clustering(data,outf):
         outf.write('\n') 
     return summary,activities,subjects
 
-def kmeans_cluster(data,outfname):
-    summary,activities,subjects=get_features_for_clustering(data,outfname)
-    features=np.genfromtxt(outfname,usecols=range(1,len(activities)+1),skip_header=True)
+def kmeans_cluster(data):
+    summary,activities,subjects=get_features_for_clustering(data)
+    features=np.genfromtxt('tmp',usecols=range(1,len(activities)+1),skip_header=True)
     from sklearn.cluster import KMeans
     kmeans=KMeans(n_clusters=10,random_state=0).fit(features)
     labels=kmeans.labels_
@@ -81,7 +82,7 @@ def kmeans_cluster(data,outfname):
     return summary,activities+['cluster']
     
     
-def percent_of_time_active(data,outfname):
+def percent_of_time_active(data):
     active_states=['walking','running','cycling']
     summary=dict()
     total=dict() 
@@ -103,7 +104,7 @@ def percent_of_time_active(data,outfname):
         summary[subject]['percent_active']=summary[subject]['percent_active']/total[subject]
     return summary,['percent_active']
 
-def percent_of_time_stationary(data,outfname):
+def percent_of_time_stationary(data):
     summary=dict()
     total=dict() 
     for row in range(len(data)):
@@ -130,7 +131,7 @@ if __name__=="__main__":
     from load_summaries import * 
     filepath_motiontracker="/scratch/PI/euan/projects/mhc/data/timeseries_v2/summary/motion_tracker_combined.filered.txt"
     data_motiontracker=load_motion_tracker_summary(filepath_motiontracker)
-    summary1=kmeans_cluster(data_motiontracker,"/scratch/PI/euan/projects/mhc/data/timeseries_v2/summary/activity_fractions.txt")
-    summary2=percent_of_time_active(data_motiontracker,"")
-    summary3=percent_of_time_stationary(data_motiontracker,"")
+    summary1=kmeans_cluster(data_motiontracker)
+    summary2=percent_of_time_active(data_motiontracker)
+    summary3=percent_of_time_stationary(data_motiontracker)
     pdb.set_trace() 

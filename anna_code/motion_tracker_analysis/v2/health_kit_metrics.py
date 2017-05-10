@@ -1,8 +1,9 @@
-def mean_step_count(data,outfname):
+import numpy as np 
+def mean_step_count(data):
     metric_name='HKQuantityTypeIdentifierStepCount'
     return mean_metric(data,metric_name)
 
-def mean_distance_walked(data,outfname):
+def mean_distance_walked(data):
     metric_name='HKQuantityTypeIdentifierDistanceWalk'
     return mean_metric(data,metric_name)
            
@@ -27,8 +28,7 @@ if __name__=="__main__":
     import pdb
     filepath_healthkit="/scratch/PI/euan/projects/mhc/data/timeseries_v2/summary/health_kit_combined.txt"
     data_healthkit=load_health_kit_summary(filepath_healthkit)
-    outfname="placeholder.txt"
-    cur_mean_step_count=mean_step_count(data_healthkit,outfname)
-    cur_mean_distance_walked=mean_distance_walked(data_healthkit,outfname)
+    cur_mean_step_count=mean_step_count(data_healthkit)
+    cur_mean_distance_walked=mean_distance_walked(data_healthkit)
     pdb.set_trace()
     
