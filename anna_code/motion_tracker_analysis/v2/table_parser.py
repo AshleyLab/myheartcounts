@@ -129,8 +129,8 @@ def parse_healthkit_data_collector(table_path,synapseCacheDir,subjects):
                 health_kit_distance=parse_healthkit_steps(synapseCacheFile)
                 if cur_subject not in subject_distance_vals:
                     subject_distance_vals[cur_subject]=health_kit_distance
-                else: 
-                    subject_distance_vals[cur_subject]=merge_duration_dict(subject_distance_vals[cur_subject],health_kit_distance)
+                else:
+                    subject_distance_vals[cur_subject]=merge_numentries_dict(subject_distance_vals[cur_subject],health_kit_distance)
             except:
                 continue 
     return subject_distance_vals 
@@ -142,13 +142,13 @@ if __name__=="__main__":
     table_path="/scratch/PI/euan/projects/mhc/data/tables/v2_data_subset/cardiovascular-motionActivityCollector-v1.tsv"
     synapseCacheDir="/scratch/PI/euan/projects/mhc/data/synapseCache_v2/"
     subjects="subjects_for_test.txt"
-    subject_motion=parse_motion_tracker(table_path,synapseCacheDir,subjects)
-    subject_motion_duration=subject_motion[0]
-    subject_motion_fractions=subject_motion[1]
-    subject_motion_numentries=subject_motion[2]
+    #subject_motion=parse_motion_tracker(table_path,synapseCacheDir,subjects)
+    #subject_motion_duration=subject_motion[0]
+    #subject_motion_fractions=subject_motion[1]
+    #subject_motion_numentries=subject_motion[2]
     
-    #table_path="/scratch/PI/euan/projects/mhc/data/tables/v2_data_subset/cardiovascular-HealthKitDataCollector-v1.tsv"
-    #subject_health_kit_distance=parse_healthkit_data_collector(table_path,synapseCacheDir,subjects) 
+    table_path="/scratch/PI/euan/projects/mhc/data/tables/v2_data_subset/cardiovascular-HealthKitDataCollector-v1.tsv"
+    subject_health_kit_distance=parse_healthkit_data_collector(table_path,synapseCacheDir,subjects) 
     pdb.set_trace()
     
 
