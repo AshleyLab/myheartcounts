@@ -83,7 +83,7 @@ def aggregate_motion_tracker(subject_daily_vals,days_in_study,intervention_order
         
 def aggregate_healthkit_data_collector(subject_daily_vals,days_in_study,intervention_order,outf_prefix):
     outf=open(outf_prefix,'w')
-    outf.write('Subject\tDaysInStudy\tIntervention\tDayIndex\tDayType\tMetric\tValue\n')
+    outf.write('Subject\tDaysInStudy\tIntervention\tDayIndex\tDayType\tMetric\tValue\tSource\n')
     for subject in subject_daily_vals:
         try:
             cur_days_in_study=days_in_study[subject]
@@ -114,14 +114,16 @@ def aggregate_healthkit_data_collector(subject_daily_vals,days_in_study,interven
             else:
                 cur_intervention=day_index_to_intervention[day_index]
             cur_weekday_or_weekend=weekday_or_weekend[day_index]
-            for key in cur_subject_daily_vals[day]:
-                cur_value=cur_subject_daily_vals[day][key]
-                outf.write(subject+\
+            for datatype in cur_subject_daily_vals[day]:
+                for source_tuple in cur_subject_daily_vals[day][datatype]: 
+                    cur_value=cur_subject_daily_vals[day][datatype][source_tuple]
+                    outf.write(subject+\
                            '\t'+str(cur_days_in_study)+\
                            '\t'+str(cur_intervention)+\
                            '\t'+str(day_index)+\
                            '\t'+str(cur_weekday_or_weekend)+\
-                           '\t'+key+\
+                           '\t'+datatype+\
                            '\t'+str(round(cur_value,3))+\
+                           '\t'+str('_'.join(source_tuple))+\
                            '\n')
     

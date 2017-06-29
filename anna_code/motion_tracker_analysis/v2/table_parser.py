@@ -51,6 +51,20 @@ def merge_numentries_dict(d1,d2):
         else:
             d3[entry]=d2[entry]
     return d3
+def merge_numentries_dict_healthkit(d1,d2):
+    d3=dict()
+    for day in d1:
+        d3[day]=d1[day]
+    for day in d2:
+        if day not in d3:
+            d3[day]=d2[day]
+        if datatype not in d3[day]:
+            d3[day][datatype]=d2[day][datatype]
+        if source_tuple not in d3[day][datatype]:
+            d3[day][datatype][source_tuple]=d2[day][datatype][source_tuple]
+        else:
+            d3[day][datatype][source_tuple]+=d2[day][datatype][source_tuple]
+    return d3
 
 def get_synapse_cache_entry(synapseCacheDir,blob_name):
     #print(str(blob_name)) 
@@ -130,7 +144,7 @@ def parse_healthkit_data_collector(table_path,synapseCacheDir,subjects):
                 if cur_subject not in subject_distance_vals:
                     subject_distance_vals[cur_subject]=health_kit_distance
                 else:
-                    subject_distance_vals[cur_subject]=merge_numentries_dict(subject_distance_vals[cur_subject],health_kit_distance)
+                    subject_distance_vals[cur_subject]=merge_numentries_dict_healthkit(subject_distance_vals[cur_subject],health_kit_distance)
             except:
                 continue 
     return subject_distance_vals 
