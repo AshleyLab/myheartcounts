@@ -1,0 +1,27 @@
+For data processing in analysis of intervention affects, these are the scripts I have been using:
+
+0) Filter the tables to include just v2 data:
+filter_tables_for_v2.sh
+This stores the v2 entries in ../../data/tables/v2_data_subset/
+
+1) Update the lists of subjects with healthkit & motion tracker data in v2
+python get_unique.py --source_files ../../data/tables/v2_data_subset/*HealthKit* --outf ../../data/tables/v2_data_subset/subjects/healthkit_data/subjects
+
+python get_unique.py --source_files ../../data/tables/v2_data_subset/*motion* --outf ../../data/tables/v2_data_subset/subjects/motion/subjects
+
+2) cd ../../data/tables/v2_data_subset/subjects/
+split the subjects into chunks of length 10
+split -a3 -d -l10 subject.motionActivityCollector
+split -a3 -d -l10 subject.healthkit_data
+
+3) get activity fractions & duration from motion tracker data: https://github.com/AshleyLab/myheartcounts/blob/master/anna_code/motion_tracker_analysis/v2/sbatch.motiontracker.sh
+
+4) healthkit metrics: https://github.com/AshleyLab/myheartcounts/blob/master/anna_code/motion_tracker_analysis/v2/sbatch.healthkit.sh
+
+
+5) create data table with gwas metrics: https://github.com/AshleyLab/myheartcounts/blob/master/anna_code/motion_tracker_analysis/v2/get_objective_metrics_for_gwas.sh
+
+
+6) some filtering & qc scripts: https://github.com/AshleyLab/myheartcounts/blob/master/anna_code/motion_tracker_analysis/v2/filter_and_qc.sh
+
+7) Rscript to analyze intervention effects.
