@@ -18,10 +18,18 @@ split -a3 -d -l10 subject.healthkit_data
 
 4) healthkit metrics: https://github.com/AshleyLab/myheartcounts/blob/master/anna_code/motion_tracker_analysis/v2/sbatch.healthkit.sh
 
-
-5) create data table with gwas metrics: https://github.com/AshleyLab/myheartcounts/blob/master/anna_code/motion_tracker_analysis/v2/get_objective_metrics_for_gwas.sh
-
+5) Combine metrics by subjects:
+/scratch/PI/euan/projects/mhc/code/anna_code/motion_tracker_analysis/v2/assemble_results_across_subjects.sh
 
 6) some filtering & qc scripts: https://github.com/AshleyLab/myheartcounts/blob/master/anna_code/motion_tracker_analysis/v2/filter_and_qc.sh
 
 7) Rscript to analyze intervention effects.
+/scratch/PI/euan/projects/mhc/code/anna_code/motion_tracker_analysis/v2/measure_intervention_effects.R
+-------------------------------------------------------------------------------------------------------------------------------
+GWAS analysis of 23&Me data:
+
+0) create data table with gwas metrics: https://github.com/AshleyLab/myheartcounts/blob/master/anna_code/motion_tracker_analysis/v2/get_objective_metrics_for_gwas.sh
+
+
+
+
