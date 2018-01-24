@@ -72,11 +72,13 @@ def get_synapse_cache_entry(synapseCacheDir,blob_name):
     if parent_dir=="":
         parent_dir="0" 
     mypath=synapseCacheDir+parent_dir+"/"+blob_name
-    onlyfiles = [f for f in listdir(mypath) if isfile(join(mypath, f))]
-    for f in onlyfiles:
-        if f.startswith('data'):
-            return mypath+'/'+f
-        
+    try:
+        onlyfiles = [f for f in listdir(mypath) if isfile(join(mypath, f))]
+        for f in onlyfiles:
+            if f.startswith('data'):
+                return mypath+'/'+f
+    except: 
+        return None
 
 def parse_motion_tracker(table_path,synapseCacheDir,subjects):
     data_table=load_motion_tracker(table_path)

@@ -48,8 +48,7 @@ def aggregate_motion_tracker(subject_daily_vals,days_in_study,intervention_order
         cur_fraction_vals=fraction_vals[subject]
         cursubject_numentries=numentries[subject]
         #sort the days!
-        subject_days=cur_duration_vals.keys()
-        subject_days.sort()
+        subject_days=sorted(cur_duration_vals.keys())
         if len(subject_days)==0:
             continue 
         first_day=subject_days[0]
@@ -99,8 +98,7 @@ def aggregate_healthkit_data_collector(subject_daily_vals,days_in_study,interven
         cur_subject_daily_vals=subject_daily_vals[subject]
 
         #sort the days!
-        subject_days=cur_subject_daily_vals.keys()
-        subject_days.sort()
+        subject_days=sorted(cur_subject_daily_vals.keys())
         if len(subject_days)==0:
             continue 
         first_day=subject_days[0]

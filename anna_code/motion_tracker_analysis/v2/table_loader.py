@@ -144,8 +144,7 @@ def load_health_kit(table_path):
                                    8: convert_datetime},
                        skip_header=True,
                        loose=True,
-                       invalid_raise=False)
-
+                       invalid_raise=True)
     return data 
 
 if __name__=="__main__":

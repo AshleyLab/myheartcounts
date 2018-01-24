@@ -31,7 +31,7 @@ def parse_motion_activity(file_path):
                          'activityType',
                          'confidence')
     dtype_dict['formats']=(datetime,
-                           'S36',
+                           'U36',
                            'i')
     try:
         data=np.genfromtxt(file_path,
@@ -101,11 +101,11 @@ def parse_healthkit_steps(file_path):
                          'sourceIdentifier')
     dtype_dict['formats']=(datetime,
                            datetime,
-                           'S36',
-                           'i',
-                           'S36',
-                           'S36',
-                           'S36')
+                           'U36',
+                           'f',
+                           'U36',
+                           'U36',
+                           'U36')
     try:
         data=np.genfromtxt(file_path,
                            dtype=dtype_dict['formats'],
@@ -145,9 +145,9 @@ def parse_healthkit_steps(file_path):
 if __name__=="__main__":
     #TESTS for sherlock
     import pdb
-    base_dir="/scratch/PI/euan/projects/mhc/data/synapseCache_v2/"
-    [motion_tracker_duration,motion_tracker_fractions,num_entries]=parse_motion_activity(base_dir+"638/14145638/data-054aa9f4-cb94-4663-b3df-e98ef3421dcb.csv")
-    health_kit_data=parse_healthkit_steps(base_dir+"661/13540661/data-cdf78ca9-1094-46ff-b7b4-94b75aafc7fb.csv")
+    base_dir="/scratch/PI/euan/projects/mhc/data/synapseCache/"
+    #[motion_tracker_duration,motion_tracker_fractions,num_entries]=parse_motion_activity(base_dir+"638/14145638/data-054aa9f4-cb94-4663-b3df-e98ef3421dcb.csv")
+    health_kit_data=parse_healthkit_steps(base_dir+"442/14643442/data-3ee4c2ea-ee90-41f4-8d62-cf44e0d42429.csv")
     pdb.set_trace() 
 
     
