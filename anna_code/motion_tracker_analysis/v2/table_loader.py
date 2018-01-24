@@ -3,6 +3,7 @@
 import numpy as np
 from datetime import datetime
 from dateutil.parser import parse 
+#from io import StringIO
 
 def convert_datetime(x):
     if x=="NA":
@@ -35,22 +36,24 @@ def load_abtest(table_path):
                          'createdOn',
                          'createdOnTimeZone',
                          'userSharingScope',
+                         'validationErrors',
                          'ABTestResult.test_name',
                          'ABTestResult.variable_value',
                          'ABTestResult.days_in_study')
-    dtype_dict['formats']=('S36',
-                           'S36',
-                           'S36',
-                           'S36',
+    dtype_dict['formats']=('U36',
+                           'U36',
+                           'U36',
+                           'U36',
                            datetime,
-                           'S36',
-                           'S36',
-                           'S36',
+                           'U36',
+                           'U36',
+                           'U36',
                            datetime,
-                           'S36',
-                           'S36',
-                           'S36',
-                           'S36',
+                           'U36',
+                           'U36',
+                           'U36',
+                           'U36',
+                           'U36',
                            'f')
     data=np.genfromtxt(table_path,
                    dtype=dtype_dict['formats'],
@@ -61,7 +64,7 @@ def load_abtest(table_path):
                    invalid_raise=False,
                    converters={4:convert_datetime,
                                8:convert_datetime,
-                               13:convert_int})
+                               14:convert_int})
 
     return data
 
@@ -78,19 +81,21 @@ def load_motion_tracker(table_path):
                          'createdOn',
                          'createdOnTimeZone',
                          'userSharingScope',
+                         'validationErrors',
                          'data') 
-    dtype_dict['formats']=('S36',
-                           'S36',
-                           'S36',
-                           'S36',
+    dtype_dict['formats']=('U36',
+                           'U36',
+                           'U36',
+                           'U36',
                            datetime,
-                           'S36',
-                           'S36',
-                           'S36',
+                           'U36',
+                           'U36',
+                           'U36',
                            datetime,
-                           'S36',
-                           'S36',
-                           'S36')
+                           'U36',
+                           'U36',
+                           'U36',
+                           'U36')
     data=np.genfromtxt(table_path,
                        dtype=dtype_dict['formats'],
                        names=dtype_dict['names'],
@@ -116,19 +121,21 @@ def load_health_kit(table_path):
                          'createdOn',
                          'createdOnTimeZone',
                          'userSharingScope',
+                         'validationErrors',
                          'data') 
-    dtype_dict['formats']=('S36',
-                           'S36',
-                           'S36',
-                           'S36',
+    dtype_dict['formats']=('U36',
+                           'U36',
+                           'U36',
+                           'U36',
                            datetime,
-                           'S36',
-                           'S36',
-                           'S36',
+                           'U36',
+                           'U36',
+                           'U36',
                            datetime,
-                           'S36',
-                           'S36',
-                           'S36')
+                           'U36',
+                           'U36',
+                           'U36',
+                           'U36')
     data=np.genfromtxt(table_path,
                        dtype=dtype_dict['formats'],
                        names=dtype_dict['names'],
