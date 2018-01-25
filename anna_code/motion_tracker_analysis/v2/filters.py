@@ -24,6 +24,9 @@ def extract_field(data,field):
     filtered=[data[0]]
     for line in data[1::]:
         tokens=line.split('\t')
+        if len(tokens)<6:
+            print(str(tokens))
+            continue
         if(tokens[5]==field):
             filtered.append(line)
     return filtered
