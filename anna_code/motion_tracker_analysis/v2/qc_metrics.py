@@ -2,6 +2,9 @@ def days_in_study_reported_observed(data,outf_name):
     subject_dict=dict()
     for line in data[1::]:
         tokens=line.split('\t')
+        if (len(tokens)<4):
+            print(str(tokens))
+            continue
         subject=tokens[0]
         days_in_study=tokens[1]
         day_index=tokens[3]
@@ -20,6 +23,9 @@ def missing_intervention_assignment(data,outf_name):
     subject_dict=dict()
     for line in data[1::]:
         tokens=line.split('\t')
+        if (len(tokens)<3):
+            print(str(tokens))
+            continue
         subject=tokens[0]
         intervention=tokens[2]
         if tokens[2]=="NA":
