@@ -31,10 +31,12 @@ def main():
                 outer_dir="0"
             inner_dir=b 
             full_dir=args.blob_source_dir+'/'+outer_dir+'/'+inner_dir+'/'
-            onlyfiles = [f for f in listdir(full_dir) if (f.startswith('.')==False) and (isfile(join(full_dir, f)))]
-            if len(onlyfiles)==0: 
-                outf.write(b+'\n') 
-                
+            try:
+                onlyfiles = [f for f in listdir(full_dir) if (f.startswith('.')==False) and (isfile(join(full_dir, f)))]
+                if len(onlyfiles)==0: 
+                    outf.write(b+'\n') 
+            except: 
+                outf.write(b+'\n')
 
 if __name__=="__main__": 
     main() 
