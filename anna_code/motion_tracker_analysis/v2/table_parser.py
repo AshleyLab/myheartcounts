@@ -133,6 +133,7 @@ def parse_healthkit_data_collector(table_path,synapseCacheDir,subjects):
             subject_dict[subject]=1
     subject_distance_vals=dict()
     total_rows=len(data_table)
+    print(str(total_rows))
     #record_matches=0 
     #print("total_rows:"+str(total_rows))
     for row in range(total_rows):
@@ -169,7 +170,7 @@ if __name__=="__main__":
     #subject_motion_fractions=subject_motion[1]
     #subject_motion_numentries=subject_motion[2]
     
-    table_path="/scratch/PI/euan/projects/mhc/data/tables/v2_data_subset/cardiovascular-HealthKitDataCollector-v1.test.tsv"
+    table_path="/scratch/PI/euan/projects/mhc/data/tables/v2_data_subset/cardiovascular-HealthKitDataCollector-v1.tsv"
     subject_health_kit_distance=parse_healthkit_data_collector(table_path,synapseCacheDir,subjects) 
     pdb.set_trace()
     
