@@ -1,4 +1,4 @@
-for subject_set in `seq 0 261`
+for subject_set in `seq 0 285`
 do
-    sbatch -J "motiontracker$subject_set" -o logs2/motiontracker.$subject_set.o -e logs2/motiontracker.$subject_set.e -p euan,owners get_activity_fraction_and_duration_appv2.activity_only.sh $subject_set
+    sbatch -J "motiontracker$subject_set" -o logs2/motiontracker.$subject_set.o -e logs2/motiontracker.$subject_set.e -p euan get_activity_fraction_and_duration_appv2.activity_only.sh $subject_set
 done
