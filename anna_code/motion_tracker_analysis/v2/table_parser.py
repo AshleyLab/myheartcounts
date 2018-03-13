@@ -58,12 +58,14 @@ def merge_numentries_dict_healthkit(d1,d2):
     for day in d2:
         if day not in d3:
             d3[day]=d2[day]
-        if datatype not in d3[day]:
-            d3[day][datatype]=d2[day][datatype]
-        if source_tuple not in d3[day][datatype]:
-            d3[day][datatype][source_tuple]=d2[day][datatype][source_tuple]
-        else:
-            d3[day][datatype][source_tuple]+=d2[day][datatype][source_tuple]
+        for datatype in d2[day]: 
+            if datatype not in d3[day]:
+                d3[day][datatype]=d2[day][datatype]
+            for source_tuple in d2[day][datatype]: 
+                if source_tuple not in d3[day][datatype]:
+                    d3[day][datatype][source_tuple]=d2[day][datatype][source_tuple]
+                else:
+                    d3[day][datatype][source_tuple]+=d2[day][datatype][source_tuple]
     return d3
 
 def get_synapse_cache_entry(synapseCacheDir,blob_name):
@@ -123,6 +125,7 @@ def parse_motion_tracker(table_path,synapseCacheDir,subjects):
 
 def parse_healthkit_data_collector(table_path,synapseCacheDir,subjects):
     data_table=load_health_kit(table_path)
+    print("loaded healthkit data table") 
     if subjects !="all":
         subject_dict=dict()
         subjects=open(subjects,'r').read().strip().split('\n')
@@ -130,40 +133,43 @@ def parse_healthkit_data_collector(table_path,synapseCacheDir,subjects):
             subject_dict[subject]=1
     subject_distance_vals=dict()
     total_rows=len(data_table)
+    record_matches=0 
+    print("total_rows:"+str(total_rows))
     for row in range(total_rows):
-        if row%100==0:
-            print(str(row)+"/"+str(total_rows))
+        #if row%100==0:
+        #    print(str(row)+"/"+str(total_rows))
         cur_subject=data_table['healthCode'][row] 
         if (subjects!="all") and (cur_subject not in subject_dict):
             continue
         else:
+            record_matches+=1
+            print(str(record_matches))
             blob_name=data_table['data'][row]
             if blob_name.endswith("NA"):
                 continue
             synapseCacheFile=get_synapse_cache_entry(synapseCacheDir,blob_name)
-            try:
-                health_kit_distance=parse_healthkit_steps(synapseCacheFile)
-                if cur_subject not in subject_distance_vals:
-                    subject_distance_vals[cur_subject]=health_kit_distance
-                else:
-                    subject_distance_vals[cur_subject]=merge_numentries_dict_healthkit(subject_distance_vals[cur_subject],health_kit_distance)
-            except:
-                continue 
+            print(synapseCacheFile)
+            print("got blob:"+str(blob_name))
+            health_kit_distance=parse_healthkit_steps(synapseCacheFile)
+            if cur_subject not in subject_distance_vals:
+                subject_distance_vals[cur_subject]=health_kit_distance
+            else:
+                subject_distance_vals[cur_subject]=merge_numentries_dict_healthkit(subject_distance_vals[cur_subject],health_kit_distance)
     return subject_distance_vals 
         
 
 
 if __name__=="__main__":
     #TESTS 
-    table_path="/scratch/PI/euan/projects/mhc/data/tables/v2_data_subset/cardiovascular-motionActivityCollector-v1.tsv"
-    synapseCacheDir="/scratch/PI/euan/projects/mhc/data/synapseCache_v2/"
+    #table_path="/scratch/PI/euan/projects/mhc/data/tables/v2_data_subset/cardiovascular-motionActivityCollector-v1.tsv"
+    synapseCacheDir="/scratch/PI/euan/projects/mhc/data/synapseCache/"
     subjects="subjects_for_test.txt"
     #subject_motion=parse_motion_tracker(table_path,synapseCacheDir,subjects)
     #subject_motion_duration=subject_motion[0]
     #subject_motion_fractions=subject_motion[1]
     #subject_motion_numentries=subject_motion[2]
     
-    table_path="/scratch/PI/euan/projects/mhc/data/tables/v2_data_subset/cardiovascular-HealthKitDataCollector-v1.tsv"
+    table_path="/scratch/PI/euan/projects/mhc/data/tables/v2_data_subset/cardiovascular-HealthKitDataCollector-v1.test.tsv"
     subject_health_kit_distance=parse_healthkit_data_collector(table_path,synapseCacheDir,subjects) 
     pdb.set_trace()
     
