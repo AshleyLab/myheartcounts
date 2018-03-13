@@ -133,8 +133,8 @@ def parse_healthkit_data_collector(table_path,synapseCacheDir,subjects):
             subject_dict[subject]=1
     subject_distance_vals=dict()
     total_rows=len(data_table)
-    record_matches=0 
-    print("total_rows:"+str(total_rows))
+    #record_matches=0 
+    #print("total_rows:"+str(total_rows))
     for row in range(total_rows):
         #if row%100==0:
         #    print(str(row)+"/"+str(total_rows))
@@ -142,14 +142,14 @@ def parse_healthkit_data_collector(table_path,synapseCacheDir,subjects):
         if (subjects!="all") and (cur_subject not in subject_dict):
             continue
         else:
-            record_matches+=1
-            print(str(record_matches))
+            #record_matches+=1
+            #print(str(record_matches))
             blob_name=data_table['data'][row]
             if blob_name.endswith("NA"):
                 continue
             synapseCacheFile=get_synapse_cache_entry(synapseCacheDir,blob_name)
-            print(synapseCacheFile)
-            print("got blob:"+str(blob_name))
+            #print(synapseCacheFile)
+            #print("got blob:"+str(blob_name))
             health_kit_distance=parse_healthkit_steps(synapseCacheFile)
             if cur_subject not in subject_distance_vals:
                 subject_distance_vals[cur_subject]=health_kit_distance

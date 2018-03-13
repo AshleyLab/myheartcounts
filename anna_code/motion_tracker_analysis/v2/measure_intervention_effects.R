@@ -1,8 +1,8 @@
 rm(list=ls())
-motion_tracker=data.frame(read.table("motion_tracker_combined.filered.txt",header=TRUE,sep='\t'))
+motion_tracker=data.frame(read.table("~/sherlock/data/timeseries_v2/summary/motion_tracker_combined.filtered.txt",header=TRUE,sep='\t'))
 motion_tracker$Duration_in_Minutes[motion_tracker$Duration_in_Minutes>(24*60)]=24*60
-healthkit_steps=data.frame(read.table("healthkit_combined.stepcount.txt",header=TRUE,sep='\t'))
-healthkit_distance=data.frame(read.table("healthkit_combined.distance.txt",header=TRUE,sep='\t'))
+healthkit_steps=data.frame(read.table("~/sherlock/data/timeseries_v2/summary/healthkit_combined.stepcount.txt",header=TRUE,sep='\t'))
+healthkit_distance=data.frame(read.table("~/sherlock/data/timeseries_v2/summary/healthkit_combined.distance.txt",header=TRUE,sep='\t'))
 
 #get subsets of the data frame of interest! 
 stationary_subset=motion_tracker[motion_tracker$Activity=="stationary",]
@@ -30,6 +30,7 @@ tk_stationary_fractions<-TukeyHSD(aov_stationary_fractions,conf.level=0.95)
 capture.output(tk_stationary_fractions, file = "stationary_fractions.tukey.txt")
 
 #stationary duration 
+stationary_subset=stationary_subset[stationary_subset$Duration_in_Minutes <=1440,]
 stationary_plot_duration=ggplot(stationary_subset,aes(stationary_subset$Intervention,stationary_subset$Duration_in_Minutes))+
   geom_boxplot() + 
   ylim(c(0,1440))+
@@ -61,10 +62,11 @@ capture.output(summary(aov_automotive_fractions), file = "automotive_fractions.a
 tk_automotive_fractions<-TukeyHSD(aov_automotive_fractions,conf.level=0.95)
 capture.output(tk_automotive_fractions, file = "automotive_fractions.tukey.txt")
 
-#automotive duration 
+#automotive duration
+automotive_subset=automotive_subset[automotive_subset$Duration_in_Minutes<120,]
 automotive_plot_duration=ggplot(automotive_subset,aes(automotive_subset$Intervention,automotive_subset$Duration_in_Minutes))+
   geom_boxplot() + 
-  ylim(c(0,1440))+
+  ylim(c(0,120))+
   xlab("Intervention")+
   ylab("Minutes/Day Spent in automotive State")+
   ggtitle("automotive Minutes/Day")+
@@ -95,9 +97,10 @@ tk_active_fractions<-TukeyHSD(aov_active_fractions,conf.level=0.95)
 capture.output(tk_active_fractions, file = "active_fractions.tukey.txt")
 
 #active duration 
+active_subset=active_subset[active_subset$Duration_in_Minutes<=200,]
 active_plot_duration=ggplot(active_subset,aes(active_subset$Intervention,active_subset$Duration_in_Minutes))+
   geom_boxplot() + 
-  ylim(c(0,1440))+
+  ylim(c(0,200))+
   xlab("Intervention")+
   ylab("Minutes/Day Spent in active State")+
   ggtitle("Active Minutes/Day")+
@@ -128,9 +131,9 @@ tk_walking_fractions<-TukeyHSD(aov_walking_fractions,conf.level=0.95)
 capture.output(tk_walking_fractions, file = "walking_fractions.tukey.txt")
 
 #walking duration 
+walking_subset=walking_subset[walking_subset$Duration_in_Minutes<=300,]
 walking_plot_duration=ggplot(walking_subset,aes(walking_subset$Intervention,walking_subset$Duration_in_Minutes))+
   geom_boxplot() + 
-  ylim(c(0,1440))+
   xlab("Intervention")+
   ylab("Minutes/Day Spent in Walking State")+
   ggtitle("Walking Minutes/Day")+
@@ -160,9 +163,10 @@ tk_exercise_fractions<-TukeyHSD(aov_exercise_fractions,conf.level=0.95)
 capture.output(tk_exercise_fractions, file = "exercise_fractions.tukey.txt")
 
 #exercise duration 
+exercise_subset=exercise_subset[exercise_subset$Duration_in_Minutes<=50,]
 exercise_plot_duration=ggplot(exercise_subset,aes(exercise_subset$Intervention,exercise_subset$Duration_in_Minutes))+
   geom_boxplot() + 
-  ylim(c(0,120))+
+  ylim(c(0,50))+
   xlab("Intervention")+
   ylab("Minutes/Day Spent in Running/Cycling State")+
   ggtitle("Running/Cycling Minutes/Day")+
@@ -176,9 +180,10 @@ tk_exercise_duration<-TukeyHSD(aov_exercise_duration,conf.level=0.95)
 capture.output(tk_exercise_duration, file = "exercise_duration.tukey.txt")
 
 #step count 
+healthkit_steps=healthkit_steps[healthkit_steps$Value<=20000,]
 steps_plot=ggplot(healthkit_steps,aes(healthkit_steps$Intervention,healthkit_steps$Value))+
   geom_boxplot() + 
-  ylim(c(0,50000))+
+  ylim(c(0,20000))+
   xlab("Intervention")+
   ylab("HealthKit Daily Steps")+
   ggtitle("HealthKit Daily Steps")+
@@ -192,6 +197,7 @@ tk_steps<-TukeyHSD(aov_steps,conf.level=0.95)
 capture.output(tk_steps, file = "steps.tukey.txt")
 
 #distance traveled 
+healthkit_distance=healthkit_distance[healthkit_distance$Value<=3000,]
 distance_plot=ggplot(healthkit_distance,aes(healthkit_distance$Intervention,healthkit_distance$Value))+
   geom_boxplot() + 
   ylim(c(0,3000))+
