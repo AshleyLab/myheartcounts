@@ -123,7 +123,24 @@ def parse_healthkit_steps(file_path):
     #get the duration of each activity by day
     try:
         if ((data is not None) and (data.size>0)):
-            for row in range(data.size):
+            if(data.size==1): 
+                datatype=data['type'] 
+                source=data['source'] 
+                sourceIdentifier=data['sourceIdentifier']
+                source_tuple=tuple([source,sourceIdentifier])
+                day=data['startTime'][row].date()
+                value=data['value'][row]
+                if day not in tally_dict:
+                    tally_dict[day]=dict()
+                if datatype not in tally_dict[day]:
+                    tally_dict[day][datatype]=dict()
+                if source_tuple not in tally_dict[day][datatype]:
+                    tally_dict[day][datatype][source_tuple]=value 
+                else:
+                    tally_dict[day][datatype][source_tuple]+=value
+
+            else:
+                for row in range(data.size):
                     if data['startTime'][row] is not None:
                         datatype=data['type'][row]
                         source=data['source'][row]
@@ -140,8 +157,7 @@ def parse_healthkit_steps(file_path):
                         else:
                             tally_dict[day][datatype][source_tuple]+=value
     except:
-        pdb.set_trace() 
-        #continue 
+        print("There was a problem importing:"+str(file_path))
     return tally_dict
 
 if __name__=="__main__":
