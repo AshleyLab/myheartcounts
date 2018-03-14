@@ -121,7 +121,7 @@ def parse_healthkit_steps(file_path):
         #pdb.set_trace() 
         return tally_dict
     #get the duration of each activity by day
-    if (data is not None) and (len(data)>0):
+    if (data is not None) and (len(data)):
         for row in range(len(data)):
             try:
                 if data['startTime'][row] is not None:
