@@ -5,6 +5,8 @@ from datetime import datetime,timedelta
 import pdb
 from os import listdir
 from os.path import isfile, join
+import warnings
+warnings.filterwarnings("ignore")
 
 #we assume a subject will rarely have multiple table entries for motion tracker and health kit data in one day,
 #but this is possible in the app, so we handle it: 
