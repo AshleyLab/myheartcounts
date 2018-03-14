@@ -121,27 +121,27 @@ def parse_healthkit_steps(file_path):
         #pdb.set_trace() 
         return tally_dict
     #get the duration of each activity by day
-    if (data is not None) and (len(data)):
-        for row in range(len(data)):
-            try:
-                if data['startTime'][row] is not None:
-                    datatype=data['type'][row]
-                    source=data['source'][row]
-                    sourceIdentifier=data['sourceIdentifier'][row]
-                    source_tuple=tuple([source,sourceIdentifier])
-                    day=data['startTime'][row].date()
-                    value=data['value'][row]
-                    if day not in tally_dict:
-                        tally_dict[day]=dict()
-                    if datatype not in tally_dict[day]:
-                        tally_dict[day][datatype]=dict()
-                    if source_tuple not in tally_dict[day][datatype]:
-                        tally_dict[day][datatype][source_tuple]=value 
-                    else:
-                        tally_dict[day][datatype][source_tuple]+=value
-            except:
-                #pdb.set_trace() 
-                continue 
+    try:
+        if ((data is not None) and (data.size>0)):
+            for row in range(data.size):
+                    if data['startTime'][row] is not None:
+                        datatype=data['type'][row]
+                        source=data['source'][row]
+                        sourceIdentifier=data['sourceIdentifier'][row]
+                        source_tuple=tuple([source,sourceIdentifier])
+                        day=data['startTime'][row].date()
+                        value=data['value'][row]
+                        if day not in tally_dict:
+                            tally_dict[day]=dict()
+                        if datatype not in tally_dict[day]:
+                            tally_dict[day][datatype]=dict()
+                        if source_tuple not in tally_dict[day][datatype]:
+                            tally_dict[day][datatype][source_tuple]=value 
+                        else:
+                            tally_dict[day][datatype][source_tuple]+=value
+    except:
+        pdb.set_trace() 
+        #continue 
     return tally_dict
 
 if __name__=="__main__":

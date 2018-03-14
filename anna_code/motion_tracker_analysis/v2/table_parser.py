@@ -150,6 +150,8 @@ def parse_healthkit_data_collector(table_path,synapseCacheDir,subjects):
             blob_name=data_table['data'][row]
             if blob_name.endswith("NA"):
                 continue
+            if blob_name.endswith('None'): 
+                continue 
             synapseCacheFile=get_synapse_cache_entry(synapseCacheDir,blob_name)
             #print(synapseCacheFile)
             #print("got blob:"+str(blob_name))
