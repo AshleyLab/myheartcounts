@@ -2,7 +2,7 @@
 python filter_and_qc.py --data /scratch/PI/euan/projects/mhc/data/timeseries_v2/motion_tracker_combined.txt\
        --filters min_datapoints account_for_huge_gaps_in_time\
        --qc_metrics days_in_study_reported_observed missing_intervention_assignment\
-       --outf_filtered /scratch/PI/euan/projects/mhc/data/timeseries_v2/motion_tracker_combined.filered.txt\
+       --outf_filtered /scratch/PI/euan/projects/mhc/data/timeseries_v2/motion_tracker_combined.filtered.txt\
        --outf_qc_metrics /scratch/PI/euan/projects/mhc/data/timeseries_v2/days_in_study_reported_vs_observed.motion /scratch/PI/euan/projects/mhc/data/timeseries_v2/missing_intervention.motion\
        --intervention_metadata /scratch/PI/euan/projects/mhc/data/tables/v2_data_subset/cardiovascular-ABTestResults-v1.tsv
 

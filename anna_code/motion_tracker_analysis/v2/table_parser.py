@@ -78,10 +78,13 @@ def get_synapse_cache_entry(synapseCacheDir,blob_name):
     mypath=synapseCacheDir+parent_dir+"/"+blob_name
     try:
         onlyfiles = [f for f in listdir(mypath) if isfile(join(mypath, f))]
-        for f in onlyfiles:
-            if f.startswith('data'):
-                if f.endswith('.filtered'):
-                    return mypath+'/'+f
+        onlyfiles=[f for f in onlyfiles if f.startswith('data')]
+        #first, check if there are any filtered files. 
+        priority=[f for f in onlyfiles if f.endswith('filtered')]
+        if len(priority)>0: 
+            return mypath+'/'+priority[0] 
+        #only return a single file in case there are copies (i.e. multiple data pulls of the same file seem to create copies) 
+        return mypath+'/'+onlyfiles[0]        
     except: 
         return None
 
