@@ -11,12 +11,15 @@ python get_unique.py --source_files ../../data/tables/v2_data_subset/*motion* --
 
 2) cd ../../data/tables/v2_data_subset/subjects/
 split the subjects into chunks of length 10
-split -a3 -d -l10 subject.motionActivityCollector
-split -a3 -d -l10 subject.healthkit_data
+split -a3 -d -l10 motion/subjects
+split -a3 -d -l10 healthkit_data/subjects
 
 3) get activity fractions & duration from motion tracker data: https://github.com/AshleyLab/myheartcounts/blob/master/anna_code/motion_tracker_analysis/v2/sbatch.motiontracker.sh
 
 4) healthkit metrics: https://github.com/AshleyLab/myheartcounts/blob/master/anna_code/motion_tracker_analysis/v2/sbatch.healthkit.sh
+NOTE: files that fail to parse can be cleaned up with this script: 
+python anna_code/data_cleanup_and_formatting/cleanup_problematic_healthkit_tables.py ../motion_tracker_analysis/v2/failed.txt
+
 
 5) Combine metrics by subjects:
 /scratch/PI/euan/projects/mhc/code/anna_code/motion_tracker_analysis/v2/assemble_results_across_subjects.sh
