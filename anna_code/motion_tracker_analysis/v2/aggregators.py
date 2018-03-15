@@ -115,13 +115,19 @@ def aggregate_healthkit_data_collector(subject_daily_vals,days_in_study,interven
             for datatype in cur_subject_daily_vals[day]:
                 for source_tuple in cur_subject_daily_vals[day][datatype]: 
                     cur_value=cur_subject_daily_vals[day][datatype][source_tuple]
-                    outf.write(subject+\
-                           '\t'+str(cur_days_in_study)+\
-                           '\t'+str(cur_intervention)+\
-                           '\t'+str(day_index)+\
-                           '\t'+str(cur_weekday_or_weekend)+\
-                           '\t'+datatype+\
-                           '\t'+str(round(cur_value,3))+\
-                           '\t'+str('_'.join(source_tuple))+\
-                           '\n')
+                    try:
+                        outf.write(subject+\
+                                   '\t'+str(cur_days_in_study)+\
+                                   '\t'+str(cur_intervention)+\
+                                   '\t'+str(day_index)+\
+                                   '\t'+str(cur_weekday_or_weekend)+\
+                                   '\t'+datatype.decode("utf-8")+\
+                                   '\t'+str(round(cur_value,3))+\
+                                   '\t'+str(source_tuple)+\
+                                   '\n')
+                    except:
+                        print("error in writing to output file, probably the utf-8 encoding thing")
+                        pdb.set_trace()
+                        
+                        
     
