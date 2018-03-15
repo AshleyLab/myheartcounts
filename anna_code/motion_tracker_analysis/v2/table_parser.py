@@ -80,7 +80,8 @@ def get_synapse_cache_entry(synapseCacheDir,blob_name):
         onlyfiles = [f for f in listdir(mypath) if isfile(join(mypath, f))]
         for f in onlyfiles:
             if f.startswith('data'):
-                return mypath+'/'+f
+                if f.endswith('.filtered'):
+                    return mypath+'/'+f
     except: 
         return None
 

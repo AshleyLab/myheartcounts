@@ -104,7 +104,7 @@ def parse_healthkit_steps(file_path):
                            'S36',
                            'f',
                            'S36',
-                           'S20',
+                           'S36',
                            'S36')
     try:
         data=np.genfromtxt(file_path,
@@ -118,20 +118,21 @@ def parse_healthkit_steps(file_path):
                                        1:lambda x: parse(x)})
     except:
         print("There was a problem importing:"+str(file_path))
-        #pdb.set_trace() 
+    #    #pdb.set_trace() 
         return tally_dict
     #get the duration of each activity by day
     try:
         if ((data is not None) and (data.size>0)):
             if(data.size==1): 
-                datatype=data['type'] 
-                source=data['source'] 
-                sourceIdentifier=data['sourceIdentifier']
+                datatype=data['type'].tolist() 
+                source=str(data['source'])
+                sourceIdentifier=str(data['sourceIdentifier'])
                 source_tuple=tuple([source,sourceIdentifier])
-                day=data['startTime'][row].date()
-                value=data['value'][row]
+                value=data['value'].tolist()
+                day=data['startTime'].tolist().date()
                 if day not in tally_dict:
                     tally_dict[day]=dict()
+                
                 if datatype not in tally_dict[day]:
                     tally_dict[day][datatype]=dict()
                 if source_tuple not in tally_dict[day][datatype]:
@@ -157,6 +158,7 @@ def parse_healthkit_steps(file_path):
                         else:
                             tally_dict[day][datatype][source_tuple]+=value
     except:
+        #pdb.set_trace()
         print("There was a problem importing:"+str(file_path))
     return tally_dict
 
@@ -166,7 +168,7 @@ if __name__=="__main__":
     base_dir="/scratch/PI/euan/projects/mhc/data/synapseCache/"
     #[motion_tracker_duration,motion_tracker_fractions,num_entries]=parse_motion_activity(base_dir+"638/14145638/data-054aa9f4-cb94-4663-b3df-e98ef3421dcb.csv")
     
-    health_kit_data=parse_healthkit_steps('/scratch/PI/euan/projects/mhc/data/synapseCache/795/14189795/data-febc1410-7302-44a9-9180-8b3a23496170.csv')
-    pdb.set_trace() 
+    health_kit_data=parse_healthkit_steps('/scratch/PI/euan/projects/mhc/data/synapseCache/135/21923135/data-e2853996-39d1-43f5-b060-f315bcd8725d.csv.filtered')
+
 
     
