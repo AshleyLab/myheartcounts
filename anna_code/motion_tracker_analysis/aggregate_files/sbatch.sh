@@ -1,5 +1,2 @@
 #for i in `seq 1 7248`
-for i in `seq 2 2486`
-do
-    sbatch -J "6mwt" -o logs/6mwt.$i.o -e logs/6mwt.$i.e -p euan,owners --nodes 1 --qos=long --time=24:00:00 --mem=10000 assemble_6mwt.sh $i
-done
+sbatch -J "workout_collector" -o workout.o -e workout.e -p euan,owners --time=24:00:00 assemble_motion.sh $i

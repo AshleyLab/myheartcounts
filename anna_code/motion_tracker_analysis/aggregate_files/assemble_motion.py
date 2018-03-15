@@ -44,7 +44,7 @@ def parse_table(blob_dir,output_dir,source_table,healthCode_index,resume_from,su
                 os.makedirs(full_output_dir)        
             #get the last 3 digits of the blob:
             blob_part1=blob[-3::].lstrip('0')
-            full_source_file=blob_dir+'/'+blob_part1+'/'+blob+'/*tmp'
+            full_source_file=blob_dir+'/'+blob_part1+'/'+blob+'/data*'
             for f in glob.glob(full_source_file):
                 if not os.path.exists(full_output_dir+'/'+f): 
                     copy(f,full_output_dir)

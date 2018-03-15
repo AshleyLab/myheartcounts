@@ -5,10 +5,13 @@ from shutil import copy
 import glob 
 from os import listdir
 from os.path import isfile, join
+import json
 
 def parse_args():
     parser=argparse.ArgumentParser("Aggregate 6 Minute Walk Data")
     parser.add_argument("--source_tables",nargs="+")
+    parser.add_argument("--healthCode_indices",type=int,nargs="+")
+    parser.add_argument("--resume_from",type=int,default=None)
     parser.add_argument("--blob_dir") 
     parser.add_argument("--task",choices=["copy_sources","group_by_subject","group_by_metric"],help="copy_sources will copy all 6MWT files to a single directory; group_by_subject will combine all 6MWT files for a single subject into a single file; group_by_activity will combine all 6MWT files for a specified metric into a single file")
     parser.add_argument("--pedometer_walk_dir",default=None)
@@ -19,6 +22,7 @@ def parse_args():
     parser.add_argument("--device_motion_rest_dir",default=None)
     parser.add_argument("--heart_rate_rest_dir",default=None)
     parser.add_argument("--output_dir")
+    parser.add_argument("--subject_index",type=int,nargs="*",default=[]) 
     return parser.parse_args()
 
 def get_metric_indices(metrics,dir_names,output_dir,header):
@@ -36,16 +40,17 @@ def get_metric_indices(metrics,dir_names,output_dir,header):
     return indices
 
 
-def parse_table(blob_dir,output_dir,source_table,blobs):
+def parse_table(blob_dir,output_dir,source_table,healthCode_index,resume_from):
     print("parsing:"+str(source_table))
     data=open(source_table,'r').read().strip().split('\n')
     header=data[0].split('\t')
-    healthCode_index=header.index('healthCode')+1
+    
+
     metrics=['pedometer_fitness.walk.items',
              'accel_fitness_walk.json.items',
              'deviceMotion_fitness.walk.items',
              'HKQuantityTypeIdentifierHeartRate_fitness.walk.items',
-             'accel_fitness_res.json.items',
+             'accel_fitness_rest.json.items',
              'deviceMotion_fitness.rest.items',
              'HKQuantityTypeIdentifierHeartRate_fitness.rest.items']
     
@@ -57,31 +62,38 @@ def parse_table(blob_dir,output_dir,source_table,blobs):
               'device_motion_rest_dir',
               'heart_rate_rest_dir']    
     indices=get_metric_indices(metrics,dirnames,output_dir,header)
-    
-    for line in data[1::]:
+    lc=0
+    start_index=1
+    if resume_from!=None:
+        start_index=resume_from
+        lc=resume_from
+    for line in data[start_index::]:
+        lc+=1
+        if lc%100==0:
+            print(str(lc))
         tokens=line.split('\t')
         healthCode=tokens[healthCode_index]
+        if healthCode=="NA":
+            pdb.set_trace() 
         for i in range(len(metrics)):
             if indices[i]!=None:
                 blob=tokens[indices[i]]
                 if blob!='NA': 
-                    if blob not in blobs:
-                        blobs[blob]=1
-                        full_output_dir=output_dir+"/"+dirnames[i]+"/"+healthCode
-                        if not os.path.exists(full_output_dir):
-                            os.makedirs(full_output_dir)        
-                        #get the last 3 digits of the blob:
-                        blob_part1=blob[-3::].lstrip('0')
-                        full_source_file=blob_dir+'/'+blob_part1+'/'+blob+'/*.tmp'
-                        for f in glob.glob(full_source_file):
-                            copy(f,full_output_dir)
-    return blobs 
-                
+                    full_output_dir=output_dir+"/"+dirnames[i]+"/"+healthCode
+                    if (not os.path.exists(full_output_dir)):
+                        os.makedirs(full_output_dir)        
+                    #get the last 3 digits of the blob:
+                    blob_part1=blob[-3::].lstrip('0')
+                    full_source_file=blob_dir+'/'+blob_part1+'/'+blob+'/*.tmp'
+                    for f in glob.glob(full_source_file):
+                        if not os.path.exists(full_output_dir+'/'+f): 
+                            copy(f,full_output_dir)                
 def copy_sources(args):
     print("copying sources")
-    blobs=dict()
-    for source_table in args.source_tables:
-        blobs=parse_table(args.blob_dir,args.output_dir,source_table,blobs)
+    for source_index in range(len(args.source_tables)):
+        source_table=args.source_tables[source_index]
+        healthCode_index=args.healthCode_indices[source_index] 
+        parse_table(args.blob_dir,args.output_dir,source_table,healthCode_index,args.resume_from)
     
 
 #create aggregate json w/ all entries for a subject
@@ -120,25 +132,36 @@ def group_by_subject(args):
     #generate a json for each subject including all the metrics available for that subject
     #if there are multiple entries for a given metric for a given subject, store them in a list
     num_subjects=str(len(subject_dict.keys()))
-    subject_index=0 
-    for subject in subject_dict:
-        subject_index+=1
-        if subject_index%100==0:
-            print(subject_index+"/"+num_subjects)
-        subject_dict=dict() 
+    print(str(num_subjects))
+    if len(args.subject_index)>0:
+        subject_keys=args.subject_index
+    else:
+        subject_keys=range(0,num_subjects)
+    subjects=subject_dict.keys()
+    #HACK!!
+    finished=open('finished','r').read().strip().split('\n')
+    subjects=list(set(subjects) - set(finished))
+    print(str(len(subjects)))
+    for key in subject_keys:
+        subject=subjects[key]
+        print(str(subject))
+        aggregate_dict=dict() 
         for metric_tuple in subject_dict[subject]:
+            #pdb.set_trace() 
             #load the json files
             cur_metric=metric_tuple[0]
             cur_metric_dir=metric_tuple[1]
-            subject_dict[cur_metric]=[]
-            subject_metric_files=[f for f in in listdir(cur_metric_dir+'/'+subject)]
+            aggregate_dict[cur_metric]=[]
+            subject_metric_files=[f for f in listdir(cur_metric_dir+'/'+subject)]
+            print(str(cur_metric))
             for f in subject_metric_files:
-                cur_file=open(cur_metric_dir+'/'+subject+f,'r')
-                subject_dict[cur_metric].append(json.load(cur_file))
+                cur_file=open(cur_metric_dir+'/'+subject+'/'+f,'r')
+                aggregate_dict[cur_metric].append(json.load(cur_file))
+        print("writing output for subject:"+str(subject))
         #all metrics for subject have been processed. Save the subject to aggregate directory.
         outf=open(args.output_dir+"/aggregate_by_subject/"+subject+".json",'w')
-        json.dump(subject_dict,outf)
-        
+        json.dump(aggregate_dict,outf)
+        print("Done!:"+subject) 
     
 #create aggregate json w/ all subjects' entries for a single metric - this will be a large file!
 def group_by_metric(args):
@@ -176,11 +199,14 @@ def group_by_metric(args):
 
 
 def perform_task(args):
-    return{
-        'copy_sources': copy_sources(args),
-        'group_by_subject': group_by_subject(args),
-        'group_by_metric':group_by_metric(args) 
-        }[args.task]
+    if args.task=="copy_sources":
+        return copy_sources(args)
+    elif args.task=="group_by_subject":
+        return group_by_subject(args)
+    elif args.task=="group_by_metric":
+        return group_by_metric(args)
+    else:
+        raise Exception('invalid value specified for --task') 
 
 def main():
     #read in the arguments 
