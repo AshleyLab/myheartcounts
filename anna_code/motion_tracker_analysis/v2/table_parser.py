@@ -21,7 +21,8 @@ def merge_duration_dict(d1,d2):
             #sum by key
             for key in d2[entry]:
                 if key in d3[entry]:
-                    d3[entry][key]+=d2[entry][key]
+                    for blob in d2[entry][key]: 
+                        d3[entry][key][blob]=d2[entry][key][blob]
                 else:
                     d3[entry][key]=d2[entry][key]
         else:
@@ -31,15 +32,18 @@ def merge_duration_dict(d1,d2):
     for entry in d3:
         d_total[entry]=timedelta(seconds=0)
         for key in d3[entry]:
-            d_total[entry]+=d3[entry][key]
+            for blob in d3[entry][key]: 
+                d_total[entry]+=d3[entry][key][blob]
     d_fract=dict()
     for entry in d3:
         d_fract[entry]=dict()
         for key in d3[entry]:
-            if d_total[entry].total_seconds()==0:
-                d_fract[entry][key]=0
-            else: 
-                d_fract[entry][key]=d3[entry][key].total_seconds()/d_total[entry].total_seconds()
+            d_fract[entry][key]=dict() 
+            for blob in d3[entry][key]: 
+                if d_total[entry].total_seconds()==0:
+                    d_fract[entry][key][blob]=0
+                else: 
+                    d_fract[entry][key][blob]=d3[entry][key][blob].total_seconds()/d_total[entry].total_seconds()
     return d3,d_fract
 
 
@@ -53,6 +57,7 @@ def merge_numentries_dict(d1,d2):
         else:
             d3[entry]=d2[entry]
     return d3
+
 def merge_numentries_dict_healthkit(d1,d2):
     d3=dict()
     for day in d1:
@@ -60,18 +65,20 @@ def merge_numentries_dict_healthkit(d1,d2):
     for day in d2:
         if day not in d3:
             d3[day]=d2[day]
-        for datatype in d2[day]: 
-            if datatype not in d3[day]:
-                d3[day][datatype]=d2[day][datatype]
-            for source_tuple in d2[day][datatype]: 
-                if source_tuple not in d3[day][datatype]:
-                    d3[day][datatype][source_tuple]=d2[day][datatype][source_tuple]
+        else:
+            for datatype in d2[day]: 
+                if datatype not in d3[day]:
+                    d3[day][datatype]=d2[day][datatype]
                 else:
-                    d3[day][datatype][source_tuple]+=d2[day][datatype][source_tuple]
+                    for source_tuple in d2[day][datatype]: 
+                        if source_tuple not in d3[day][datatype]:
+                            d3[day][datatype][source_tuple]=d2[day][datatype][source_tuple]
+                        else: 
+                            for blob in d2[day][datatype][source_tuple]: 
+                                d3[day][datatype][source_tuple][blob]=d2[day][datatype][source_tuple][blob] 
     return d3
 
 def get_synapse_cache_entry(synapseCacheDir,blob_name):
-    #print(str(blob_name)) 
     parent_dir=blob_name[-3::].lstrip('0')
     if parent_dir=="":
         parent_dir="0" 
@@ -106,10 +113,8 @@ def parse_motion_tracker(table_path,synapseCacheDir,subjects):
             print(str(row)+"/"+str(total_rows))
         cur_subject=data_table['healthCode'][row]
         if (subjects!="all") and (cur_subject not in subject_dict):
-            #print("Skipping!") 
             continue
         else:
-            #print("Not skipping!") 
             blob_name=data_table['data'][row]
             if blob_name.endswith('NA'):
                 continue 
@@ -125,7 +130,7 @@ def parse_motion_tracker(table_path,synapseCacheDir,subjects):
             if cur_subject not in subject_numentries:
                 subject_numentries[cur_subject]=numentries
             else:
-                subject_numentries[cur_subject]=merge_numentries_dict(subject_numentries[cur_subject],numentries)
+                subject_numentries[cur_subject]=merge_numentries_dict(subject_numentries[cur_subject],numentries,cur_blob)
                 
     return [subject_duration_vals,subject_fraction_vals,subject_numentries]
 
@@ -140,25 +145,17 @@ def parse_healthkit_data_collector(table_path,synapseCacheDir,subjects):
     subject_distance_vals=dict()
     total_rows=len(data_table)
     print(str(total_rows))
-    #record_matches=0 
-    #print("total_rows:"+str(total_rows))
     for row in range(total_rows):
-        #if row%100==0:
-        #    print(str(row)+"/"+str(total_rows))
         cur_subject=data_table['healthCode'][row] 
         if (subjects!="all") and (cur_subject not in subject_dict):
             continue
         else:
-            #record_matches+=1
-            #print(str(record_matches))
             blob_name=data_table['data'][row]
             if blob_name.endswith("NA"):
                 continue
             if blob_name.endswith('None'): 
                 continue 
             synapseCacheFile=get_synapse_cache_entry(synapseCacheDir,blob_name)
-            #print(synapseCacheFile)
-            #print("got blob:"+str(blob_name))
             health_kit_distance=parse_healthkit_steps(synapseCacheFile)
             if cur_subject not in subject_distance_vals:
                 subject_distance_vals[cur_subject]=health_kit_distance
@@ -173,10 +170,6 @@ if __name__=="__main__":
     #table_path="/scratch/PI/euan/projects/mhc/data/tables/v2_data_subset/cardiovascular-motionActivityCollector-v1.tsv"
     synapseCacheDir="/scratch/PI/euan/projects/mhc/data/synapseCache/"
     subjects="subjects_for_test.txt"
-    #subject_motion=parse_motion_tracker(table_path,synapseCacheDir,subjects)
-    #subject_motion_duration=subject_motion[0]
-    #subject_motion_fractions=subject_motion[1]
-    #subject_motion_numentries=subject_motion[2]
     
     table_path="/scratch/PI/euan/projects/mhc/data/tables/v2_data_subset/cardiovascular-HealthKitDataCollector-v1.tsv"
     subject_health_kit_distance=parse_healthkit_data_collector(table_path,synapseCacheDir,subjects) 
