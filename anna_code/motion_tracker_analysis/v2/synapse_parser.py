@@ -26,7 +26,7 @@ def parse_motion_activity(file_path):
     duration_dict=dict()
     fraction_dict=dict()
     numentries=dict() 
-    cur_blob=file_path.split('/')[-2]
+
 
     #read in the data
     dtype_dict=dict()
@@ -37,6 +37,7 @@ def parse_motion_activity(file_path):
                            'U36',
                            'i')
     try:
+        cur_blob=file_path.split('/')[-2]
         data=np.genfromtxt(file_path,
                            dtype=dtype_dict['formats'],
                            names=dtype_dict['names'],
@@ -95,7 +96,6 @@ def parse_motion_activity(file_path):
 def parse_healthkit_steps(file_path):
     tally_dict=dict()
     #keep track of the blob that yielded this data 
-    cur_blob=file_path.split('/')[-2]
     #read in the data
     dtype_dict=dict()
     dtype_dict['names']=('startTime',
@@ -113,6 +113,7 @@ def parse_healthkit_steps(file_path):
                            'S36',
                            'S36')
     try:
+        cur_blob=file_path.split('/')[-2]
         data=np.genfromtxt(file_path,
                            dtype=dtype_dict['formats'],
                            names=dtype_dict['names'],
@@ -172,9 +173,12 @@ if __name__=="__main__":
     #TESTS for sherlock
     import pdb
     base_dir="/scratch/PI/euan/projects/mhc/data/synapseCache/"
-    [motion_tracker_duration,motion_tracker_fractions,num_entries]=parse_motion_activity(base_dir+"638/14145638/data-054aa9f4-cb94-4663-b3df-e98ef3421dcb.csv")
+    [motion_tracker_duration,motion_tracker_fractions,num_entries]=parse_motion_activity(base_dir+"927/16760927/data-a3201e39-7e45-486c-8a19-43f19174fb45.csv")
     
-    #health_kit_data=parse_healthkit_steps('/scratch/PI/euan/projects/mhc/data/synapseCache/135/21923135/data-e2853996-39d1-43f5-b060-f315bcd8725d.csv.filtered')
+#    health_kit_data=parse_healthkit_steps('/scratch/PI/euan/projects/mhc/data/synapseCache/135/21923135/data-e2853996-39d1-43f5-b060-f315bcd8725d.csv.filtered')
+
+#/scratch/PI/euan/projects/mhc/data/synapseCache/927/16760927/data-a3201e39-7e45-486c-8a19-43f19174fb45.csv
+
     pdb.set_trace() 
 
     
