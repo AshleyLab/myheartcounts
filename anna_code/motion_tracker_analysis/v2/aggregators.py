@@ -25,8 +25,39 @@ def get_weekday_or_weekend_label(days,first_day):
         index_to_type[cur_index]=cur_day.weekday()
     return index_to_type
 
-
-def aggregate_motion_tracker(subject_daily_vals,days_in_study,intervention_order,outf_prefix):
+def aggregate_motion_tracker_aws(subject_daily_vals,days_in_study,intervention_order,outf_prefix): 
+    duration_vals=subject_daily_vals[0]
+    fraction_vals=subject_daily_vals[1]
+    numentries_vals=subject_daily_vals[2]
+    
+    outf=open(outf_prefix,'w')
+    outf.write('Subject\tDaysInStudy\tIntervention\tDate\tActivity\tDuration_in_Minutes\tFraction\tNumentries\tSourceBlobs\n')
+    for subject in duration_vals: 
+        subject_days_in_study=days_in_study[subject]
+        for day in duration_vals[subject]: 
+            numentries=numentries_vals[subject][day]
+            #determine the intervention that is applied for this subject on this day 
+            cur_intervention="NA" 
+            if subject in intervention_order: 
+                if day in intervention_order[subject]: 
+                    cur_intervention=str(intervention_order[subject][day]) 
+            for activity in duration_vals[subject][day]: 
+                #sum durations across blobs 
+                blobs=duration_vals[subject][day].keys()
+                #get the duration in minutes 
+                duration=sum(duration_vals[subject][day].values()).total_seconds()/60
+                fraction=sum(fraction_vals[subject][day].values())
+                outf.write(subject+'\t'+
+                           str(subject_days_in_study)+'\t'+
+                           cur_intervention+'\t'+
+                           str(day)+'\t'+
+                           activity+'\t'+
+                           str(duration)+'\t'+
+                           str(fraction)+'\t'+
+                           str(numentries)+'\t'+
+                           str(blobs)+'\n')
+                
+def aggregate_motion_tracker_synapse(subject_daily_vals,days_in_study,intervention_order,outf_prefix):
     duration_vals=subject_daily_vals[0]
     fraction_vals=subject_daily_vals[1]
     numentries=subject_daily_vals[2]
@@ -80,7 +111,31 @@ def aggregate_motion_tracker(subject_daily_vals,days_in_study,intervention_order
                            '\n')
             
         
-def aggregate_healthkit_data_collector(subject_daily_vals,days_in_study,intervention_order,outf_prefix):
+def aggregate_healthkit_data_collector_aws(subject_daily_vals,days_in_study,intervention_order,outf_prefix):
+    outf=open(outf_prefix,'w') 
+    outf.write("Subject\tDaysInStudy\tIntervention\tDate\tMetric\tValue\tSource\tSourceBlobs\n")
+    for subject in subject_daily_vals: 
+        subject_days_in_study=days_in_study[subject]
+        for day in subject_daily_vals[subject]:
+            cur_intervention="NA" 
+            if subject in intervention_order: 
+                if day in intervention_order[subject]: 
+                    cur_intervention=intervenion_order[subject][day]
+            for metric in subject_daily_vals[subject][day]: 
+                for source in subject_daily_vals[subject][day][metric]: 
+                    blobs=str(subject_daily_vals[subject][day][metric][source].keys())
+                    value=sum(subject_daily_vals[subject][day][metric][source].values())
+                    outf.write(subject+'\t'+
+                               str(subject_days_in_study)+'\t'+
+                               str(cur_intervention)+'\t'+
+                               str(day)+'\t'+
+                               str(metric)+'\t'+
+                               str(value)+'\t'+
+                               str(source)+'\t'+
+                               str(blobs)+'\n')
+                               
+                    
+def aggregate_healthkit_data_collector_synapse(subject_daily_vals,days_in_study,intervention_order,outf_prefix):
     outf=open(outf_prefix,'w')
     outf.write('Subject\tDaysInStudy\tIntervention\tDayIndex\tDayType\tMetric\tValue\tSource\n')
     for subject in subject_daily_vals:

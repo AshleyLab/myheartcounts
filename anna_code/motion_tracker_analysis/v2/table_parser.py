@@ -90,6 +90,9 @@ def get_synapse_cache_entry(synapseCacheDir,blob_name):
         priority=[f for f in onlyfiles if f.endswith('filtered')]
         if len(priority)>0: 
             return mypath+'/'+priority[0] 
+        priority=[f for f in onlyfiles if f.endswith('csv')]
+        if len(priority)>0: 
+            return mypath+'/'+priority[0] 
         #only return a single file in case there are copies (i.e. multiple data pulls of the same file seem to create copies) 
         return mypath+'/'+onlyfiles[0]        
     except: 
@@ -130,7 +133,7 @@ def parse_motion_tracker(table_path,synapseCacheDir,subjects):
             if cur_subject not in subject_numentries:
                 subject_numentries[cur_subject]=numentries
             else:
-                subject_numentries[cur_subject]=merge_numentries_dict(subject_numentries[cur_subject],numentries,cur_blob)
+                subject_numentries[cur_subject]=merge_numentries_dict(subject_numentries[cur_subject],numentries)
                 
     return [subject_duration_vals,subject_fraction_vals,subject_numentries]
 
@@ -167,12 +170,14 @@ def parse_healthkit_data_collector(table_path,synapseCacheDir,subjects):
 
 if __name__=="__main__":
     #TESTS 
-    #table_path="/scratch/PI/euan/projects/mhc/data/tables/v2_data_subset/cardiovascular-motionActivityCollector-v1.tsv"
     synapseCacheDir="/scratch/PI/euan/projects/mhc/data/synapseCache/"
     subjects="subjects_for_test.txt"
     
-    table_path="/scratch/PI/euan/projects/mhc/data/tables/v2_data_subset/cardiovascular-HealthKitDataCollector-v1.tsv"
-    subject_health_kit_distance=parse_healthkit_data_collector(table_path,synapseCacheDir,subjects) 
+    table_path="/scratch/PI/euan/projects/mhc/data/tables/v2_data_subset/cardiovascular-motionActivityCollector-v1.tsv"
+    [subject_duration_vals,subject_fraction_vals,subject_numentries]=parse_motion_tracker(table_path,synapseCacheDir,subjects) 
+
+    #table_path="/scratch/PI/euan/projects/mhc/data/tables/v2_data_subset/cardiovascular-HealthKitDataCollector-v1.tsv"
+    #subject_health_kit_distance=parse_healthkit_data_collector(table_path,synapseCacheDir,subjects) 
     pdb.set_trace()
     
 
