@@ -145,12 +145,13 @@ def parse_healthkit_data_collector(table_path,synapseCacheDir,subjects):
         subjects=open(subjects,'r').read().strip().split('\n')
         for subject in subjects:
             subject_dict[subject]=1
+    print(str(subject_dict))
     subject_distance_vals=dict()
     total_rows=len(data_table)
     print(str(total_rows))
     for row in range(total_rows):
         cur_subject=data_table['healthCode'][row] 
-        if (subjects!="all") and (cur_subject not in subject_dict):
+        if ((subjects!="all") and (cur_subject not in subject_dict)):
             continue
         else:
             blob_name=data_table['data'][row]
