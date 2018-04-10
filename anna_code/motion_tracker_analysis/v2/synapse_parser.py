@@ -1,10 +1,40 @@
 #NOTE: tested on pythoon 3.6 w/ anaconda 3
 #Author: annashch@stanford.edu
 import numpy as np
-from datetime import datetime,timedelta
+from datetime import datetime,timedelta,date
 from dateutil.parser import parse
 import pdb 
 sample_gap_thresh=timedelta(minutes=15) 
+min_allowed_time=date(2015,1,1)
+max_allowed_time=date(2018,5,5) 
+
+#perform qc on healthkit entries to ensure they fall into humanly feasible ranges 
+def qc_mt(data): 
+    num_rows=data.shape[0]
+    to_delete=[] 
+    for row_index in range(num_rows): 
+        cur_date=data[row_index]['startTime'].date()
+        if ((cur_date < min_allowed_time) or (cur_date > max_allowed_time)): 
+            to_delete.append(row_index)
+    data=np.delete(data,to_delete)        
+    return data    
+def qc_hk(datatype,value,startTime,endTime):
+    if datatype not in ["HKQuantityTypeIdentifierDistanceWalk","HKQuantityTypeIdentifierStepCount"]:
+        return True 
+    if datatype=="HKQuantityTypeIdentifierDistanceWalk": 
+        time_diff=(endTime-startTime).total_seconds()/60.0
+        speed=value/time_diff
+        if speed > 750: 
+            return False 
+        else: 
+            return True 
+    if datatyp=="HKQuantityTypeIdentifierStepCount": 
+        time_diff=(endTime-startTime).total_seconds()/60.0 
+        rate=value/time_diff 
+        if rate >1000: 
+            return False 
+        else: 
+            return True 
 
 def get_activity_fractions_from_duration(duration_dict):
     fraction_dict=dict()
@@ -26,8 +56,6 @@ def parse_motion_activity(file_path):
     duration_dict=dict()
     fraction_dict=dict()
     numentries=dict() 
-
-
     #read in the data
     dtype_dict=dict()
     dtype_dict['names']=('startTime',
@@ -46,6 +74,8 @@ def parse_motion_activity(file_path):
                            loose=True,
                            invalid_raise=False,
                            converters={0:lambda x: parse(x)})
+        data=np.unique(data)
+        data=qc_mt(data) 
     except:
         return [duration_dict,fraction_dict,numentries]
     
@@ -123,6 +153,10 @@ def parse_healthkit_steps(file_path):
                            invalid_raise=False,
                            converters={0:lambda x: parse(x),
                                        1:lambda x: parse(x)})
+        try:
+            data=np.unique(data)
+        except: 
+            data=np.unique(data[1::])
     except:
         print("There was a problem importing:"+str(file_path))
         return tally_dict
@@ -136,16 +170,19 @@ def parse_healthkit_steps(file_path):
                 source_tuple=tuple([source,sourceIdentifier])
                 value=data['value'].tolist()
                 day=data['startTime'].tolist().date()
-                if day not in tally_dict:
-                    tally_dict[day]=dict()                
-                if datatype not in tally_dict[day]:
-                    tally_dict[day][datatype]=dict()
-                if source_tuple not in tally_dict[day][datatype]:
-                    tally_dict[day][datatype][source_tuple]=dict() 
-                if cur_blob not in tally_dict[day][datatype][source_tuple]: 
-                    tally_dict[day][datatype][source_tuple][cur_blob]=value 
-                else:
-                    tally_dict[day][datatype][source_tuple][cur_blob]+=value
+                #check if the value makes sense 
+                qc_result=qc_hk(datatype,value,data['startTime'],data['endTime'])
+                if qc_result==True: 
+                    if day not in tally_dict:
+                        tally_dict[day]=dict()                
+                    if datatype not in tally_dict[day]:
+                        tally_dict[day][datatype]=dict()
+                    if source_tuple not in tally_dict[day][datatype]:
+                        tally_dict[day][datatype][source_tuple]=dict() 
+                    if cur_blob not in tally_dict[day][datatype][source_tuple]: 
+                        tally_dict[day][datatype][source_tuple][cur_blob]=value 
+                    else:
+                        tally_dict[day][datatype][source_tuple][cur_blob]+=value
             else:
                 for row in range(data.size):
                     if data['startTime'][row] is not None:
@@ -155,6 +192,9 @@ def parse_healthkit_steps(file_path):
                         source_tuple=tuple([source,sourceIdentifier])
                         day=data['startTime'][row].date()
                         value=data['value'][row]
+                        qc_result=qc_hk(datatype,value,data['startTime'],data['endTime'])
+                        if qc_result==False: 
+                            continue 
                         if day not in tally_dict:
                             tally_dict[day]=dict()
                         if datatype not in tally_dict[day]:
@@ -173,12 +213,8 @@ if __name__=="__main__":
     #TESTS for sherlock
     import pdb
     base_dir="/scratch/PI/euan/projects/mhc/data/synapseCache/"
-    [motion_tracker_duration,motion_tracker_fractions,num_entries]=parse_motion_activity(base_dir+"927/16760927/data-a3201e39-7e45-486c-8a19-43f19174fb45.csv")
-    
-#    health_kit_data=parse_healthkit_steps('/scratch/PI/euan/projects/mhc/data/synapseCache/135/21923135/data-e2853996-39d1-43f5-b060-f315bcd8725d.csv.filtered')
-
-#/scratch/PI/euan/projects/mhc/data/synapseCache/927/16760927/data-a3201e39-7e45-486c-8a19-43f19174fb45.csv
-
+    #[motion_tracker_duration,motion_tracker_fractions,num_entries]=parse_motion_activity(base_dir+"927/16760927/data-a3201e39-7e45-486c-8a19-43f19174fb45.csv")
+    health_kit_data=parse_healthkit_steps('/scratch/PI/euan/projects/mhc/data/synapseCache/225/15115225/data-8d466f8d-d8e4-46ea-b417-2efc1816940b.csv')
     pdb.set_trace() 
 
     
