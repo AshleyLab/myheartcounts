@@ -25,6 +25,21 @@ def get_weekday_or_weekend_label(days,first_day):
         index_to_type[cur_index]=cur_day.weekday()
     return index_to_type
 
+def get_intervention(intervention_order,subject,day):
+    if subject in intervention_order: 
+        first_intervention_day=min(intervention_order[subject].keys())
+        last_intervention_day=max(intervention_order[subject].keys())
+
+        if day in intervention_order[subject]: 
+            return list(intervention_order[subject][day])[0] 
+        elif (day < first_intervention_day): #check if this is baseline data 
+            return "Baseline"
+        elif (day > last_intervention_day) : #check if this is post-intervention data 
+            return "PostIntervention"
+        else: 
+            return "InterventionGap" 
+    return "NA" 
+
 def aggregate_motion_tracker_aws(subject_daily_vals,days_in_study,intervention_order,outf_prefix): 
     duration_vals=subject_daily_vals[0]
     fraction_vals=subject_daily_vals[1]
@@ -39,11 +54,7 @@ def aggregate_motion_tracker_aws(subject_daily_vals,days_in_study,intervention_o
         for day in duration_vals[subject]: 
             numentries=numentries_vals[subject][day]
             #determine the intervention that is applied for this subject on this day 
-            cur_intervention="NA" 
-            if subject in intervention_order: 
-                if day in intervention_order[subject]: 
-                    cur_intervention=list(intervention_order[subject][day])[0] 
-            print(str(cur_intervention))
+            cur_intervention=get_intervention(intervention_order,subject,day)
             for activity in duration_vals[subject][day]: 
                 #sum durations across blobs 
                 blobs=','.join([str(i) for i in duration_vals[subject][day][activity].keys()])
@@ -127,7 +138,7 @@ def aggregate_healthkit_data_collector_aws(subject_daily_vals,days_in_study,inte
             cur_intervention="NA" 
             if subject in intervention_order: 
                 if day in intervention_order[subject]: 
-                    cur_intervention=list(intervention_order[subject][day])[0]
+                    cur_intervention=get_intervention(intervention_order,subject,day)
             for metric in subject_daily_vals[subject][day]: 
                 for source in subject_daily_vals[subject][day][metric]: 
                     blobs=','.join([str(i) for i in subject_daily_vals[subject][day][metric][source].keys()])
