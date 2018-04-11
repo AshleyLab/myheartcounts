@@ -1,5 +1,5 @@
-steps=open("/scratch/PI/euan/projects/mhc/data/timeseries_v2/summary/health_kit_combined.StepCount.txt",'r').read().strip().split('\n') 
-distance=open("/scratch/PI/euan/projects/mhc/data/timeseries_v2/summary/health_kit_combined.DistanceWalk.txt",'r').read().strip().split('\n') 
+steps=open("/scratch/PI/euan/projects/mhc/data/timeseries_v2/summary/healthkit_combined.stepcount.txt",'r').read().strip().split('\n') 
+distance=open("/scratch/PI/euan/projects/mhc/data/timeseries_v2/summary/healthkit_combined.distance.txt",'r').read().strip().split('\n') 
 steps_thresh=50000
 dist_thresh=25000
 step_dict=dict() 

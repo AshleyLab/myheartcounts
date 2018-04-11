@@ -16,22 +16,26 @@ def qc_mt(data):
         cur_date=data[row_index]['startTime'].date()
         if ((cur_date < min_allowed_time) or (cur_date > max_allowed_time)): 
             to_delete.append(row_index)
+    print(str(to_delete))
     data=np.delete(data,to_delete)        
     return data    
 def qc_hk(datatype,value,startTime,endTime):
+    datatype=datatype.decode('utf-8') 
     if datatype not in ["HKQuantityTypeIdentifierDistanceWalk","HKQuantityTypeIdentifierStepCount"]:
         return True 
     if datatype=="HKQuantityTypeIdentifierDistanceWalk": 
         time_diff=(endTime-startTime).total_seconds()/60.0
         speed=value/time_diff
         if speed > 750: 
+            print('BAD SPEED') 
             return False 
         else: 
             return True 
-    if datatyp=="HKQuantityTypeIdentifierStepCount": 
+    if datatype=="HKQuantityTypeIdentifierStepCount": 
         time_diff=(endTime-startTime).total_seconds()/60.0 
         rate=value/time_diff 
         if rate >1000: 
+            print("BAD RATE") 
             return False 
         else: 
             return True 
@@ -170,7 +174,8 @@ def parse_healthkit_steps(file_path):
                 source_tuple=tuple([source,sourceIdentifier])
                 value=data['value'].tolist()
                 day=data['startTime'].tolist().date()
-                #check if the value makes sense 
+                #check if the value makes sense
+                pdb.set_trace() 
                 qc_result=qc_hk(datatype,value,data['startTime'],data['endTime'])
                 if qc_result==True: 
                     if day not in tally_dict:
@@ -192,7 +197,7 @@ def parse_healthkit_steps(file_path):
                         source_tuple=tuple([source,sourceIdentifier])
                         day=data['startTime'][row].date()
                         value=data['value'][row]
-                        qc_result=qc_hk(datatype,value,data['startTime'],data['endTime'])
+                        qc_result=qc_hk(datatype,value,data['startTime'][row],data['endTime'][row])
                         if qc_result==False: 
                             continue 
                         if day not in tally_dict:
@@ -214,7 +219,7 @@ if __name__=="__main__":
     import pdb
     base_dir="/scratch/PI/euan/projects/mhc/data/synapseCache/"
     #[motion_tracker_duration,motion_tracker_fractions,num_entries]=parse_motion_activity(base_dir+"927/16760927/data-a3201e39-7e45-486c-8a19-43f19174fb45.csv")
-    health_kit_data=parse_healthkit_steps('/scratch/PI/euan/projects/mhc/data/synapseCache/225/15115225/data-8d466f8d-d8e4-46ea-b417-2efc1816940b.csv')
+    health_kit_data=parse_healthkit_steps('/scratch/PI/euan/projects/mhc/data/synapseCache/321/16862321/data-d06f43a8-ea7d-4c96-8022-375c296c312d.csv')
     pdb.set_trace() 
 
     

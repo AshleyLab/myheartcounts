@@ -135,10 +135,7 @@ def aggregate_healthkit_data_collector_aws(subject_daily_vals,days_in_study,inte
         if subject in days_in_study: 
             subject_days_in_study=days_in_study[subject]
         for day in subject_daily_vals[subject]:
-            cur_intervention="NA" 
-            if subject in intervention_order: 
-                if day in intervention_order[subject]: 
-                    cur_intervention=get_intervention(intervention_order,subject,day)
+            cur_intervention=get_intervention(intervention_order,subject,day)
             for metric in subject_daily_vals[subject][day]: 
                 for source in subject_daily_vals[subject][day][metric]: 
                     blobs=','.join([str(i) for i in subject_daily_vals[subject][day][metric][source].keys()])
