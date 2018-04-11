@@ -7,7 +7,6 @@ qc_metric_choices={"days_in_study_reported_observed":days_in_study_reported_obse
                    "missing_intervention_assignment":missing_intervention_assignment}
 filter_choices={"min_datapoints":min_datapoints,
                 "extract_field":extract_field,
-                "extract_field":extract_field,
                 "extract_source":extract_source}
 
 def parse_args():
@@ -19,7 +18,7 @@ def parse_args():
     parser.add_argument("--outf_qc_metrics",nargs="*",default=[])
     parser.add_argument("--intervention_metadata",default=None)
     parser.add_argument("--min_datapoints_thresh",type=int,default=100)
-    parser.add_argument("--min_duration_thresh",type=int,default=300) 
+    parser.add_argument("--min_duration_thresh",type=int,default=0.5) 
     parser.add_argument("--max_duration_thresh",type=int,default=1440) 
     parser.add_argument("--field_to_extract",default=None)
     parser.add_argument("--source_to_extract",default=None) 

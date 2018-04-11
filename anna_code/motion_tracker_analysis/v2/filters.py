@@ -14,17 +14,34 @@ def get_intervention(interventions,day_index):
 #also specify max allowed duration of time. 
 def min_datapoints(data,min_thresh,min_minutes,max_minutes):
     filtered=[data[0]]
+    subject_day_count=dict() 
     for line in data[1::]:
         tokens=line.split('\t')
-        if int(tokens[-2])>=min_thresh:
-            if float(tokens[5])>=min_minutes: 
-                if float(tokens[5])<=max_minutes: 
-                    filtered.append(line)
-    return filtered
+        if float(tokens[5])>=min_minutes: 
+            if float(tokens[5])<=max_minutes: 
+                filtered.append(line)
+                subject=tokens[0] 
+                day=tokens[3] 
+                count=tokens[-2]
+                if subject not in subject_day_count: 
+                    subject_day_count[subject]=dict() 
+                if day not in subject_day_count[subject]: 
+                    subject_day_count[subject][day]=int(count) 
+                else: 
+                    subject_day_count[subject][day]+=int(count) 
+    #filter by total number of entries for a given day 
+    filtered2=[filtered[0]]
+    for line in filtered[1::]: 
+        tokens=line.split('\t') 
+        subject=tokens[0] 
+        day=tokens[3] 
+        if subject_day_count[subject][day]> min_thresh: 
+            filtered2.append(line)
+    return filtered2
 
 #filter to only include data sources that contain the specified "source" string in their name. 
 def extract_source(data,source): 
-    filtered=data[0] 
+    filtered=[data[0]] 
     for line in data[1::]: 
         tokens=line.split('\t') 
         if len(tokens)<7: 
@@ -40,10 +57,10 @@ def extract_field(data,field):
     filtered=[data[0]]
     for line in data[1::]:
         tokens=line.split('\t')
-        if len(tokens)<6:
+        if len(tokens)<5:
             print(str(tokens))
             continue
-        if(tokens[5]==field):
+        if(tokens[4].__contains__(field)):
             filtered.append(line)
     return filtered
 
