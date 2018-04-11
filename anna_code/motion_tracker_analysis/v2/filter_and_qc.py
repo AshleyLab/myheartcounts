@@ -7,8 +7,8 @@ qc_metric_choices={"days_in_study_reported_observed":days_in_study_reported_obse
                    "missing_intervention_assignment":missing_intervention_assignment}
 filter_choices={"min_datapoints":min_datapoints,
                 "extract_field":extract_field,
-                "account_for_huge_gaps_in_time":account_for_huge_gaps_in_time,
-                "extract_field":extract_field}
+                "extract_field":extract_field,
+                "extract_source":extract_source}
 
 def parse_args():
     parser=argparse.ArgumentParser("qc and filter aggregate motion/healthkit data")
@@ -19,7 +19,10 @@ def parse_args():
     parser.add_argument("--outf_qc_metrics",nargs="*",default=[])
     parser.add_argument("--intervention_metadata",default=None)
     parser.add_argument("--min_datapoints_thresh",type=int,default=100)
-    parser.add_argument("--field_to_extract",default=None) 
+    parser.add_argument("--min_duration_thresh",type=int,default=300) 
+    parser.add_argument("--max_duration_thresh",type=int,default=1440) 
+    parser.add_argument("--field_to_extract",default=None)
+    parser.add_argument("--source_to_extract",default=None) 
     return parser.parse_args()
 
 def main():
@@ -38,11 +41,14 @@ def main():
         cur_filter_metric=args.filters[filter_metric_index]
         print(cur_filter_metric) 
         if cur_filter_metric=="min_datapoints": 
-            data=filter_choices[cur_filter_metric](data,args.min_datapoints_thresh)
+            data=filter_choices[cur_filter_metric](data,args.min_datapoints_thresh,args.min_duration_thresh,args.max_duration_thresh)
         elif cur_filter_metric=="extract_field":
             data=filter_choices[cur_filter_metric](data,args.field_to_extract)
         elif cur_filter_metric=="account_for_huge_gaps_in_time":
             data=filter_choices[cur_filter_metric](data,args.intervention_metadata) 
+        elif cur_filter_metric=="extract_source": 
+            data=filter_choices[cur_filter_metric](data,args.source_to_extract) 
+
     #write the output file (filtered data file)
     if args.outf_filtered!=None:
         outf=open(args.outf_filtered,'w')
