@@ -35,30 +35,36 @@ hk_step_phone_fit=lm(Value~Intervention+dayIndex+Intervention*dayIndex,data=heal
 healthkit_distance=healthkit_distance[healthkit_distance$Value<25000,]
 healthkit_distance$Intervention=factor(healthkit_distance$Intervention,levels=c("Baseline","APHClusterModule","APHReadAHAWebsiteModule","APHStandModule","APHWalkModule","InterventionGap","PostIntervention"))
 healthkit_distance$WatchVsPhone=factor(healthkit_distance$WatchVsPhone)
-hk_step_fit=lm(Value~Intervention+dayIndex+Intervention*dayIndex+WatchVsPhone,data=healthkit_distance)
+hk_distance_fit=lm(Value~Intervention+dayIndex+Intervention*dayIndex+WatchVsPhone,data=healthkit_distance)
 
 #distance for watch only 
 healthkit_distance_watch=healthkit_distance[healthkit_distance$WatchVsPhone=="watch",]
 healthkit_distance_watch$Intervention=factor(healthkit_distance_watch$Intervention,levels=c("Baseline","APHClusterModule","APHReadAHAWebsiteModule","APHStandModule","APHWalkModule","InterventionGap","PostIntervention"))
 healthkit_distance_watch$WatchVsPhone=NULL
-hk_step_watch_fit=lm(Value~Intervention+dayIndex+Intervention*dayIndex,data=healthkit_distance_watch)
+hk_distance_watch_fit=lm(Value~Intervention+dayIndex+Intervention*dayIndex,data=healthkit_distance_watch)
 
 #distance for phone only 
 healthkit_distance_phone=healthkit_distance[healthkit_distance$WatchVsPhone=="phone",]
 healthkit_distance_phone$Intervention=factor(healthkit_distance_phone$Intervention,levels=c("Baseline","APHClusterModule","APHReadAHAWebsiteModule","APHStandModule","APHWalkModule","InterventionGap","PostIntervention"))
 healthkit_distance_phone$WatchVsPhone=NULL
-hk_step_phone_fit=lm(Value~Intervention+dayIndex+Intervention*dayIndex,data=healthkit_distance_phone)
+hk_distance_phone_fit=lm(Value~Intervention+dayIndex+Intervention*dayIndex,data=healthkit_distance_phone)
 
 
 #scatter plot of dayIndex vs Steps / Distance 
 source('helpers.R')
-p1=ggplot(data=healthkit_steps,aes(x=dayIndex,y=Value,group=Intervention,color=Intervention))+geom_point(alpha=0.1)+xlab("Day Index")+ ylab("HealthKit Steps")+ylim(c(0,20000))+ggtitle("Steps Phone+Watch")
-p2=ggplot(data=healthkit_steps_watch,aes(x=dayIndex,y=Value,group=Intervention,color=Intervention))+geom_point(alpha=0.1)+xlab("Day Index")+ ylab("HealthKit Steps")+ylim(c(0,20000))+ggtitle("Steps Watch")
-p3=ggplot(data=healthkit_steps_phone,aes(x=dayIndex,y=Value,group=Intervention,color=Intervention))+geom_point(alpha=0.1)+xlab("Day Index")+ ylab("HealthKit Steps")+ylim(c(0,20000))+ggtitle("Steps Phone")
+p1=ggplot(data=healthkit_steps,aes(x=dayIndex,y=Value,group=Intervention,color=Intervention))+geom_point(alpha=0.5)+xlab("Day Index")+ ylab("HealthKit Steps")+ylim(c(0,20000))+ggtitle("Steps Phone+Watch")+ theme(legend.position="none")
 
-p4=ggplot(data=healthkit_distance,aes(x=dayIndex,y=Value,group=Intervention,color=Intervention))+geom_point(alpha=0.1)+xlab("Day Index")+ ylab("HealthKit Distance(m)")+ylim(c(0,20000))+ggtitle("Distance Phone+Watch")
-p5=ggplot(data=healthkit_distance_watch,aes(x=dayIndex,y=Value,group=Intervention,color=Intervention))+geom_point(alpha=0.1)+xlab("Day Index")+ ylab("HealthKit Distance(m)")+ylim(c(0,20000))+ggtitle("Distance Watch")
-p6=ggplot(data=healthkit_distance_phone,aes(x=dayIndex,y=Value,group=Intervention,color=Intervention))+geom_point(alpha=0.1)+xlab("Day Index")+ ylab("HealthKit Distance(m)")+ylim(c(0,20000))+ggtitle("Distance Phone")
+p2=ggplot(data=healthkit_steps_watch,aes(x=dayIndex,y=Value,group=Intervention,color=Intervention))+geom_point(alpha=0.5)+xlab("Day Index")+ ylab("HealthKit Steps")+ylim(c(0,20000))+ggtitle("Steps Watch")+ theme(legend.position="none")
+
+p3=ggplot(data=healthkit_steps_phone,aes(x=dayIndex,y=Value,group=Intervention,color=Intervention))+geom_point(alpha=0.5)+xlab("Day Index")+ ylab("HealthKit Steps")+ylim(c(0,20000))+ggtitle("Steps Phone")+ theme(legend.position="none")
+
+
+p4=ggplot(data=healthkit_distance,aes(x=dayIndex,y=Value,group=Intervention,color=Intervention))+geom_point(alpha=0.5)+xlab("Day Index")+ ylab("HealthKit Distance(m)")+ylim(c(0,20000))+ggtitle("Distance Phone+Watch")+ theme(legend.position="none")
+
+p5=ggplot(data=healthkit_distance_watch,aes(x=dayIndex,y=Value,group=Intervention,color=Intervention))+geom_point(alpha=0.5)+xlab("Day Index")+ ylab("HealthKit Distance(m)")+ylim(c(0,20000))+ggtitle("Distance Watch")+ theme(legend.position="none")
+
+p6=ggplot(data=healthkit_distance_phone,aes(x=dayIndex,y=Value,group=Intervention,color=Intervention))+geom_point(alpha=0.5)+xlab("Day Index")+ ylab("HealthKit Distance(m)")+ylim(c(0,20000))+ggtitle("Distance Phone")+ theme(legend.position="none")
+
 
 multiplot(p1,p4,p2,p5,p3,p6,cols=3)
 
@@ -76,6 +82,6 @@ p11=ggplot(data=healthkit_distance_watch,aes(x=Intervention,y=Value))+geom_boxpl
 
 p12=ggplot(data=healthkit_distance_phone,aes(x=Intervention,y=Value))+geom_boxplot()+xlab("Intervention")+ ylab("HealthKit Distance(m)")+ylim(c(0,25000))+ggtitle("Distance Phone")+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
 
-multiplot(p7,p10,p8,p11,p19,p12,cols=3)
+multiplot(p7,p10,p8,p11,p9,p12,cols=3)
 
 

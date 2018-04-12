@@ -1,7 +1,7 @@
 rm(list=ls())
-motion_tracker=data.frame(read.table("~/sherlock/data/timeseries_v2/summary/motion_tracker_combined.filtered.txt",header=TRUE,sep='\t'))
-healthkit_steps=data.frame(read.table("~/sherlock/data/timeseries_v2/summary/healthkit_combined.stepcount.txt",header=TRUE,sep='\t'))
-healthkit_distance=data.frame(read.table("~/sherlock/data/timeseries_v2/summary/healthkit_combined.distance.txt",header=TRUE,sep='\t'))
+motion_tracker=data.frame(read.table("~/sherlock/data/timeseries_v2/summary/motion_tracker_combined.filtered.txt.regression",header=TRUE,sep='\t'))
+healthkit_steps=data.frame(read.table("~/sherlock/data/timeseries_v2/summary/healthkit_combined.stepcount.txt.regression",header=TRUE,sep='\t'))
+healthkit_distance=data.frame(read.table("~/sherlock/data/timeseries_v2/summary/healthkit_combined.distance.txt.regression",header=TRUE,sep='\t'))
 
 #get subsets of the data frame of interest! 
 stationary_subset=motion_tracker[motion_tracker$Activity=="stationary",]
@@ -40,7 +40,7 @@ stationary_plot_duration=ggplot(stationary_subset,aes(stationary_subset$Interven
   ggtitle("Stationary Minutes/Day")+
   theme_bw(20)+
   theme(axis.text.x = element_text(angle = 90, hjust = 1))
-  
+
 png("stationary_plot_duration.png")
 print(stationary_plot_duration)
 dev.off() 
@@ -58,6 +58,7 @@ automotive_plot_fractions=ggplot(automotive_subset,aes(automotive_subset$Interve
   ggtitle("automotive Fractions")+
   theme_bw(20)+
   theme(axis.text.x = element_text(angle = 90, hjust = 1))
+
 png("automotive_plot_fractions.png")
 print(automotive_plot_fractions)
 dev.off() 
@@ -75,6 +76,7 @@ automotive_plot_duration=ggplot(automotive_subset,aes(automotive_subset$Interven
   ggtitle("automotive Minutes/Day")+
   theme_bw(20)+
   theme(axis.text.x = element_text(angle = 90, hjust = 1))
+
 png("automotive_plot_duration.png")
 print(automotive_plot_duration)
 dev.off() 
@@ -111,7 +113,7 @@ active_plot_duration=ggplot(active_subset,aes(active_subset$Intervention,active_
   ggtitle("Active Minutes/Day")+
   theme_bw(20)+
   theme(axis.text.x = element_text(angle = 90, hjust = 1))
-  
+
 png("active_plot_duration.png")
 print(active_plot_duration)
 dev.off() 
@@ -130,7 +132,7 @@ walking_plot_fractions=ggplot(walking_subset,aes(walking_subset$Intervention,wal
   ggtitle("Walking Fraction")+
   theme_bw(20)+
   theme(axis.text.x = element_text(angle = 90, hjust = 1))
-  
+
 png("walking_plot_fractions.png")
 print(walking_plot_fractions)
 dev.off() 
@@ -181,6 +183,7 @@ exercise_plot_duration=ggplot(exercise_subset,aes(exercise_subset$Intervention,e
   ggtitle("Running/Cycling Minutes/Day")+
   theme_bw(20)+
   theme(axis.text.x = element_text(angle = 90, hjust = 1))
+
 png("exercise_plot_duration.png")
 print(exercise_plot_duration)
 dev.off() 
