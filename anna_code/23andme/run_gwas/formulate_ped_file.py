@@ -1,0 +1,100 @@
+#combine 23&me subject profiles to generate a ped file in plink 
+import argparse 
+
+def parse_args(): 
+    parser=argparse.ArgumentParser(description="combine 23&me subject profiles to generate a ped file in plink")
+    parser.add_argument("--subject_files",default="all_genomes.txt")
+    parser.add_argument("--map_file",default="/scratch/PI/euan/projects/mhc/23andme/plink/data/23andme_fix.map")
+    parser.add_argument("--outf_prefix",default="23andme") 
+    parser.add_argument("--demographics_table",default="/scratch/PI/euan/projects/mhc/data/tables/cardiovascular-NonIdentifiableDemographicsTask-v2.tsv") 
+    parser.add_argument("--sex_field_name",default="NonIdentifiableDemographics.json.patientBiologicalSex") 
+    parser.add_argument("--health_code_to_23andme_id")
+    parser.add_argument("--phenotype_sources",nargs="+")
+    parser.add_argument("--phenotype_fields",nargs="+")
+    return parser.parse_args() 
+
+def get_biological_sex(demographics_table,sex_field_name): 
+    data_dict=dict() 
+    data=open(demographics_table,'r').read().strip().split('\n') 
+    header=data[0].split('\t') 
+    sex_index=[] 
+    healthCode_index=header.index('healthCode') 
+    for i in range(len(header)): 
+        if header[i]==sex_field_name: 
+            sex_index.append(i) 
+    for line in data[1::]: 
+        tokens=line.split('\t') 
+        biological_sex_values=[tokens[i] for i in sex_index] 
+        biological_sex=biological_sex_values.remove('NA')[0] 
+        subject_id=tokens[healthCode_index] 
+        if subject_id not in data_dict: 
+            data_dict[subject_id]=biological_sex 
+    return data_dict         
+        
+def get_id_map(health_code_to_23andme_id): 
+    subject_id_map=dict() 
+    data=open(health_code_to_23andme_id,'r').read().strip().split('\n') 
+    header=data[0].split('\t') 
+    healthCode_id=header.index('healthCode') 
+    userId_23andme=header.index('23andMeUserId.userId')
+    profileId_23andme=header.index('23andMeUserId.profileId')
+    subject_id_map[usedId_23andme+'-'+profileId_23andme]=healthCode_id 
+    return subject_id_map
+
+def get_phenotypes(phenotype_sources,phenotype_fields,subject_order):
+    phenotype_dict=dict() 
+    #consolidate the parsing -- generate a dictionary of phenotype source file to list of phenotypes from that source file. 
+    source_to_field=dict() 
+    for i in range(len(phenotype_sources)): 
+        cur_source=phenotype_sources[i] 
+        cur_field=phenotype_fields[i] 
+        if cur_source not in source_to_field: 
+            source_to_field[cur_source]=[cur_field] 
+        else: 
+            source_to_field[cur_source].append(cur_field) 
+    for source_file in source_to_field: 
+        data=open(source_file,'r').read().strip().split('\n') 
+        header=data[0] 
+        
+    return phenotype_dict 
+
+def main(): 
+    args=parse_args()
+    data_map=open(args.map_file,'r').read().strip().split('\n') 
+    #generate a dictionary of subject -> sex 
+    subject_biological_sex_dict=get_biological_sex(args.demographics_table,args.sex_field_name) 
+    #generate a dictionary of aws file name to subject id 
+    subject_ids=get_id_map(args.health_code_to_23andme_id,args.subject_files) 
+
+    #get the number of variants on the chip 
+    num_snps=len(data_map) 
+    outf=open(args.out_prefix+".ped",'w') 
+    snp_files=open(args.subject_files).read().strip().split('\n') 
+    subject_order=[] 
+    for snp_file in snp_files: 
+        data=open(snp_file,'r').read()[0:2*num_snps]
+        alleles=[] 
+        for entry in data: 
+            if entry not in ['A','T','C','G']: 
+                alleles.append('0') 
+            else: 
+                alleles.append(entry) 
+        data=' '.join(alleles) 
+        #get the subject id 
+        subject_id=subject_ids[snp_file]
+        subject_order.append(subject_id) 
+        subject_sex=subject_biological_sex_dict[subject_id]
+        leading_fields=[subject_id,subject_id,'0','0',subject_sex,'-9']
+        outf.write(' '.join(leading_fields)+' '+data+'\n')
+
+    #get the phenotype file 
+    outf=open(args.out_prefix+".phenotype")
+    phenotype_dict=get_phenotypes(args.phenotype_sources,args.phenotype_fields,subject_order)
+    
+    
+        
+        
+
+if __name__=="__main__": 
+    main() 
+
