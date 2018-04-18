@@ -161,7 +161,7 @@ def get_ped_file(data_map,out_prefix,subject_files,subject_biological_sex,subjec
         try:
             subject_sex=subject_biological_sex[subject_id]
         except: 
-            pdb.set_trace() 
+            #pdb.set_trace() 
             subject_sex='-1000' 
         leading_fields=[subject_id,subject_id,'0','0',subject_sex,'-9']
         outf.write(' '.join(leading_fields)+' '+data+'\n')
