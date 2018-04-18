@@ -15,18 +15,21 @@ def parse_args():
     parser.add_argument("--activity_source",default="/scratch/PI/euan/projects/mhc/data/timeseries_v2/summary/within_subject_measures.txt") 
     return parser.parse_args() 
 
-def get_biological_sex(demographics_table,sex_field_name): 
+def get_biological_sex(demographics_table,sex_field_name,subject_dict): 
     data_dict=dict() 
     data=open(demographics_table,'r').read().strip().split('\n') 
     data[0]='\t'+data[0] 
     header=data[0].split('\t') 
-    sex_index=[] 
+    sex_index=[14,15] 
     healthCode_index=header.index('healthCode') 
-    for i in range(len(header)): 
-        if header[i]==sex_field_name: 
-            sex_index.append(i) 
+    #for i in range(len(header)): 
+    #    if header[i]==sex_field_name: 
+    #        sex_index.append(i) 
     for line in data[1::]: 
         tokens=line.split('\t') 
+        subject_id=tokens[healthCode_index] 
+        if subject_id not in subject_dict: 
+            continue 
         biological_sex_values=[tokens[i] for i in sex_index]
         if 'NA' in biological_sex_values: 
             biological_sex_values.remove('NA')
@@ -34,7 +37,6 @@ def get_biological_sex(demographics_table,sex_field_name):
             biological_sex=biological_sex_values[0] 
         else: 
             biological_sex='-1000' 
-        subject_id=tokens[healthCode_index] 
         if subject_id not in data_dict: 
             if biological_sex!='-1000': 
                 if biological_sex.lower().__contains__('female'): 
@@ -44,8 +46,12 @@ def get_biological_sex(demographics_table,sex_field_name):
             data_dict[subject_id]=biological_sex 
     return data_dict         
         
-def get_id_map(health_code_to_23andme_id): 
-    subject_id_map=dict() 
+def get_id_map(health_code_to_23andme_id,all_genotypes):
+    all_genotypes=open(all_genotypes,'r').read().strip().split('\n') 
+    subject_dict=dict() 
+    for line in all_genotypes:
+        id_23me=line.split('/')[-1].split('.')[0]
+        subject_dict[id_23me]=1
     data=open(health_code_to_23andme_id,'r').read().strip().split('\n') 
     data[0]='\t'+data[0] 
     header=data[0].split('\t') 
@@ -57,25 +63,36 @@ def get_id_map(health_code_to_23andme_id):
         userId_23andme_cur=tokens[userId_23andme] 
         profileId_23andme_cur=tokens[profileId_23andme] 
         healthCode_id_cur=tokens[healthCode_id] 
-        subject_id_map[userId_23andme_cur+'-'+profileId_23andme_cur]=healthCode_id_cur
-    return subject_id_map
+        keyval=userId_23andme_cur+'-'+profileId_23andme_cur
+        if keyval in subject_dict: 
+            subject_dict[keyval]=healthCode_id_cur
+    rev_dict=dict() 
+    for key in subject_dict: 
+        val=subject_dict[key] 
+        rev_dict[val]=key
+    return subject_dict,rev_dict
 
-def get_phenotypes(phenotype_file,phenotype_prefix):
+def get_phenotypes(phenotype_file,phenotype_prefix,subject_order):
+    subject_dict=dict() 
+    for subject in subject_order: 
+        subject_dict[subject]=1 
     phenotype_dict=dict() 
+    phenotype_fields=set([]) 
     #consolidate the parsing -- generate a dictionary of phenotype source file to list of phenotypes from that source file. 
     source_to_field=dict() 
     source_files=open(phenotype_file,'r').read().strip().split('\n') 
     for line in source_files: 
-        tokens=line.split() 
+        tokens=line.split('\t') 
         cur_source=tokens[0] 
         cur_field=tokens[1] 
+        phenotype_fields.add(cur_field) 
         if cur_source not in source_to_field: 
             source_to_field[cur_source]=[cur_field] 
         else: 
             source_to_field[cur_source].append(cur_field) 
     for source_file in source_to_field: 
         data=open(phenotype_prefix+'/'+source_file,'r').read().strip().split('\n') 
-        header=data[0].split() 
+        header=data[0].split('\t') 
         fields=source_to_field[source_file] 
         field_to_index=dict() 
         if 'healthCode' in header:             
@@ -87,8 +104,10 @@ def get_phenotypes(phenotype_file,phenotype_prefix):
             for field in fields: 
                 field_to_index[field]=header.index(field) 
         for line in data[1::]: 
-            tokens=line.split() 
+            tokens=line.split('\t') 
             cur_subject=tokens[healthcode_index]
+            if cur_subject not in subject_dict: 
+                continue 
             if cur_subject not in phenotype_dict: 
                 phenotype_dict[cur_subject]=dict() 
             for field in field_to_index: 
@@ -96,14 +115,19 @@ def get_phenotypes(phenotype_file,phenotype_prefix):
                 cur_value=tokens[cur_index] 
                 if field not in phenotype_dict[cur_subject]: 
                     phenotype_dict[cur_subject][field]=cur_value
-    return phenotype_dict 
+    return phenotype_dict,phenotype_fields 
 
-def get_activity_source(phenotype_dict,activity_source): 
+def get_activity_source(phenotype_dict,activity_source,subject_order): 
+    subject_dict=dict() 
+    for subject in subject_order: 
+        subject_dict[subject]=1 
     data=open(activity_source,'r').read().strip().split('\n')
     activity_fields=set([]) 
     for line in data[1::]: 
         tokens=line.split('\t') 
         subject=tokens[0] 
+        if subject not in subject_dict: 
+            continue 
         field=tokens[1]+'_'+tokens[2]+'_'+tokens[4] 
         activity_fields.add(field) 
         value=tokens[3] 
@@ -130,26 +154,27 @@ def get_ped_file(data_map,out_prefix,subject_files,subject_biological_sex,subjec
         id_23me=snp_file.split('/')[-1].split('.')[0]
         try:
             subject_id=subject_ids[id_23me]
+            subject_order.append(subject_id) 
         except: 
             print("Couldn't parse:"+str(subject_id))
             continue 
-        subject_order.append(subject_id) 
         try:
-            subject_sex=subject_biological_sex_dict[subject_id]
+            subject_sex=subject_biological_sex[subject_id]
         except: 
+            pdb.set_trace() 
             subject_sex='-1000' 
         leading_fields=[subject_id,subject_id,'0','0',subject_sex,'-9']
         outf.write(' '.join(leading_fields)+' '+data+'\n')
-
+    return subject_order
 def write_phenotype_file(out_prefix,phenotype_dict,all_fields,subject_order): 
-    outf=open(out_prefix+".phenotype")
+    outf=open(out_prefix+".phenotype",'w')
     outf.write('FID'+'\t'+'IID'+'\t'+'\t'.join(all_fields)+'\n')
     for subject in subject_order: 
         output_line=[subject,subject]
         if subject not in phenotype_dict: 
             #no phenotype data available, use all -1000 values 
-            output_line=output_line+'-1000'*len(all_fields)
-            outf.write('\t'.join(output_line)+'\n')
+            output_line='\t'.join(output_line)+'\t'+'\t'.join(['-1000' for i in range(len(all_fields))])
+            outf.write(output_line+'\n') 
             continue 
         for phenotype_field in all_fields: 
             if phenotype_field in phenotype_dict[subject]: 
@@ -157,29 +182,32 @@ def write_phenotype_file(out_prefix,phenotype_dict,all_fields,subject_order):
             else: 
                 output_line.append('-1000') 
         outf.write('\t'.join(output_line)+'\n')
-
+    
 
 def main(): 
     args=parse_args()
     data_map=open(args.map_file,'r').read().strip().split('\n') 
 
-    #generate a dictionary of subject -> sex 
-    subject_biological_sex_dict=get_biological_sex(args.demographics_table,args.sex_field_name) 
-    print("got biological sex of subjects") 
 
     #generate a dictionary of aws file name to subject id 
-    subject_ids=get_id_map(args.health_code_to_23andme_id) 
+    subject_ids,mhc_to_23me=get_id_map(args.health_code_to_23andme_id,args.subject_files) 
     print("got map of 23andme id's to health codes") 
 
-    get_ped_file(data_map,args.out_prefix,args.subject_files,subject_biological_sex_dict,subject_ids)
+    #generate a dictionary of subject -> sex 
+    subject_biological_sex_dict=get_biological_sex(args.demographics_table,args.sex_field_name,mhc_to_23me) 
+    print("got biological sex of subjects") 
+
+    subject_order=get_ped_file(data_map,args.out_prefix,args.subject_files,subject_biological_sex_dict,subject_ids)
     print("generated genetic data file") 
 
     #get the phenotype file 
-    phenotype_dict=get_phenotypes(args.phenotype_file,args.phenotype_prefix)
+    phenotype_dict,phenotype_fields=get_phenotypes(args.phenotype_file,args.phenotype_prefix,mhc_to_23me)
+
     print("got phenotype fields without activity") 
-    phenotype_dict,activity_fields=get_activity_source(phenotype_dict,activity_source)
+    phenotype_dict,activity_fields=get_activity_source(phenotype_dict,args.activity_source,subject_order)
+
     print("got activity fields") 
-    all_fields=args.phenotype_fields+list(activity_fields) 
+    all_fields=list(phenotype_fields)+list(activity_fields) 
     
     #write the phenotype file 
     print("writing phenotype file") 
