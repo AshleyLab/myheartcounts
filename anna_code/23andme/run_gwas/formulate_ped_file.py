@@ -230,13 +230,13 @@ def get_healthkit(phenotype_dict,healthkit_steps_file,healthkit_distance_file,su
     for subject in step_dict: 
         if subject not in phenotype_dict: 
             phenotype_dict[subject]=dict() 
-            mean_steps=sum(step_dict[subject])/len(step_dict[subject])
-            phenotype_dict[subject]["HKQuantityTypeIdentifierStepCount"]=mean_steps 
+        mean_steps=sum(step_dict[subject])/len(step_dict[subject])
+        phenotype_dict[subject]["HKQuantityTypeIdentifierStepCount"]=mean_steps 
     for subject in dist_dict: 
         if subject not in phenotype_dict: 
             phenotype_dict[subject]=dict() 
-            mean_dist=sum(dist_dict[subject])/len(dist_dict[subject])         
-            phenotype_dict[subject]["HKQuantityTypeIdentifierDistanceWalk"]=mean_dist 
+        mean_dist=sum(dist_dict[subject])/len(dist_dict[subject])         
+        phenotype_dict[subject]["HKQuantityTypeIdentifierDistanceWalk"]=mean_dist 
     return phenotype_dict,activity_fields 
 
 def get_ped_file(data_map,out_prefix,subject_files,subject_biological_sex,subject_ids):  
