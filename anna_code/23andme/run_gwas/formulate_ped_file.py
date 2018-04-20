@@ -12,7 +12,10 @@ def parse_args():
     parser.add_argument("--health_code_to_23andme_id",default="/scratch/PI/euan/projects/mhc/data/tables/cardiovascular-23andmeTask-v1.tsv")
     parser.add_argument("--phenotype_file",default="phenotypes.txt")
     parser.add_argument("--phenotype_prefix",default="/scratch/PI/euan/projects/mhc/data/tables/") 
-    parser.add_argument("--activity_source",default="/scratch/PI/euan/projects/mhc/data/timeseries_v2/summary/within_subject_measures.txt") 
+    parser.add_argument("--activity_rct",default="/scratch/PI/euan/projects/mhc/data/timeseries_v2/summary/within_subject_measures.txt") 
+    parser.add_argument("--motion_tracker_file",default="/scratch/PI/euan/projects/mhc/data/timeseries_v2/summary/motion_tracker_combined.filtered.txt")
+    parser.add_argument("--health_kit_steps",default="/scratch/PI/euan/projects/mhc/data/timeseries_v2/summary/healthkit_combined.stepcount.txt") 
+    parser.add_argument("--health_kit_distance",default="/scratch/PI/euan/projects/mhc/data/timeseries_v2/summary/healthkit_combined.distance.txt") 
     return parser.parse_args() 
 
 def get_biological_sex(demographics_table,sex_field_name,subject_dict): 
@@ -51,7 +54,7 @@ def get_id_map(health_code_to_23andme_id,all_genotypes):
     subject_dict=dict() 
     for line in all_genotypes:
         id_23me=line.split('/')[-1].split('.')[0]
-        subject_dict[id_23me]=1
+        subject_dict[id_23me]=None
     data=open(health_code_to_23andme_id,'r').read().strip().split('\n') 
     data[0]='\t'+data[0] 
     header=data[0].split('\t') 
@@ -67,15 +70,16 @@ def get_id_map(health_code_to_23andme_id,all_genotypes):
         if keyval in subject_dict: 
             subject_dict[keyval]=healthCode_id_cur
     rev_dict=dict() 
+    subject_dict_filtered=dict() 
     for key in subject_dict: 
         val=subject_dict[key] 
+        if val==None: 
+            continue 
         rev_dict[val]=key
-    return subject_dict,rev_dict
+        subject_dict_filtered[key]=val 
+    return subject_dict_filtered,rev_dict
 
-def get_phenotypes(phenotype_file,phenotype_prefix,subject_order):
-    subject_dict=dict() 
-    for subject in subject_order: 
-        subject_dict[subject]=1 
+def get_phenotypes(phenotype_file,phenotype_prefix,subject_dict):
     phenotype_dict=dict() 
     phenotype_fields=set([]) 
     #consolidate the parsing -- generate a dictionary of phenotype source file to list of phenotypes from that source file. 
@@ -117,24 +121,123 @@ def get_phenotypes(phenotype_file,phenotype_prefix,subject_order):
                     phenotype_dict[cur_subject][field]=cur_value
     return phenotype_dict,phenotype_fields 
 
-def get_activity_source(phenotype_dict,activity_source,subject_order): 
-    subject_dict=dict() 
-    for subject in subject_order: 
-        subject_dict[subject]=1 
+def get_activity_rct(phenotype_dict,activity_source,subject_dict): 
     data=open(activity_source,'r').read().strip().split('\n')
+    activity_fields=set([]) 
+    activity_dict=dict() 
+    for line in data[1::]: 
+        tokens=line.split('\t') 
+        subject=tokens[0] 
+        if subject not in subject_dict: 
+            continue 
+        field =tokens[1] 
+        if field not in ["HKQuantityTypeIdentifierStepCount","HKQuantityTypeIdentifierDistanceWalk"]: 
+            continue 
+        intervention=tokens[2] 
+        if intervention!="Baseline": 
+            activity_fields.add(field+"_"+intervention) 
+        value=tokens[3] 
+        if subject not in activity_dict: 
+            activity_dict[subject]=dict() 
+        if field not in activity_dict[subject]: 
+            activity_dict[subject][field]=dict() 
+        if intervention not in activity_dict[subject][field]: 
+            activity_dict[subject][field][intervention]=[float(value)] 
+        else: 
+            activity_dict[subject][field][intervention].append(value)
+    #get the mean delta from Baseline for each intervention 
+    for subject in activity_dict: 
+        for field in activity_dict[subject]: 
+            try:
+                mean_baseline=sum(activity_dict[subject][field]['Baseline'])/len(activity_dict[subject][field]['Baseline'])
+                for intervention in activity_dict[subject][field]: 
+                    if intervention=="Baseline": 
+                        continue 
+                    intervention_mean=sum(activity_dict[subject][field][intervention])/len(activity_dict[subject][field][intervention])
+                    delta=(intervention_mean-mean_baseline)/mean_baseline 
+                    if subject not in phenotype_dict: 
+                        phentype_dict[subject]=dict() 
+                    print('ADDED RCT VALUE!') 
+                    phenotype_dict[subject][field+"_"+intervention]=delta 
+            except: 
+                continue
+    return phenotype_dict,activity_fields
+
+#get mean duration in minutes and mean fraction for each activity state 
+def get_motiontracker(phenotype_dict,motion_tracker_file,subject_dict): 
+    data=open(motion_tracker_file,'r').read().strip().split('\n') 
+    motion_dict=dict() 
     activity_fields=set([]) 
     for line in data[1::]: 
         tokens=line.split('\t') 
         subject=tokens[0] 
         if subject not in subject_dict: 
             continue 
-        field=tokens[1]+'_'+tokens[2]+'_'+tokens[4] 
-        activity_fields.add(field) 
-        value=tokens[3] 
+        field=tokens[4]
+        if field in ['stationary','walking','automotive','cycling','running']: 
+            minutes=float(tokens[5])
+            fraction=float(tokens[6]) 
+            if subject not in motion_dict: 
+                motion_dict[subject]=dict() 
+            f1=field+"_Mins" 
+            f2=field+"_Fract" 
+            activity_fields.add(f1) 
+            activity_fields.add(f2) 
+            if f1 not in motion_dict[subject]: 
+                motion_dict[subject][f1]=[minutes] 
+            else: 
+                motion_dict[subject][f1].append(minutes) 
+            if f2 not in motion_dict[subject]: 
+                motion_dict[subject][f2]=[fraction] 
+            else: 
+                motion_dict[subject][f2].append(fraction) 
+    for subject in motion_dict: 
         if subject not in phenotype_dict: 
             phenotype_dict[subject]=dict() 
-        phenotype_dict[subject][field]=value 
-    return phenotype_dict,activity_fields
+        for field in motion_dict[subject]: 
+            phenotype_dict[subject][field]=sum(motion_dict[subject][field])/len(motion_dict[subject][field])
+    return phenotype_dict,activity_fields 
+    
+
+def get_healthkit(phenotype_dict,healthkit_steps_file,healthkit_distance_file,subject_dict): 
+    activity_fields=["HKQuantityTypeIdentifierStepCount","HKQuantityTypeIdentifierDistanceWalk"] 
+    steps_data=open(healthkit_steps_file,'r').read().strip().split('\n') 
+    step_dict=dict() 
+    dist_dict=dict() 
+    for line in steps_data[1::]: 
+        tokens=line.split('\t') 
+        subject=tokens[0] 
+        if subject not in subject_dict: 
+            continue 
+        value=float(tokens[5]) 
+        if subject not in step_dict: 
+            step_dict[subject]=[value] 
+        else: 
+            step_dict[subject].append(value) 
+
+    dist_data=open(healthkit_distance_file,'r').read().strip().split('\n') 
+    for line in dist_data[1::]: 
+        tokens=line.split('\t') 
+        subject=tokens[0] 
+        if subject not in subject_dict: 
+            continue 
+        value=float(tokens[5])
+        if subject not in dist_dict: 
+            dist_dict[subject]=[value] 
+        else: 
+            dist_dict[subject].append(value) 
+    #get the averages 
+    for subject in step_dict: 
+        if subject not in phenotype_dict: 
+            phenotype_dict[subject]=dict() 
+            mean_steps=sum(step_dict[subject])/len(step_dict[subject])
+            phenotype_dict[subject]["HKQuantityTypeIdentifierStepCount"]=mean_steps 
+    for subject in dist_dict: 
+        if subject not in phenotype_dict: 
+            phenotype_dict[subject]=dict() 
+            mean_dist=sum(dist_dict[subject])/len(dist_dict[subject])         
+            phenotype_dict[subject]["HKQuantityTypeIdentifierDistanceWalk"]=mean_dist 
+    return phenotype_dict,activity_fields 
 
 def get_ped_file(data_map,out_prefix,subject_files,subject_biological_sex,subject_ids):  
     num_snps=len(data_map) 
@@ -149,6 +252,11 @@ def get_ped_file(data_map,out_prefix,subject_files,subject_biological_sex,subjec
                 alleles.append('0') 
             else: 
                 alleles.append(entry) 
+        delta=2*num_snps - len(data) 
+        for i in range(delta): 
+            alleles.append('0')
+        if len(alleles)!=(2*num_snps): 
+            pdb.set_trace() 
         data=' '.join(alleles) 
         #get the subject id 
         id_23me=snp_file.split('/')[-1].split('.')[0]
@@ -164,8 +272,9 @@ def get_ped_file(data_map,out_prefix,subject_files,subject_biological_sex,subjec
             #pdb.set_trace() 
             subject_sex='-1000' 
         leading_fields=[subject_id,subject_id,'0','0',subject_sex,'-9']
-        outf.write(' '.join(leading_fields)+' '+data+'\n')
+        outf.write(' '.join([str(i) for i in leading_fields])+' '+data+'\n')
     return subject_order
+
 def write_phenotype_file(out_prefix,phenotype_dict,all_fields,subject_order): 
     outf=open(out_prefix+".phenotype",'w')
     outf.write('FID'+'\t'+'IID'+'\t'+'\t'.join(all_fields)+'\n')
@@ -173,7 +282,7 @@ def write_phenotype_file(out_prefix,phenotype_dict,all_fields,subject_order):
         output_line=[subject,subject]
         if subject not in phenotype_dict: 
             #no phenotype data available, use all -1000 values 
-            output_line='\t'.join(output_line)+'\t'+'\t'.join(['-1000' for i in range(len(all_fields))])
+            output_line='\t'.join([str(i) for i in output_line])+'\t'+'\t'.join(['-1000' for i in range(len(all_fields))])
             outf.write(output_line+'\n') 
             continue 
         for phenotype_field in all_fields: 
@@ -181,7 +290,7 @@ def write_phenotype_file(out_prefix,phenotype_dict,all_fields,subject_order):
                 output_line.append(phenotype_dict[subject][phenotype_field])
             else: 
                 output_line.append('-1000') 
-        outf.write('\t'.join(output_line)+'\n')
+        outf.write('\t'.join([str(i) for i in output_line])+'\n')
     
 
 def main(): 
@@ -204,10 +313,18 @@ def main():
     phenotype_dict,phenotype_fields=get_phenotypes(args.phenotype_file,args.phenotype_prefix,mhc_to_23me)
 
     print("got phenotype fields without activity") 
-    phenotype_dict,activity_fields=get_activity_source(phenotype_dict,args.activity_source,subject_order)
+    phenotype_dict,activity_fields=get_activity_rct(phenotype_dict,args.activity_rct,subject_order)
 
-    print("got activity fields") 
+    print("got RCT percent change in stepcount and distance")
     all_fields=list(phenotype_fields)+list(activity_fields) 
+    
+    phenotype_dict,activity_fields=get_healthkit(phenotype_dict,args.health_kit_steps,args.health_kit_distance,subject_order)
+    print("got healthkit steps and healthkit distance")
+    all_fields=all_fields+list(activity_fields) 
+
+    phenotype_dict,activity_fields=get_motiontracker(phenotype_dict,args.motion_tracker_file,subject_order)
+    all_fields=all_fields+list(activity_fields) 
+    print("got motion tracker fields") 
     
     #write the phenotype file 
     print("writing phenotype file") 
