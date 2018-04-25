@@ -1,5 +1,5 @@
 #generate paired t-test input for within subject comparison for HK & MotionTracker 
-
+import numpy as np 
 hk_steps=open("/scratch/PI/euan/projects/mhc/data/timeseries_v2/summary/healthkit_combined.stepcount.txt",'r').read().strip().split('\n') 
 hk_distance=open('/scratch/PI/euan/projects/mhc/data/timeseries_v2/summary/healthkit_combined.distance.txt','r').read().strip().split('\n') 
 mt=open("/scratch/PI/euan/projects/mhc/data/timeseries_v2/summary/motion_tracker_combined.filtered.txt",'r').read().strip().split('\n') 
@@ -15,6 +15,9 @@ subject_dict=dict()
 for line in hk_steps[1::]: 
     tokens=line.split('\t') 
     subject=tokens[0] 
+    source=tokens[-2] 
+    if not source.lower().__contains__('phone'):
+        continue 
     intervention=tokens[2] 
     measure=tokens[4] 
     value=float(tokens[5]) 
@@ -36,6 +39,9 @@ print("processed steps")
 for line in hk_distance[1::]: 
     tokens=line.split('\t') 
     subject=tokens[0] 
+    source=tokens[-2]
+    if not source.lower().__contains__('phone'):
+        continue 
     intervention=tokens[2] 
     measure=tokens[4] 
     value=float(tokens[5]) 
@@ -75,7 +81,7 @@ for line in mt[1::]:
 print("processed mt")    
 
 #use average intervention values / subject to generate output data frame 
-outf=open('within_subject_measures.txt','w') 
+outf=open('within_subject_measures.phone.txt','w') 
 outf.write('Subject\tMeasure\tIntervention\tValue\tComputation\n')
 for subject in subject_dict: 
     for measure in subject_dict[subject]: 
