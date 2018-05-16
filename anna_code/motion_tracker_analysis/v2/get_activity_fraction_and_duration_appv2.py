@@ -8,11 +8,13 @@ import pdb
 table_parser_choices={"motion_tracker_aws":parse_motion_tracker,
                       "motion_tracker_synapse":parse_motion_tracker,
                       "health_kit_data_collector_aws":parse_healthkit_data_collector,
-                      "health_kit_data_collector_synapse":parse_healthkit_data_collector}
+                      "health_kit_data_collector_synapse":parse_healthkit_data_collector,
+                      "health_kit_sleep_collector_aws":parse_healthkit_sleep_collector}
 aggregation_choices={"motion_tracker_synapse":aggregate_motion_tracker_synapse,
                      "motion_tracker_aws":aggregate_motion_tracker_aws,
                      "health_kit_data_collector_synapse":aggregate_healthkit_data_collector_synapse,
-                     "health_kit_data_collector_aws":aggregate_healthkit_data_collector_aws}
+                     "health_kit_data_collector_aws":aggregate_healthkit_data_collector_aws,
+                     "health_kit_sleep_collector_aws":aggregate_healthkit_data_collector_aws}
 
 def parse_args():
     parser=argparse.ArgumentParser(description="gets the activity fractions (number of entries for given activity)/total number of entries per day for app version 2")
@@ -20,7 +22,7 @@ def parse_args():
     parser.add_argument("--synapseCacheDir")
     parser.add_argument("--out_prefixes",nargs="+")
     parser.add_argument("--subjects",default="all")
-    parser.add_argument("--data_types",nargs="+",help="allowed values are \"motion_tracker\",\"health_kit_data_collector\"")
+    parser.add_argument("--data_types",nargs="+",help="allowed values are \"motion_tracker\",\"health_kit_data_collector\", \"health_kit_sleep\"")
     parser.add_argument("--intervention_metadata",default=None)
     parser.add_argument("--aws_files",default=None) 
     parser.add_argument("--map_aws_to_healthcodes",default=None)
