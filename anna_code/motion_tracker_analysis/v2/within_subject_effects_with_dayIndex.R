@@ -6,6 +6,7 @@ library(multcompView)
 library(lsmeans)
 library(rcompanion)
 
+#STATA & SAS 
 
 #ANALYSIS IN ACCORDANCE WITH REPEATED ANOVA MEASURES TUTORIAL HERE: 
 #http://rcompanion.org/handbook/I_09.html 
@@ -29,26 +30,31 @@ healthkit_distance=healthkit_distance[healthkit_distance$Value<25000,]
 
 motion_tracker$Intervention=factor(motion_tracker$Intervention,
                                    levels=c("Baseline",
-                                   "APHClusterModule",
-                                    "APHReadAHAWebsiteModule",
-                                    "APHStandModule",
-                                    "APHWalkModule",
+                                   "Cluster",
+                                    "ReadAHAWebsite",
+                                    "Stand",
+                                    "Walk",
                                     "InterventionGap",
                                     "PostIntervention"))
+healthkit_steps=healthkit_steps[healthkit_steps$Intervention %in% c("Baseline",
+                                                                  "Cluster",
+                                                                  "ReadAHAWebsite",
+                                                                  "Stand",
+                                                                  "Walk"),]
 healthkit_steps$Intervention=factor(healthkit_steps$Intervention,
                                     levels=c("Baseline",
-                                    "APHClusterModule",
-                                    "APHReadAHAWebsiteModule",
-                                    "APHStandModule",
-                                    "APHWalkModule",
-                                    "InterventionGap",
-                                    "PostIntervention"))
+                                    "Cluster",
+                                    "ReadAHAWebsite",
+                                    "Stand",
+                                    "Walk"))
+healthkit_steps=healthkit_steps[healthkit_steps$WatchVsPhone=="phone",]
+
 motion_tracker$Intervention=factor(motion_tracker$Intervention,
                                    levels=c("Baseline",
-                                   "APHClusterModule",
-                                   "APHReadAHAWebsiteModule",
-                                   "APHStandModule",
-                                   "APHWalkModule",
+                                   "ClusterModule",
+                                   "ReadAHAWebsiteModule",
+                                   "StandModule",
+                                   "WalkModule",
                                    "InterventionGap",
                                    "PostIntervention"))
 healthkit_steps$Subject=factor(healthkit_steps$Subject)
@@ -67,12 +73,31 @@ exercise_subset=motion_tracker[motion_tracker$Activity %in% c("running","cycling
 #---------------------------------------------------------------------------------
 #ANALYZE HEALTHKIT STEPS 
 #determining autocorrelation in residuals -- this comes out to 0.336 
-model.a = lme(Value ~ 
-          Intervention + WatchVsPhone+dayIndex + dayIndex*Intervention, 
-          random = ~1 | Subject,data=healthkit_steps,
-          control = lmeControl(opt = "optim"))
-ACF(model.a,
-    form = ~ 1 | Subject)
+#model.a = lme(Value ~ Intervention +WeekIndex, 
+#          random = ~1 | Subject,data=healthkit_steps,
+#          control = lmeControl(opt = "optim"))
+#ACF(model.a,
+#    form = ~ 1 | Subject)
+
+#estimate correlation at same time as fit model 
+
+#week index --reduce parameters. 
+#add quadratic term 
+#remove interaction terms 
+#intent to treat ? 
+# use last received intervention  & last assigned intervention ; but causes collinearity issues 
+# just the 4 
+#Add indicator variable if person is watch + phone vs just phone 
+
+#use the default structure assuming consistent behavior 
+
+healthkit_steps$WeekIndex=ceiling(healthkit_steps$dayIndex/7) 
+model = lme(Value ~ 
+              Intervention  + WeekIndex + WeekIndex**2, 
+            random = ~1|Subject,
+            data=healthkit_steps,
+            control=lmeControl(opt="optim"))
+
 model = lme(Value ~ 
             Intervention + WatchVsPhone + dayIndex + Intervention*dayIndex
             +Intervention*WatchVsPhone+dayIndex*WatchVsPhone, 
@@ -82,19 +107,19 @@ model = lme(Value ~
             control=lmeControl(opt="optim"))
 Anova(model)
 #TEST THE RANDOM EFFECTS OF THE MODEL 
-model.fixed = gls(Value ~ Intervention + WatchVsPhone+dayIndex+
+model.fixed = gls(Value ~ Intervention +dayIndex+
                   Intervention*dayIndex+Intervention*WatchVsPhone+dayIndex*WatchVsPhone,
                   data=healthkit_steps,
                   method="REML")
 anova(model,
       model.fixed)
 #POST HOC ANALYSIS  W/ TUKEY HSD 
-marginal = lsmeans(model, ~ Intervention + dayIndex + Intervention*dayIndex+WatchVsPhone)
+marginal = lsmeans(model, ~ Intervention + WeekIndex )
 
-cld(marginal,
+plot(cld(marginal,
     alpha   = 0.05, 
     Letters = letters,     ### Use lower-case letters for .group
-    adjust  = "tukey")     ###  Tukey-adjusted comparisons
+    adjust  = "tukey"))     ###  Tukey-adjusted comparisons
 
 #INTERACTION PLOT
 Sum = groupwiseMean(Value ~ Intervention + dayIndex,
@@ -149,11 +174,11 @@ model.fixed = gls(Value ~ Intervention + WatchVsPhone+dayIndex+
 anova(model,
       model.fixed)
 #POST HOC ANALYSIS  W/ TUKEY HSD 
-marginal = lsmeans(model, ~ Intervention + dayIndex + Intervention*dayIndex+WatchVsPhone)
-cld(marginal,
+marginal = lsmeans(model, ~ Intervention + WeekIndex )
+plot(cld(marginal,
     alpha   = 0.05, 
     Letters = letters,     ### Use lower-case letters for .group
-    adjust  = "tukey")     ###  Tukey-adjusted comparisons
+    adjust  = "tukey"))     ###  Tukey-adjusted comparisons
 #INTERACTION PLOT
 Sum = groupwiseMean(Value ~ Intervention + dayIndex,
                     data   = healthkit_distance,
