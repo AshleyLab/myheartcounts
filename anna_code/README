@@ -37,6 +37,10 @@ GWAS analysis of 23&Me data:
 
 0) create data table with gwas metrics: https://github.com/AshleyLab/myheartcounts/blob/master/anna_code/motion_tracker_analysis/v2/get_objective_metrics_for_gwas.sh
 
+-------------------------------------------------------------------------------------------------------------------------------
+To aggregate 6 min walk files: 
+/scratch/PI/euan/projects/mhc/code/anna_code/6_minute_walk_analysis/aggregate_6mwt_files
+
 
 
 
