@@ -1,7 +1,7 @@
 import argparse
 import pdb
 import os
-from shutil import copy
+from shutil import copyfile
 import glob 
 from os import listdir
 from os.path import isfile, join
@@ -85,9 +85,12 @@ def parse_table(blob_dir,output_dir,source_table,healthCode_index,resume_from):
                     #get the last 3 digits of the blob:
                     blob_part1=blob[-3::].lstrip('0')
                     full_source_file=blob_dir+'/'+blob_part1+'/'+blob+'/*.tmp'
+                    cur_blob_index=0 
                     for f in glob.glob(full_source_file):
-                        if not os.path.exists(full_output_dir+'/'+f): 
-                            copy(f,full_output_dir)                
+                        output_file='.'.join([blob,str(cur_blob_index)])
+                        full_output_file='/'.join([full_output_dir,output_file])
+                        if not os.path.exists(full_output_file): 
+                            copyfile(f,full_output_file)                
 def copy_sources(args):
     print("copying sources")
     for source_index in range(len(args.source_tables)):
@@ -219,5 +222,3 @@ def main():
         
 if __name__=="__main__":
     main()
-        
-
