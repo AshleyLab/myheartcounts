@@ -91,11 +91,11 @@ def extract_interventions(file_names,client_id_to_health_code_id):
     return interventions
 
 if __name__=="__main__": 
-    file_names="/scratch/PI/euan/projects/mhc/code/anna_code/motion_tracker_analysis/v2/aws.all"
+    file_names="/scratch/PI/euan/projects/mhc/data/aws.all"
     source_table="/scratch/PI/euan/projects/mhc/data/tables/cardiovascular-AwsClientIdTask-v1.tsv"
     client_id_to_health_code_id=map_aws_to_healthcode(source_table)    
     interventions=extract_interventions(file_names,client_id_to_health_code_id)
     #store the data in a pickle
     import pickle
-    pickle.dump(interventions,open('aws_interventions.p','wb'))
+    pickle.dump(interventions,open('/scratch/PI/euan/projects/mch/data/aws_interventions.p','wb'))
 
