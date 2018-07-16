@@ -23,6 +23,7 @@ def parse_args():
     parser.add_argument("--heart_rate_rest_dir",default=None)
     parser.add_argument("--output_dir")
     parser.add_argument("--subject_index",type=int,nargs="*",default=[]) 
+    parser.add_argument("--subjects_to_ignore",type=str,default=None)
     return parser.parse_args()
 
 def get_metric_indices(metrics,dir_names,output_dir,header):
@@ -62,6 +63,7 @@ def parse_table(blob_dir,output_dir,source_table,healthCode_index,resume_from):
               'device_motion_rest_dir',
               'heart_rate_rest_dir']    
     indices=get_metric_indices(metrics,dirnames,output_dir,header)
+    print(indices)
     lc=0
     start_index=1
     if resume_from!=None:
@@ -77,7 +79,11 @@ def parse_table(blob_dir,output_dir,source_table,healthCode_index,resume_from):
             pdb.set_trace() 
         for i in range(len(metrics)):
             if indices[i]!=None:
-                blob=tokens[indices[i]]
+                try:
+                    blob=tokens[indices[i]]
+                except: 
+                    print(line+"\t"+str(indices[i]))
+                    continue 
                 if blob!='NA': 
                     full_output_dir=output_dir+"/"+dirnames[i]+"/"+healthCode
                     if (not os.path.exists(full_output_dir)):
@@ -141,10 +147,13 @@ def group_by_subject(args):
     else:
         subject_keys=range(0,num_subjects)
     subjects=subject_dict.keys()
-    #HACK!!
-    finished=open('finished','r').read().strip().split('\n')
-    subjects=list(set(subjects) - set(finished))
-    print(str(len(subjects)))
+
+    if args.subject_to_ignore!=None:
+        finished=open(args.subjects_to_ignore,'r').read().strip().split('\n')
+        subjects=list(set(subjects) - set(finished))
+        num_subjects=len(subjects)
+        subject_keys=range(0,num_subjects)
+        print(str(len(subjects)))
     for key in subject_keys:
         subject=subjects[key]
         print(str(subject))
