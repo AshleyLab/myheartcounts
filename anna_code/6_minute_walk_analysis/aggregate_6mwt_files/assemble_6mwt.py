@@ -167,8 +167,11 @@ def group_by_subject(args):
             subject_metric_files=[f for f in listdir(cur_metric_dir+'/'+subject)]
             print(str(cur_metric))
             for f in subject_metric_files:
-                cur_file=open(cur_metric_dir+'/'+subject+'/'+f,'r')
-                aggregate_dict[cur_metric].append(json.load(cur_file))
+                try:
+                    cur_file=open(cur_metric_dir+'/'+subject+'/'+f,'r')
+                    aggregate_dict[cur_metric].append(json.load(cur_file))
+                except:
+                    continue 
         print("writing output for subject:"+str(subject))
         #all metrics for subject have been processed. Save the subject to aggregate directory.
         outf=open(args.output_dir+"/aggregate_by_subject/"+subject+".json",'w')
