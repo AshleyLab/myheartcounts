@@ -140,7 +140,7 @@ def group_by_subject(args):
                 subject_dict[subject].append(tuple([cur_metric,cur_metric_dir]))
     #generate a json for each subject including all the metrics available for that subject
     #if there are multiple entries for a given metric for a given subject, store them in a list
-    num_subjects=str(len(subject_dict.keys()))
+    num_subjects=len(subject_dict.keys())
     print(str(num_subjects))
     if len(args.subject_index)>0:
         subject_keys=args.subject_index
@@ -148,7 +148,7 @@ def group_by_subject(args):
         subject_keys=range(0,num_subjects)
     subjects=subject_dict.keys()
 
-    if args.subject_to_ignore!=None:
+    if args.subjects_to_ignore!=None:
         finished=open(args.subjects_to_ignore,'r').read().strip().split('\n')
         subjects=list(set(subjects) - set(finished))
         num_subjects=len(subjects)
