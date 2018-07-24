@@ -12,10 +12,10 @@ def parse_args():
     parser.add_argument("--health_code_to_23andme_id",default="/scratch/PI/euan/projects/mhc/data/tables/cardiovascular-23andmeTask-v1.tsv")
     parser.add_argument("--phenotype_file",default="phenotypes.txt")
     parser.add_argument("--phenotype_prefix",default="/scratch/PI/euan/projects/mhc/data/tables/") 
-    parser.add_argument("--activity_rct",default="/scratch/PI/euan/projects/mhc/data/timeseries_v2/summary/within_subject_measures.txt") 
-    parser.add_argument("--motion_tracker_file",default="/scratch/PI/euan/projects/mhc/data/timeseries_v2/summary/motion_tracker_combined.filtered.txt")
-    parser.add_argument("--health_kit_steps",default="/scratch/PI/euan/projects/mhc/data/timeseries_v2/summary/healthkit_combined.stepcount.txt") 
-    parser.add_argument("--health_kit_distance",default="/scratch/PI/euan/projects/mhc/data/timeseries_v2/summary/healthkit_combined.distance.txt") 
+    parser.add_argument("--activity_rct",default="/scratch/PI/euan/projects/mhc/data/timeseries_v2/summary/within_subject_measures.phone.txt") 
+    parser.add_argument("--motion_tracker_file",default="/scratch/PI/euan/projects/mhc/data/timeseries_v2/summary/motion_tracker_combined.txt")
+    parser.add_argument("--health_kit_steps",default="/scratch/PI/euan/projects/mhc/data/timeseries_v2/summary/health_kit_combined.steps.txt") 
+    parser.add_argument("--health_kit_distance",default="/scratch/PI/euan/projects/mhc/data/timeseries_v2/summary/health_kit_combined.distance.txt") 
     return parser.parse_args() 
 
 def get_biological_sex(demographics_table,sex_field_name,subject_dict): 
@@ -204,12 +204,12 @@ def get_healthkit(phenotype_dict,healthkit_steps_file,healthkit_distance_file,su
     steps_data=open(healthkit_steps_file,'r').read().strip().split('\n') 
     step_dict=dict() 
     dist_dict=dict() 
-    for line in steps_data[1::]: 
+    for line in steps_data: 
         tokens=line.split('\t') 
         subject=tokens[0] 
         if subject not in subject_dict: 
             continue 
-        value=float(tokens[5]) 
+        value=float(tokens[7]) 
         if subject not in step_dict: 
             step_dict[subject]=[value] 
         else: 
@@ -221,7 +221,7 @@ def get_healthkit(phenotype_dict,healthkit_steps_file,healthkit_distance_file,su
         subject=tokens[0] 
         if subject not in subject_dict: 
             continue 
-        value=float(tokens[5])
+        value=float(tokens[7])
         if subject not in dist_dict: 
             dist_dict[subject]=[value] 
         else: 
@@ -245,6 +245,7 @@ def get_ped_file(data_map,out_prefix,subject_files,subject_biological_sex,subjec
     snp_files=open(subject_files).read().strip().split('\n') 
     subject_order=[] 
     for snp_file in snp_files: 
+        print(snp_file)
         data=open(snp_file,'r').read()[0:2*num_snps]
         alleles=[] 
         for entry in data: 
