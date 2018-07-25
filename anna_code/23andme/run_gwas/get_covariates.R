@@ -1,0 +1,7 @@
+rm(list=ls())
+pcvals=read.table("pca/pca_5pcs.eigenvec",header=FALSE)
+names(pcvals)=c("IID","FID","PC1","PC2","PC3","PC4","PC5")
+demographics=read.table("/scratch/PI/euan/projects/mhc/code/anna_code/demographics/demographics_summary_v1_v2.tsv",header=TRUE,sep='\t')
+age=subset(demographics,select=c("Subject","Age"))
+merged=merge(pcvals,age,by.x="FID",by.y="Subject")
+write.csv(merged,"covariates.txt",quote=FALSE,sep="\t",row.names=FALSE)
