@@ -1,0 +1,5 @@
+library(gplots) 
+x <- as.matrix(read.table('/home/anna/masamune/annashch/intermediate_results/feature_groups_main_labeled.tsv', header=TRUE, sep = "\t",row.names=1,as.is=TRUE))
+pdf('heatmap_gplots.pdf',width=12,height=25)
+heatmap.2(x, Colv=FALSE,  trace="none", xlab="feature pattern", ylab="number of subjects",offsetRow=0, offsetCol=0) 
+dev.off()

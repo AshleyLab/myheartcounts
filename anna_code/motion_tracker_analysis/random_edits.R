@@ -1,6 +1,0 @@
-library(data.table)
-library(ggplot2)
-library(reshape2)
-data1=data.frame(read.table("NonTimeSeries.txt",header=T,sep='\t'))
-data2=data.frame(read.table("Activity_states_weekday_weekend_total.tsv",header=T,sep='\t'))
-m=merge(data1,data2,by="Subject")

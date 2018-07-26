@@ -1,0 +1,6 @@
+#TO EXTRACT FEATURES FROM 6 MINUTE WALK DATA IN PARALLEL: 
+qsub -cwd -V -t 1-5000:50 feature_extract_6min_walk.sh 
+
+#TO EXTRACT FEATURES FROM ACTIVITY DATA IN PARALLEL: 
+qsub -cwd -V -t 1-20101:100 feature_extract_motiontracker.sh
+

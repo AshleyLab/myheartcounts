@@ -1,6 +1,0 @@
-1. generate GWAS inputs from 23andme data by running: 
-   make_gwas_inputs/formulate_ped_file.py 
-2. convert the ped file to binary file 
-   plink --file 23andme --make-bed --out 23andmeBinary 
-3. run PCA analysis 
-   

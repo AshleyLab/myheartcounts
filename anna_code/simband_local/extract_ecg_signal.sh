@@ -1,5 +1,0 @@
-python extract_ecg_signal.py f2345ed3560741f387390bb3848f457d/0f530e1c73e041ad9c7889cd20d5e68f-1439316366052.json values/values_1
-python extract_ecg_signal.py f2345ed3560741f387390bb3848f457d/0f530e1c73e041ad9c7889cd20d5e68f-1439317069796.json values/values_2
-python extract_ecg_signal.py f3aa28660afa47f0aa5a0af050025467/0f530e1c73e041ad9c7889cd20d5e68f-1439320449179.json values/values_3  
-python extract_ecg_signal.py f3aa28660afa47f0aa5a0af050025467/0f530e1c73e041ad9c7889cd20d5e68f-1439321144367.json values/values_4
-

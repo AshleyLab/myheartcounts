@@ -1,9 +1,0 @@
-#execute the following to summarize age/sex, demographic, heart age, and all survey files 
-#this will generate a file , as specified in Parameters.py in "survey_summary_file" 
-python summarize_survey_files.py 
-
-#To get a binary file indicating which features are present for which subject: 
-python get_feature_presence.py 
-
-
-
