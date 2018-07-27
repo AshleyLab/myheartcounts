@@ -3,12 +3,14 @@ import pandas as pd
 import pdb
 from datetime import datetime,timedelta,date
 from dateutil.parser import parse 
+import sys  
 
 def get_interventions(ab_test_file,aws_file_pickle,appVersion_file,intervention_days):
     #load the tables
-    aws_data=p.load(open(aws_file_pickle,'rb'))
+    with open(aws_file_pickle,'rb') as f:         
+        aws_data=p.load(f,encoding='bytes')
     ab_data=pd.read_csv(ab_test_file,header=0,sep='\t')
-    appversion=pd.read_csv(appVersion_file,header=None,sep='\t')
+    appversion=pd.read_csv(appVersion_file,header=0,sep='\t')
     print("loaded tables of interest") 
 
     #use a dictionary to keep track of AB-test values,AWS values, HealthKit steps, HealthKit distance 
@@ -25,7 +27,7 @@ def get_interventions(ab_test_file,aws_file_pickle,appVersion_file,intervention_
         #the days in range(1,days_in_study) before created_on date constitute the baseline week of data 
         first_baseline=created_on-timedelta(days=days_in_study)
         for d in range(1,days_in_study+1):
-            baseline_date=create_on-timedelta(days=d)         
+            baseline_date=created_on-timedelta(days=d)         
             if baseline_date not in subject_dict[health_code]: 
                 subject_dict[health_code][baseline_date]=dict() 
             subject_dict[health_code][baseline_date]['ABTest']='baseline'
@@ -63,14 +65,18 @@ def get_interventions(ab_test_file,aws_file_pickle,appVersion_file,intervention_
 
 
     print("Determining appVersion for each healthCode/createOn")
+    cur_count=0 
     for index,row in appversion.iterrows(): 
+        cur_count+=1 
+        if cur_count %1000==0: 
+            print(cur_count) 
         subject=row['healthCode'] 
         cur_date=parse(row['createdOn']).date() 
         cur_appVersion=row['appVersion'] 
         if subject in subject_dict: 
             if cur_date in subject_dict[subject]: 
                 subject_dict[subject][cur_date]['appVersion']=cur_appVersion 
-
+    print("finished parsing ABTest/ AWS/ appVersion")
     return subject_dict
 
 

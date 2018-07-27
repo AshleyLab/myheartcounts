@@ -1,12 +1,23 @@
 #!/bin/sh
 subject_set=$1
-python get_activity_fraction_and_duration_appv2.py --tables /scratch/PI/euan/projects/mhc/data/tables/v2_data_subset/cardiovascular-motionActivityCollector-v1.tsv \
+#motionActivity
+#python get_activity_fraction_and_duration_appv2.py --tables /scratch/PI/euan/projects/mhc/data/tables/cardiovascular-motionActivityCollector-v1.tsv \
+#    --synapseCacheDir /scratch/PI/euan/projects/mhc/data/synapseCache/ \
+#    --out_prefixes parsed_motionActivity.$subject_set \
+#    --data_types motion_tracker \
+#    --subjects /scratch/PI/euan/projects/mhc/data/tables/subjects/motion.activity/x$subject_set \
+#    --aws_file_pickle /scratch/PI/euan/projects/mhc/data/aws_interventions.p \
+#    --ab_test /scratch/PI/euan/projects/mhc/data/tables/cardiovascular-ABTestResults-v1.tsv \
+#    --appVersion /scratch/PI/euan/projects/mhc/data/tables/appVersionWithDates.tsv
+#
+
+#motionTracker
+python get_activity_fraction_and_duration_appv2.py --tables /scratch/PI/euan/projects/mhc/data/tables/cardiovascular-motionTracker-v1.tsv \
     --synapseCacheDir /scratch/PI/euan/projects/mhc/data/synapseCache/ \
-    --out_prefixes parsed_v2_motionActivity.$subject_set \
+    --out_prefixes parsed_motionTracker.$subject_set \
     --data_types motion_tracker \
-    --subjects /scratch/PI/euan/projects/mhc/data/tables/v2_data_subset/subjects/motion/x$subject_set \
-    #--map_aws_to_healthcodes /scratch/PI/euan/projects/mhc/data/tables/cardiovascular-AwsClientIdTask-v1.tsv \
-    --aws_file_pickle /scratch/PI/euan/projects/mhc/data/aws_interventions.p
-    #--aws_files /scratch/PI/euan/projects/mhc/data/aws.all \
-    --intervention_metadata /scratch/PI/euan/projects/mhc/data/tables/cardiovascular-ABTestResults-v1.tsv
+    --subjects /scratch/PI/euan/projects/mhc/data/tables/subjects/motion.tracker/x$subject_set \
+    --aws_file_pickle /scratch/PI/euan/projects/mhc/data/aws_interventions.p \
+    --ab_test /scratch/PI/euan/projects/mhc/data/tables/cardiovascular-ABTestResults-v1.tsv \
     --appVersion /scratch/PI/euan/projects/mhc/data/tables/appVersionWithDates.tsv
+

@@ -2,10 +2,10 @@
 import argparse
 from table_parser import *
 from aggregators import *
-from get_abtest_and_aws_interventions.py import *
+from get_abtest_and_aws_interventions import *
 import pickle 
 import pdb 
-table_parser_choices={"motion_tracker_":parse_motion_tracker,
+table_parser_choices={"motion_tracker":parse_motion_tracker,
                       "health_kit_data_collector":parse_healthkit_data_collector,
                       "health_kit_sleep_collector":parse_healthkit_sleep_collector}
 aggregation_choices={"motion_tracker":aggregate_motion_tracker,
@@ -19,7 +19,7 @@ def parse_args():
     parser.add_argument("--out_prefixes",nargs="+")
     parser.add_argument("--subjects",default="all")
     parser.add_argument("--data_types",nargs="+",help="allowed values are \"motion_tracker\",\"health_kit_data_collector\", \"health_kit_sleep_collector\"")
-    parser.add_argument("--intervention_metadata",default=None)
+    parser.add_argument("--ab_test",default=None)
     parser.add_argument("--aws_files",default=None) 
     parser.add_argument("--map_aws_to_healthcodes",default=None)
     parser.add_argument("--aws_file_pickle",default=None)
@@ -42,7 +42,7 @@ def main():
 
     #load the intervention metadata 
     interventions=get_interventions(args.ab_test,args.aws_file_pickle,args.appVersion,args.intervention_duration) 
-
+    print("got interventions") 
     #parse all tables 
     for i in range(len(args.tables)):
         #get daily values

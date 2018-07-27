@@ -1,8 +1,8 @@
 #generate paired t-test input for within subject comparison for HK & MotionTracker 
 import numpy as np 
-hk_steps=open("/scratch/PI/euan/projects/mhc/data/timeseries_v2/summary/healthkit_combined.stepcount.txt",'r').read().strip().split('\n') 
-hk_distance=open('/scratch/PI/euan/projects/mhc/data/timeseries_v2/summary/healthkit_combined.distance.txt','r').read().strip().split('\n') 
-mt=open("/scratch/PI/euan/projects/mhc/data/timeseries_v2/summary/motion_tracker_combined.filtered.txt",'r').read().strip().split('\n') 
+hk_steps=open("/scratch/PI/euan/projects/mhc/data/timeseries_v2/summary/health_kit_combined.steps.txt",'r').read().strip().split('\n') 
+hk_distance=open('/scratch/PI/euan/projects/mhc/data/timeseries_v2/summary/health_kit_combined.distance.txt','r').read().strip().split('\n') 
+mt=open("/scratch/PI/euan/projects/mhc/data/timeseries_v2/summary/motion_tracker_combined.txt",'r').read().strip().split('\n') 
 print('read in data') 
 #define thresholds 
 max_steps=20000 
@@ -18,9 +18,9 @@ for line in hk_steps[1::]:
     source=tokens[-2] 
     if not source.lower().__contains__('phone'):
         continue 
-    intervention=tokens[2] 
-    measure=tokens[4] 
-    value=float(tokens[5]) 
+    intervention=tokens[3] 
+    measure=tokens[6] 
+    value=float(tokens[7]) 
     if intervention=="NA": 
         continue 
     if value >  max_steps: 
@@ -42,9 +42,9 @@ for line in hk_distance[1::]:
     source=tokens[-2]
     if not source.lower().__contains__('phone'):
         continue 
-    intervention=tokens[2] 
-    measure=tokens[4] 
-    value=float(tokens[5]) 
+    intervention=tokens[4] 
+    measure=tokens[6] 
+    value=float(tokens[7]) 
     if intervention=="NA": 
         continue 
     if value >  max_dist: 
@@ -62,10 +62,10 @@ print("processed distance")
 for line in mt[1::]: 
     tokens=line.split('\t') 
     subject=tokens[0] 
-    intervention=tokens[2] 
-    measure=tokens[4] 
-    minutes=float(tokens[5]) 
-    fraction=float(tokens[6]) 
+    intervention=tokens[4] 
+    measure=tokens[5] 
+    minutes=float(tokens[6]) 
+    fraction=float(tokens[7]) 
     if intervention=="NA": 
         continue 
     if minutes > max_minutes: 
