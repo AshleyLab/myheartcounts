@@ -8,14 +8,17 @@ outf=open(sys.argv[1]+'.regression','w')
 header=data[0] 
 outf.write(header+'\t'+'dayIndex'+'\t'+'WatchVsPhone'+'\n')
 subject_dict=dict() 
-valid_interventions=['APHClusterModule','APHReadAHAWebsiteModule','APHStandModule','APHWalkModule']
+valid_interventions=['baseline','cluster','read_aha','stand','walk']
+
+valid_interventions_aws=['APHClusterModule','APHReadAHAWebsiteModule','APHStandModule','APHWalkModule']
 for line in data[1::]: 
     tokens=line.split('\t') 
-    intervention=tokens[2] 
+    #USE ABTEST SCHEDULED INTERVENTION
+    intervention=tokens[4] 
     if intervention=="NA": 
         continue 
     subject=tokens[0] 
-    day=datetime.datetime.strptime(tokens[3],'%Y-%m-%d').date() 
+    day=datetime.datetime.strptime(tokens[1],'%Y-%m-%d').date() 
     #keep track of valid interventions 
     if intervention in valid_interventions: 
         if subject not in subject_dict: 
@@ -29,25 +32,21 @@ for line in data[1::]:
 print("done w/ first pass") 
 for line in data[1::]: 
     tokens=line.split('\t') 
-    intervention=tokens[2] 
+    intervention=tokens[4] 
     if intervention=="NA": 
         continue 
     subject=tokens[0] 
     if subject not in subject_dict: 
         continue 
-    day=datetime.datetime.strptime(tokens[3],'%Y-%m-%d').date() 
+    day=datetime.datetime.strptime(tokens[1],'%Y-%m-%d').date() 
     print(intervention) 
     day_index=(day-subject_dict[subject]['first']).days 
-    #drop any baseline values more than a week before first intervention-- handles case when subjects have large data gaps 
-    if (day_index <-8): 
-        continue 
-    #we only look at 1 week post final intervention 
-    if (day_index > 50): 
-        continue 
-    if tokens[6].lower().__contains__('phone'): 
+    if tokens[8].lower().__contains__('phone'): 
         device_type='phone'
-    else: 
+    elif tokens[8].lower().__contains__('watch'):
         device_type='watch' 
+    else: 
+        device_type="unknown"
     outf.write(line+'\t'+str(day_index)+'\t'+device_type+'\n')
 
         

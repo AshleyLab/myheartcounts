@@ -97,5 +97,6 @@ if __name__=="__main__":
     interventions=extract_interventions(file_names,client_id_to_health_code_id)
     #store the data in a pickle
     import pickle
-    pickle.dump(interventions,open('/scratch/PI/euan/projects/mch/data/aws_interventions.p','wb'))
+    with open(str("aws_interventions.p"), 'wb') as f:
+        pickle.dump(interventions, f)
 
