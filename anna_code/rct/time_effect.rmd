@@ -1,0 +1,165 @@
+#Approaches suggested by Laura, as defined in AshleyMHC.docx
+```{r load_libraries, message=FALSE, warning=FALSE}
+rm(list=ls())
+options(warn=-1)
+library(nlme)
+library(car)
+library(multcompView)
+library(lsmeans)
+library(rcompanion)
+```
+## Load HealthKit Step Count Data 
+```{r load_and_filter_data, warning=FALSE}
+healthkit_steps=data.frame(read.table(
+  "health_kit_combined.steps.txt.regression",
+  header=TRUE,sep='\t',stringsAsFactors = FALSE))
+
+#Remove any step counts greater than 20k  
+healthkit_steps=healthkit_steps[healthkit_steps$Value<20000,]
+
+#restrict analysis to person-days that fall into one of study phases
+phases=c("baseline","cluster","read_aha","stand","walk")
+healthkit_steps=healthkit_steps[healthkit_steps$ABTest %in% phases,]
+healthkit_steps$ABTest=factor(healthkit_steps$ABTest,levels=phases)
+
+#phone only
+healthkit_steps=healthkit_steps[healthkit_steps$WatchVsPhone=="phone",]
+
+#subjects are random effects, generate factor from string
+healthkit_steps$Subject=factor(healthkit_steps$Subject)
+
+#keep track of weekIndex in addition to dayIndex
+healthkit_steps$WeekIndex=ceiling(healthkit_steps$dayIndex/7) 
+```
+## 1) Assume there is no time effect 
+```{r no_time_effect}
+model = lme(Value ~ ABTest, 
+            random = ~1|Subject,
+            data=healthkit_steps,
+            control=lmeControl(opt="optim"))
+marginal = lsmeans(model, ~ ABTest )
+print(summary(model))
+print(marginal)
+plot(cld(marginal,
+    alpha   = 0.05, 
+    Letters = letters,     ### Use lower-case letters for .group
+    adjust  = "tukey"))     ###  Tukey-adjusted comparisons
+#HISTOGRAM OF RESIDUALS
+x = residuals(model)
+plotNormalHistogram(x)
+#plot(fitted(model),residuals(model))
+```
+
+## 2a) Test for a time effect within the baseline week using a day variable. 
+```{r}
+baseline=healthkit_steps[healthkit_steps$ABTest=="baseline",]
+model = lme(Value ~ dayIndex, 
+            random = ~1|Subject,
+            data=baseline,
+            control=lmeControl(opt="optim"))
+marginal = lsmeans(model, ~ dayIndex )
+print(summary(model))
+print(marginal)
+#HISTOGRAM OF RESIDUALS
+x = residuals(model)
+plotNormalHistogram(x)
+```
+## 2b) Test for a time effect within weeks 1-4 using a day variable 
+```{r time_effect_weeks}
+interventions=healthkit_steps[healthkit_steps$ABTest!="baseline",]
+model = lme(Value ~ dayIndex, 
+            random = ~1|Subject,
+            data=interventions,
+            control=lmeControl(opt="optim"))
+marginal = lsmeans(model, ~ dayIndex )
+print(summary(model))
+print(marginal)
+
+```
+## 3) Assume the time effect is linear for all 5 weeks (use dayIndex or weekIndex as an explanatory variable in the model)
+### using dayIndex 
+```{r time_effect_linear_day}
+model = lme(Value ~ ABTest+dayIndex, 
+            random = ~1|Subject,
+            data=healthkit_steps,
+            control=lmeControl(opt="optim"))
+marginal = lsmeans(model, ~ ABTest+ dayIndex )
+print(summary(model))
+print(marginal)
+plot(cld(marginal,
+    alpha   = 0.05, 
+    Letters = letters,     ### Use lower-case letters for .group
+    adjust  = "tukey"))     ###  Tukey-adjusted comparisons
+
+```
+### using weekIndex 
+```{r time_effect_linear_week}
+model = lme(Value ~ ABTest+WeekIndex, 
+            random = ~1|Subject,
+            data=healthkit_steps,
+            control=lmeControl(opt="optim"))
+marginal = lsmeans(model, ~ ABTest+ WeekIndex )
+print(summary(model))
+print(marginal)
+plot(cld(marginal,
+    alpha   = 0.05, 
+    Letters = letters,     ### Use lower-case letters for .group
+    adjust  = "tukey"))     ###  Tukey-adjusted comparisons
+```
+## 4a) Use the delta (intervention - baseline) as a dependent variable and look whether it differs from 0 on average. 
+```{r delta_from_baseline}
+library(dplyr,verbose=FALSE)
+library(tidyr,verbose=FALSE)
+
+#get a dataframem of mean-per-subject value for baseline as well as each intervention 
+mean_intervention_vals=healthkit_steps %>%
+  select(Subject,Date,ABTest,Value) %>%
+  distinct(Subject,Date,ABTest,.keep_all = TRUE) %>%
+  spread(ABTest,Value) %>%
+  group_by(Subject) %>%
+  summarise_all(funs(mean(., na.rm=TRUE)))
+
+#get distributions of (intervention-baseline) for each intervention 
+delta_cluster=mean_intervention_vals$cluster-mean_intervention_vals$baseline
+delta_aha=mean_intervention_vals$read_aha-mean_intervention_vals$baseline 
+delta_stand=mean_intervention_vals$stand - mean_intervention_vals$baseline 
+delta_walk=mean_intervention_vals$walk - mean_intervention_vals$baseline 
+
+#We want to see if mean of above 4 distributions differs from 0. 
+#We first apply shapiro test to check if the values are normally distributed 
+shapiro.test(delta_cluster)
+shapiro.test(delta_aha)
+shapiro.test(delta_stand)
+shapiro.test(delta_walk)
+
+#The shapiro test rejects the normal distribution in all 4 cases. 
+#So we use Wilcoxon signed rank test to check for a shift from 0 
+wilcox.test(delta_cluster, mu=0, conf.int = TRUE)
+wilcox.test(delta_aha, mu=0, conf.int = TRUE)
+wilcox.test(delta_stand, mu=0, conf.int = TRUE)
+wilcox.test(delta_walk, mu=0, conf.int = TRUE)
+
+#plot the distributions 
+library(reshape2,verbose=FALSE)
+library(ggplot2,verbose=FALSE)
+deltas=data.frame(delta_aha,delta_walk,delta_cluster,delta_stand)
+deltas=melt(deltas)
+ggplot(data=deltas,aes(x=deltas$value,group=deltas$variable,color=deltas$variable,fill=deltas$variable))+
+  geom_density(position="dodge",alpha=0.2)+
+  theme_bw()
+```
+## 4b) 
+
+## 4c) 
+
+## 4d) 
+
+## Repeat analysis for HealthKit Distance 
+
+## Repeat analysis for MotionTracker 
+
+## Repeat analysis for Watch Steps 
+
+## Incorporating information from AWS analytics 
+We have a subset of active subjects that did not receive stand prompts and daily step count reminders. What can we learn if we treat those as a separate group? 
+
