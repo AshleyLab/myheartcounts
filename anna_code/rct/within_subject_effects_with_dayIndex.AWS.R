@@ -102,6 +102,11 @@ healthkit_distance$AWS=factor(healthkit_distance$AWS,
                                           "APHStandModule",
                                           "APHWalkModule"))
 
+model = lme(Value ~ 
+              AWS  , 
+            random = ~1|Subject,
+            data=healthkit_steps,
+            control=lmeControl(opt="optim"))
 
 
 model = lme(Value ~ 
@@ -110,6 +115,8 @@ model = lme(Value ~
             data=healthkit_steps,
             control=lmeControl(opt="optim"))
 Anova(model)
+marginal = lsmeans(model, ~ AWS )
+
 marginal = lsmeans(model, ~ AWS + WeekIndex )
 
 plot(cld(marginal,
