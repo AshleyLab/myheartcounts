@@ -13,9 +13,11 @@ def main():
     #dictionary of healthCode->appVersion->uploadDate 
     data_hist=dict() 
 
-    #prepare the output file 
+    #prepare the output files 
     outf=open(args.outf,'w')
     outf.write('healthCode\tappVersion\tuploadDate\n')
+    outf_collapsed=open(args.outf+'.collapsed','w')
+    outf_collapsed.write('healthCode\tappVersion\tUniqueNumberDays\n')
 
     #iterate through each table 
     for table in open(args.tables_to_parse,'r').read().strip().split('\n'): 
@@ -51,6 +53,7 @@ def main():
     print("Finished parsing all tables. Writing data_hist to ouptut file")
     for healthCode in data_hist: 
         for appVersion in data_hist[healthCode]: 
+            outf_collapsed.write(healthCode+'\t'+str(appVersion)+'\t'+str(len(data_hist[healthCode][apVersion].keys()))+'\n')
             for uploadDate in data_hist[healthCode][appVersion]: 
                 outf.write('\t'.join([str(healthCode),str(appVersion),str(uploadDate)])+'\n')
         
