@@ -1,0 +1,119 @@
+---
+title: "Power for MHC RCT"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+rm(list=ls())
+knitr::opts_chunk$set(echo = TRUE)
+library(pwr)
+```
+## Baseline vs 10K steps 
+```{r power_10kwalk}
+#baseline parameters
+n1=1168
+mu1=2955
+
+#intervention parameters
+#10ksteps
+n2=853
+mu2=3140
+
+sd=3658
+
+d=abs(mu1-mu2)/sd
+
+pwr.t2n.test(n1=n1,n2=n2,d=d,sig.level=0.05,alternative="greater")
+```
+
+
+## Hourly Stand
+```{r power_hourly_stand}
+#intervention parameters
+#Hourly Stand 
+n3=879
+mu3=3173
+sd=3643
+d=abs(mu1-mu3)/sd
+pwr.t2n.test(n1=n1,n2=n3,d=d,sig.level=0.05,alternative="greater")
+```
+
+## Read AHA 
+```{r power_read_aha}
+#intervention parameters
+#read_aha
+n4=868
+mu4=3245
+sd=3706
+d=abs(mu1-mu4)/sd
+pwr.t2n.test(n1=n1,n2=n4,d=d,sig.level=0.05,alternative="greater")
+```
+
+## Clusters 
+```{r power_cluster}
+#intervention parameters
+#Cluster
+n5=896
+mu5=3192
+sd=3698
+d=abs(mu1-mu5)/sd
+pwr.t2n.test(n1=n1,n2=n5,d=d,sig.level=0.05,alternative="greater")
+```
+
+
+##Power for ANOVA analysis of variance across interventions 
+```{r pairwise_interventions}
+m_i=3361
+sd_i=3622
+overall_n=sum(c(n2,n3,n4,n5))
+mean_n=mean(c(n2,n3,n4,n5))
+
+delta_sum=(n2/overall_n)*(mu2-m_i)^2+(n3/overall_n)*(mu3-m_i)^2+(n4/overall_n)*(mu4-m_i)^2+(n5/overall_n)*(mu5-m_i)^2
+f=sqrt(delta_sum/(sd_i^2))
+pwr.anova.test(k=4,f=f,n=mean_n,sig.level=0.05)
+```
+## Power for secondary outcome: change in daily minutes walked 
+```{r daily_minutes}
+n1=1721
+n2=mean(c(1329,1434,1384,1359))
+mu1=45
+mu2=46
+sd=mean(c(73,61,59,58,61))
+d=abs(mu1-mu2)/sd
+pwr.t2n.test(n1=n1,n2=n2,d=d,sig.level=0.05,alternative="greater")
+```
+
+## Power for secondary outcome: change in self-reported happiness 
+```{r happiness}
+n1=947
+n2=mean(c(117,179,174,134))
+mu1=7.34
+mu2=mean(c(7.5,7.52,7.37,7.40))
+sd=mean(c(1.93,1.97,1.66,1.65,1.83))
+d=abs(mu1-mu2)/sd
+pwr.t2n.test(n1=n1,n2=n2,d=d,sig.level=0.05,alternative="greater")
+
+```
+
+## Power for seconday outcome: change in sleep duration 
+```{r sleep_duration}
+n1=354
+n2=mean(c(235,240,248,227))
+mu1=7.99
+mu2=mean(c(8.04,8.16,7.88,7.98))
+sd=mean(c(5.16,4.99,5.15,4.92,5.19))
+d=abs(mu1-mu2)/sd
+pwr.t2n.test(n1=n1,n2=n2,d=d,sig.level=0.05,alternative="greater")
+```
+
+## Power for secondary outcome: change in sleep quality 
+```{r sleep_quality}
+n1=325
+n2=mean(c(218,220,235,216))
+mu1=0.74
+mu2=mean(c(0.75,0.76,0.75,0.76))
+sd=mean(c(0.28,0.27,0.27,0.27,0.25))
+d=abs(mu1-mu2)/sd
+pwr.t2n.test(n1=n1,n2=n2,d=d,sig.level=0.05,alternative="greater")
+```
+
