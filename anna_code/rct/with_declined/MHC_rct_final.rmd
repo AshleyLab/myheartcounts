@@ -1,0 +1,521 @@
+---
+output:
+  pdf_document: default
+  html_document: default
+---
+```{r load_libraries, message=FALSE, warning=FALSE,echo=FALSE, message=FALSE}
+rm(list=ls())
+options(warn=-1)
+library(nlme)
+#library(car)
+library(multcomp)
+library(multcompView)
+library(lsmeans)
+#library(rcompanion)
+#library(sjPlot)
+library(tidyr)
+library(dplyr)
+
+```
+## Load HealthKit Step Count Data for Phones
+```{r load_and_filter_data, warning=FALSE,echo=FALSE,message=FALSE}
+healthkit_steps=data.frame(read.table(
+  "data.txt",
+  header=TRUE,sep='\t',stringsAsFactors = FALSE))
+
+#Remove any step counts greater than 20k  
+healthkit_steps=healthkit_steps[healthkit_steps$Value<20000,]
+
+#restrict analysis to person-days that fall into one of study phases
+phases=c("baseline","cluster","read_aha","stand","walk")#,"declined")
+healthkit_steps=healthkit_steps[healthkit_steps$ABTest %in% phases,]
+healthkit_steps$ABTest=factor(healthkit_steps$ABTest,levels=phases)
+
+#phone only
+healthkit_steps=healthkit_steps[healthkit_steps$WatchVsPhone=="phone",]
+
+#subjects are random effects, generate factor from string
+healthkit_steps$Subject=factor(healthkit_steps$Subject)
+
+#keep track of weekIndex in addition to dayIndex
+healthkit_steps$WeekIndex=ceiling(healthkit_steps$dayIndex/7) 
+```
+
+
+## Number of people-days in each intervention each week 
+```{r number_of_users_by_intervention_and_week}
+
+#overall users 
+overall_users=healthkit_steps %>%
+  select(Subject, ABTest) %>%
+  group_by(ABTest) %>%
+  summarize(count=n_distinct(Subject))
+
+#participants for each week/intervention 
+subject_counts=healthkit_steps %>%
+  select(Subject,WeekIndex,ABTest)%>%
+  group_by(WeekIndex,ABTest) %>%
+  summarize(count=n_distinct(Subject))
+
+#participant/days for each week 
+subject_counts=healthkit_steps %>%
+  select(Subject,WeekIndex,ABTest)%>%
+  group_by(WeekIndex,ABTest) %>%
+  summarize(count=n())
+```
+
+
+## 1) Analysis
+```{r all_phone}
+#mediataion analysis 
+
+model = lme(Value ~ ABTest +dayIndex, 
+            random = ~1|Subject,
+            data=healthkit_steps,
+            control=lmeControl(opt="optim"))
+marginal = lsmeans(model, ~ ABTest +dayIndex  )
+print(summary(model))
+print("marginal:")
+print(marginal)
+print("Tukey HSD:")
+summary(glht(model,linfct=mcp(ABTest="Tukey")))
+
+plot(cld(marginal,
+    alpha   = 0.05, 
+    Letters = letters,     ### Use lower-case letters for .group
+    adjust  = "tukey"),xlim=c(2000,5000))
+plot_model(model,sort.est = TRUE,axis.lim=c(-300,1200))#,axis.labels = c("Day","10KSteps","Cluster","HourlyStand","ReadAHA"), title="Source=Phone")
+library(ggplot2)
+data=healthkit_steps
+data$ABTest=factor(data$ABTest,levels=c("baseline","read_aha","cluster","stand","walk","declined"))
+ggplot(data, aes(data$ABTest,data$Value)) + 
+    stat_summary(fun.y = mean, geom = "point") + 
+    stat_summary(fun.data = mean_cl_normal, geom = "errorbar")+
+  xlab("Intervention")+
+  ylab("95% CI for Mean Daliy Step Count")
+
+
+ggplot(data, aes(data$ABTest,data$Value)) + 
+    stat_summary(fun.y = mean, geom = "point") + 
+    stat_summary(fun.data = mean_sdl, geom = "errorbar")+
+  xlab("Intervention")+
+  ylab("Mean Daily Step Count+/- 1 Standard Deviation")
+
+```
+## 1.5) Phone users who completed all 4 interventions 
+```{r}
+healthkit_steps=data.frame(read.table(
+  "../all_four_interventions.txt",
+  header=TRUE,sep='\t',stringsAsFactors = FALSE))
+#Remove any step counts greater than 20k  
+healthkit_steps=healthkit_steps[healthkit_steps$Value<20000,]
+#restrict analysis to person-days that fall into one of study phases
+phases=c("baseline","cluster","read_aha","stand","walk")
+healthkit_steps=healthkit_steps[healthkit_steps$ABTest %in% phases,]
+healthkit_steps$ABTest=factor(healthkit_steps$ABTest,levels=phases)
+#watch only
+healthkit_steps=healthkit_steps[healthkit_steps$WatchVsPhone=="phone",]
+#subjects are random effects, generate factor from string
+healthkit_steps$Subject=factor(healthkit_steps$Subject)
+#keep track of weekIndex in addition to dayIndex
+healthkit_steps$WeekIndex=ceiling(healthkit_steps$dayIndex/7) 
+
+#######################################################
+#overall users 
+overall_users=healthkit_steps %>%
+  select(Subject, ABTest) %>%
+  group_by(ABTest) %>%
+  summarize(count=n_distinct(Subject))
+
+#participants for each week/intervention 
+subject_counts=healthkit_steps %>%
+  select(Subject,WeekIndex,ABTest)%>%
+  group_by(WeekIndex,ABTest) %>%
+  summarize(count=n_distinct(Subject))
+
+#participant/days for each week 
+subject_counts=healthkit_steps %>%
+  select(Subject,WeekIndex,ABTest)%>%
+  group_by(WeekIndex,ABTest) %>%
+  summarize(count=n())
+
+#get the standard deviation of steps for each intervention 
+baseline=healthkit_steps[healthkit_steps$ABTest=="baseline",]
+cluster=healthkit_steps[healthkit_steps$ABTest=="cluster",]
+read_aha=healthkit_steps[healthkit_steps$ABTest=="read_aha",]
+walk=healthkit_steps[healthkit_steps$ABTest=="walk",]
+stand=healthkit_steps[healthkit_steps$ABTest=="stand",]
+##########################################################
+model = lme(Value ~ ABTest+dayIndex, 
+            random = ~1|Subject,
+            data=healthkit_steps,
+            control=lmeControl(opt="optim"))
+marginal = lsmeans(model, ~ ABTest+ dayIndex )
+print(summary(model))
+print("marginal:")
+print(marginal)
+print("Tukey HSD:")
+summary(glht(model,linfct=mcp(ABTest="Tukey")))
+
+plot(cld(marginal,
+    alpha   = 0.05, 
+    Letters = letters,     ### Use lower-case letters for .group
+    adjust  = "tukey"),xlim=c(2000,5000))
+plot_model(model,sort.est = TRUE,axis.lim=c(-300,1200),axis.labels = c("Day","10KSteps","Cluster","HourlyStand","ReadAHA"), title="493 Users Who Completed all Interventions")
+
+```
+
+
+## 2) All Watch Users 
+```{r watch}
+healthkit_steps=data.frame(read.table(
+  "data.txt",
+  header=TRUE,sep='\t',stringsAsFactors = FALSE))
+#Remove any step counts greater than 20k  
+healthkit_steps=healthkit_steps[healthkit_steps$Value<20000,]
+#restrict analysis to person-days that fall into one of study phases
+phases=c("baseline","cluster","read_aha","stand","walk")
+healthkit_steps=healthkit_steps[healthkit_steps$ABTest %in% phases,]
+healthkit_steps$ABTest=factor(healthkit_steps$ABTest,levels=phases)
+#watch only
+healthkit_steps=healthkit_steps[healthkit_steps$WatchVsPhone=="watch",]
+#subjects are random effects, generate factor from string
+healthkit_steps$Subject=factor(healthkit_steps$Subject)
+#keep track of weekIndex in addition to dayIndex
+healthkit_steps$WeekIndex=ceiling(healthkit_steps$dayIndex/7) 
+
+#######################################################
+#overall users 
+overall_users=healthkit_steps %>%
+  select(Subject, ABTest) %>%
+  group_by(ABTest) %>%
+  summarize(count=n_distinct(Subject))
+
+#participants for each week/intervention 
+subject_counts=healthkit_steps %>%
+  select(Subject,WeekIndex,ABTest)%>%
+  group_by(WeekIndex,ABTest) %>%
+  summarize(count=n_distinct(Subject))
+
+#participant/days for each week 
+subject_counts=healthkit_steps %>%
+  select(Subject,WeekIndex,ABTest)%>%
+  group_by(WeekIndex,ABTest) %>%
+  summarize(count=n())
+#############################################################
+#Get the Standard deviation for each group
+baseline=healthkit_steps[healthkit_steps$ABTest=="baseline",]
+cluster=healthkit_steps[healthkit_steps$ABTest=="cluster",]
+read_aha=healthkit_steps[healthkit_steps$ABTest=="read_aha",]
+walk=healthkit_steps[healthkit_steps$ABTest=="walk",]
+stand=healthkit_steps[healthkit_steps$ABTest=="stand",]
+##########################################################
+model = lme(Value ~ ABTest+dayIndex, 
+            random = ~1|Subject,
+            data=healthkit_steps,
+            control=lmeControl(opt="optim"))
+marginal = lsmeans(model, ~ ABTest+ dayIndex )
+print(summary(model))
+print("marginal:")
+print(marginal)
+print("Tukey HSD:")
+summary(glht(model,linfct=mcp(ABTest="Tukey")))
+
+plot(cld(marginal,
+    alpha   = 0.05, 
+    Letters = letters,     ### Use lower-case letters for .group
+    adjust  = "tukey"),xlim=c(2000,5000))
+plot_model(model,sort.est = TRUE,axis.lim=c(-300,1200),axis.labels = c("Day","ReadAHA","10KSteps","Cluster","Stand"), title="Source=Watch")
+
+watch_subjects=as.character(healthkit_steps$Subject)
+```
+## 3) Subset of phone users that also had a watch 
+```{r watch_phone_subset}
+healthkit_steps=data.frame(read.table(
+  "health_kit_combined.steps.txt.regression",
+  header=TRUE,sep='\t',stringsAsFactors = FALSE))
+#Remove any step counts greater than 20k  
+healthkit_steps=healthkit_steps[healthkit_steps$Value<20000,]
+#restrict analysis to person-days that fall into one of study phases
+phases=c("baseline","cluster","read_aha","stand","walk")
+healthkit_steps=healthkit_steps[healthkit_steps$ABTest %in% phases,]
+healthkit_steps$ABTest=factor(healthkit_steps$ABTest,levels=phases)
+#watch only
+healthkit_steps=healthkit_steps[healthkit_steps$WatchVsPhone=="phone",]
+healthkit_steps=healthkit_steps[healthkit_steps$Subject %in% watch_subjects,]
+#subjects are random effects, generate factor from string
+healthkit_steps$Subject=factor(healthkit_steps$Subject)
+#keep track of weekIndex in addition to dayIndex
+healthkit_steps$WeekIndex=ceiling(healthkit_steps$dayIndex/7) 
+watch_phone_subjects=as.character(healthkit_steps$Subject)
+#######################################################
+#overall users 
+overall_users=healthkit_steps %>%
+  select(Subject, ABTest) %>%
+  group_by(ABTest) %>%
+  summarize(count=n_distinct(Subject))
+
+#participants for each week/intervention 
+subject_counts=healthkit_steps %>%
+  select(Subject,WeekIndex,ABTest)%>%
+  group_by(WeekIndex,ABTest) %>%
+  summarize(count=n_distinct(Subject))
+
+#participant/days for each week 
+subject_counts=healthkit_steps %>%
+  select(Subject,WeekIndex,ABTest)%>%
+  group_by(WeekIndex,ABTest) %>%
+  summarize(count=n())
+
+##########################################################
+model = lme(Value ~ ABTest+dayIndex, 
+            random = ~1|Subject,
+            data=healthkit_steps,
+            control=lmeControl(opt="optim"))
+marginal = lsmeans(model, ~ ABTest+ dayIndex )
+print(summary(model))
+print("marginal:")
+print(marginal)
+print("Tukey HSD:")
+summary(glht(model,linfct=mcp(ABTest="Tukey")))
+
+plot(cld(marginal,
+    alpha   = 0.05, 
+    Letters = letters,     ### Use lower-case letters for .group
+    adjust  = "tukey"),xlim=c(2000,5000))
+plot_model(model,sort.est = TRUE,axis.lim=c(-300,1200),axis.labels = c("Day","HourlyStand","10KSteps","Cluster","ReadAHA"), title="Source=Phone of Watch Users")
+
+```
+#Watch Data subsetted to subjects who had both watch & phone data 
+```{r}
+healthkit_steps=data.frame(read.table(
+  "health_kit_combined.steps.txt.regression",
+  header=TRUE,sep='\t',stringsAsFactors = FALSE))
+#Remove any step counts greater than 20k  
+healthkit_steps=healthkit_steps[healthkit_steps$Value<20000,]
+#restrict analysis to person-days that fall into one of study phases
+phases=c("baseline","cluster","read_aha","stand","walk")
+healthkit_steps=healthkit_steps[healthkit_steps$ABTest %in% phases,]
+healthkit_steps$ABTest=factor(healthkit_steps$ABTest,levels=phases)
+#watch only
+healthkit_steps=healthkit_steps[healthkit_steps$WatchVsPhone=="watch",]
+healthkit_steps=healthkit_steps[healthkit_steps$Subject %in% watch_phone_subjects,]
+#subjects are random effects, generate factor from string
+healthkit_steps$Subject=factor(healthkit_steps$Subject)
+#keep track of weekIndex in addition to dayIndex
+healthkit_steps$WeekIndex=ceiling(healthkit_steps$dayIndex/7) 
+watch_phone_subjects=as.character(healthkit_steps$Subject)
+#######################################################
+#overall users 
+overall_users=healthkit_steps %>%
+  select(Subject, ABTest) %>%
+  group_by(ABTest) %>%
+  summarize(count=n_distinct(Subject))
+
+#participants for each week/intervention 
+subject_counts=healthkit_steps %>%
+  select(Subject,WeekIndex,ABTest)%>%
+  group_by(WeekIndex,ABTest) %>%
+  summarize(count=n_distinct(Subject))
+
+#participant/days for each week 
+subject_counts=healthkit_steps %>%
+  select(Subject,WeekIndex,ABTest)%>%
+  group_by(WeekIndex,ABTest) %>%
+  summarize(count=n())
+
+##########################################################
+model = lme(Value ~ ABTest+dayIndex, 
+            random = ~1|Subject,
+            data=healthkit_steps,
+            control=lmeControl(opt="optim"))
+marginal = lsmeans(model, ~ ABTest+ dayIndex )
+print(summary(model))
+print("marginal:")
+print(marginal)
+print("Tukey HSD:")
+summary(glht(model,linfct=mcp(ABTest="Tukey")))
+
+plot(cld(marginal,
+    alpha   = 0.05, 
+    Letters = letters,     ### Use lower-case letters for .group
+    adjust  = "tukey"),xlim=c(2000,5000))
+plot_model(model,sort.est = TRUE,axis.lim=c(-300,1200),axis.labels = c("Day","10KSteps","ReadAHA","Cluster","HourlyStand"), title="Source=Watch of Watch Users")
+
+```
+## 4) Core motion 
+```{r motione,cho=FALSE,message=FALSE}
+motion_tracker=data.frame(read.table("../motion_tracker_combined.txt.regression.nodoublecounting",header=TRUE,sep='\t',stringsAsFactors = FALSE))
+motion_tracker=motion_tracker[motion_tracker$Activity=="walking",]
+phases=c("baseline","cluster","read_aha","stand","walk")
+motion_tracker=motion_tracker[motion_tracker$ABTest %in% phases,]
+motion_tracker$ABTest=factor(motion_tracker$ABTest,levels=phases)
+motion_tracker=motion_tracker[motion_tracker$WatchVsPhone=="phone",]
+motion_tracker$Subject=factor(motion_tracker$Subject)
+motion_tracker$dayIndex=as.numeric(motion_tracker$dayIndex)
+motion_tracker$WeekIndex=ceiling(motion_tracker$dayIndex/7) 
+
+
+#get sd for each subset
+#Get the Standard deviation for each group
+baseline=motion_tracker[motion_tracker$ABTest=="baseline",]
+cluster=motion_tracker[motion_tracker$ABTest=="cluster",]
+read_aha=motion_tracker[motion_tracker$ABTest=="read_aha",]
+walk=motion_tracker[motion_tracker$ABTest=="walk",]
+stand=motion_tracker[motion_tracker$ABTest=="stand",]
+
+#get the number of users in each group 
+#overall users 
+overall_users=motion_tracker %>%
+  select(Subject, ABTest) %>%
+  group_by(ABTest) %>%
+  summarize(count=n_distinct(Subject))
+
+#participants for each week/intervention 
+subject_counts=motion_tracker %>%
+  select(Subject,WeekIndex,ABTest)%>%
+  group_by(WeekIndex,ABTest) %>%
+  summarize(count=n_distinct(Subject))
+
+#participant/days for each week 
+subject_counts=motion_tracker %>%
+  select(Subject,WeekIndex,ABTest)%>%
+  group_by(WeekIndex,ABTest) %>%
+  summarize(count=n())
+
+
+model = lme(Duration_in_Minutes ~ ABTest+dayIndex, 
+            random = ~1|Subject,
+            data=motion_tracker,
+            control=lmeControl(opt="optim"))
+marginal = lsmeans(model, ~ ABTest+ dayIndex )
+print(summary(model))
+print("marginal:")
+print(marginal)
+print("Tukey HSD:")
+summary(glht(model,linfct=mcp(ABTest="Tukey")))
+plot(cld(marginal,
+    alpha   = 0.05, 
+    Letters = letters,     ### Use lower-case letters for .group
+    adjust  = "tukey"))
+plot_model(model,sort.est = TRUE)
+
+
+```
+
+##5 Sleep Duration 
+```{r sleep_duration}
+sleep=read.table("../sleep_healthkit_combined.txt.regression.nodoublecounting",header=TRUE,sep='\t')
+sleep$Value=sleep$Value/3600
+sleep=sleep[sleep$Value<=24,]
+sleep=sleep[sleep$Metric=="HKCategoryValueSleepAnalysisAsleep",]
+phases=c("baseline","cluster","read_aha","stand","walk")
+sleep=sleep[sleep$ABTest %in% phases,]
+sleep$ABTest=factor(sleep$ABTest,levels=phases)
+sleep$Subject=factor(sleep$Subject)
+sleep$dayIndex=as.numeric(sleep$dayIndex)
+
+
+#get sd for each subset
+#Get the Standard deviation for each group
+baseline=sleep[sleep$ABTest=="baseline",]
+cluster=sleep[sleep$ABTest=="cluster",]
+read_aha=sleep[sleep$ABTest=="read_aha",]
+walk=sleep[sleep$ABTest=="walk",]
+stand=sleep[sleep$ABTest=="stand",]
+
+
+overall_users=sleep %>%
+  select(Subject, ABTest) %>%
+  group_by(ABTest) %>%
+  summarize(count=n_distinct(Subject))
+
+
+model = lme(Value ~ ABTest+dayIndex, 
+            random = ~1|Subject,
+            data=sleep,
+            control=lmeControl(opt="optim"))
+marginal = lsmeans(model, ~ ABTest+ dayIndex )
+print(summary(model))
+print("marginal:")
+print(marginal)
+print("Tukey HSD:")
+summary(glht(model,linfct=mcp(ABTest="Tukey")))
+plot(cld(marginal,
+    alpha   = 0.05, 
+    Letters = letters,     ### Use lower-case letters for .group
+    adjust  = "tukey"))
+plot_model(model,sort.est = TRUE)
+
+```
+##6 Sleep Quality 
+```{r sleep_quality}
+sleep_quality=read.table("../sleep_healthkit_quality.txt",header=TRUE,sep='\t')
+sleep_quality=sleep_quality[sleep_quality$Value<=1,]
+sleep_quality$ABTest=sleep_quality$Intervention
+overall_users=sleep_quality %>%
+  select(Subject, ABTest) %>%
+  group_by(ABTest) %>%
+  summarize(count=n_distinct(Subject))
+
+#get sd for each subset
+#Get the Standard deviation for each group
+baseline=sleep_quality[sleep_quality$ABTest=="baseline",]
+cluster=sleep_quality[sleep_quality$ABTest=="cluster",]
+read_aha=sleep_quality[sleep_quality$ABTest=="read_aha",]
+walk=sleep_quality[sleep_quality$ABTest=="walk",]
+stand=sleep_quality[sleep_quality$ABTest=="stand",]
+
+model = lme(Value ~ ABTest+dayIndex, 
+            random = ~1|Subject,
+            data=sleep_quality,
+            control=lmeControl(opt="optim"))
+marginal = lsmeans(model, ~ ABTest+ dayIndex )
+print(summary(model))
+print("marginal:")
+print(marginal)
+print("Tukey HSD:")
+summary(glht(model,linfct=mcp(ABTest="Tukey")))
+plot(cld(marginal,
+    alpha   = 0.05, 
+    Letters = letters,     ### Use lower-case letters for .group
+    adjust  = "tukey"))
+plot_model(model,sort.est = TRUE)
+
+```
+##7 Life Satisfaction 
+```{r life_satisfaction}
+lifesat=read.table("../life_satisfaction.regression.nodoublecounting",header=TRUE,sep='\t')
+lifesat$ABTest=lifesat$Intervention
+lifesat$ABTest=factor(lifesat$ABTest,levels=phases)
+lifesat$Subject=factor(lifesat$Subject)
+lifesat$dayIndex=as.numeric(lifesat$dayIndex)
+lifesat=na.omit(lifesat)
+overall_users=lifesat %>%
+  select(Subject, ABTest) %>%
+  group_by(ABTest) %>%
+  summarize(count=n_distinct(Subject))
+
+baseline=lifesat[lifesat$ABTest=="baseline",]
+cluster=lifesat[lifesat$ABTest=="cluster",]
+read_aha=lifesat[lifesat$ABTest=="read_aha",]
+walk=lifesat[lifesat$ABTest=="walk",]
+stand=lifesat[lifesat$ABTest=="stand",]
+
+model = lme(Happy ~ ABTest+dayIndex, 
+            random = ~1|Subject,
+            data=lifesat,
+            control=lmeControl(opt="optim"))
+marginal = lsmeans(model, ~ ABTest+ dayIndex )
+print(summary(model))
+print("marginal:")
+print(marginal)
+print("Tukey HSD:")
+summary(glht(model,linfct=mcp(ABTest="Tukey")))
+plot(cld(marginal,
+    alpha   = 0.05, 
+    Letters = letters,     ### Use lower-case letters for .group
+    adjust  = "tukey"))
+plot_model(model,sort.est = TRUE)
+
+```
