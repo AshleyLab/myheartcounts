@@ -27,7 +27,7 @@ healthkit_steps=data.frame(read.table(
 healthkit_steps=healthkit_steps[healthkit_steps$Value<20000,]
 
 #restrict analysis to person-days that fall into one of study phases
-phases=c("baseline","cluster","read_aha","stand","walk")#,"declined")
+phases=c("baseline","cluster","read_aha","stand","walk","declined")
 healthkit_steps=healthkit_steps[healthkit_steps$ABTest %in% phases,]
 healthkit_steps$ABTest=factor(healthkit_steps$ABTest,levels=phases)
 
@@ -84,7 +84,7 @@ plot(cld(marginal,
     alpha   = 0.05, 
     Letters = letters,     ### Use lower-case letters for .group
     adjust  = "tukey"),xlim=c(2000,5000))
-plot_model(model,sort.est = TRUE,axis.lim=c(-300,1200))#,axis.labels = c("Day","10KSteps","Cluster","HourlyStand","ReadAHA"), title="Source=Phone")
+#plot_model(model,sort.est = TRUE,axis.lim=c(-300,1200))#,axis.labels = c("Day","10KSteps","Cluster","HourlyStand","ReadAHA"), title="Source=Phone")
 library(ggplot2)
 data=healthkit_steps
 data$ABTest=factor(data$ABTest,levels=c("baseline","read_aha","cluster","stand","walk","declined"))
