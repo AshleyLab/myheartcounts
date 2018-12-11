@@ -15,6 +15,14 @@ def main():
     for f in args.tables: 
         print(f) 
         data=pd.read_table(f,header=0,sep='\t') 
+        for c in ['recordId','appVersion','phoneInfo','uploadDate','externalId','dataGroups','createdOn','createdOnTimeZone','userSharingScope','validationErrors','rawData']: 
+            try:
+                data=data.drop([c],axis=1)
+            except: 
+                print(c+" not in data") 
+        data.drop_duplicates(subset ="healthCode", 
+                     keep = False, inplace = True) 
+        print('filtered!') 
         dfs.append(data) 
     print("loaded all data frames")     
     print("starting join") 
