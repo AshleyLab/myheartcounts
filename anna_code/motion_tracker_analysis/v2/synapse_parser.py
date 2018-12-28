@@ -207,6 +207,75 @@ def parse_healthkit_sleep(file_path):
         print("There was a problem importing:"+str(file_path))
     return tally_dict
 
+def parse_healthkit_workout(file_path): 
+    tally_dict=dict() 
+    #keep track of the blob that yielded this data 
+    #read in the data 
+    dtype_dict=dict() 
+    dtype_dict['names']=('startTime',
+                         'endTime',
+                         'type',
+                         'workoutType',
+                         'total distance', 
+                         'unit', 
+                         'energy_consumed',
+                         'unit', 
+                         'source',
+                         'sourceIdentifier',
+                         'metadata')
+    dtype_dict['formats']=(datetime,
+                           datetime,
+                           'S36',
+                           'S36',
+                           'f',
+                           'S36',
+                           'f',
+                           'S36',
+                           'S36',
+                           'S36')
+    try:
+        cur_blob=file_path.split('/')[-2]
+        data=np.genfromtxt(file_path,
+                           dtype=dtype_dict['formats'],
+                           names=dtype_dict['names'],
+                           delimiter=',',
+                           skip_header=True,
+                           loose=True,
+                           invalid_raise=False,
+                           converters={0:lambda x: parse(x),
+                                       1:lambda x: parse(x)})
+        
+        try:
+            data=np.unique(data)
+        except: 
+            data=np.unique(data[1::])
+    except:
+        print("There was a problem importing:"+str(file_path))
+        return tally_dict
+    #get the duration of each activity by day
+    try:
+        if ((data is not None) and (data.size>0)):
+            for row in range(data.size):
+                if data['startTime'][row] is not None:
+                    datatype=data['workoutType'][row]
+                    source=data['source'][row]
+                    sourceIdentifier=data['sourceIdentifier'][row]
+                    source_tuple=tuple([source,sourceIdentifier])
+                    day=data['startTime'][row].date()
+                    value=data['energy_consumed'][row]
+                    if day not in tally_dict:
+                        tally_dict[day]=dict()
+                    if datatype not in tally_dict[day]:
+                        tally_dict[day][datatype]=dict()
+                    if source_tuple not in tally_dict[day][datatype]:
+                        tally_dict[day][datatype][source_tuple]=dict() 
+                    if cur_blob not in tally_dict[day][datatype][source_tuple]:
+                        tally_dict[day][datatype][source_tuple][cur_blob]=value
+                    else:
+                        tally_dict[day][datatype][source_tuple][cur_blob]+=value
+    except:
+        print("There was a problem importing:"+str(file_path))
+    return tally_dict
 
 def parse_healthkit_steps(file_path):
     tally_dict=dict()
@@ -300,7 +369,8 @@ if __name__=="__main__":
     base_dir="/scratch/PI/euan/projects/mhc/data/synapseCache/"
     #[motion_tracker_duration,motion_tracker_fractions,num_entries]=parse_motion_activity(base_dir+"927/16760927/data-a3201e39-7e45-486c-8a19-43f19174fb45.csv")
     #health_kit_data=parse_healthkit_steps('/scratch/PI/euan/projects/mhc/data/synapseCache/321/16862321/data-d06f43a8-ea7d-4c96-8022-375c296c312d.csv')
-    health_kit_data=parse_healthkit_sleep("/scratch/PI/euan/projects/mhc/data/synapseCache/28/18425028/data-270aee97-b93d-4046-8753-c8dbde7f35f7.csv")
+    #health_kit_data=parse_healthkit_sleep("/scratch/PI/euan/projects/mhc/data/synapseCache/28/18425028/data-270aee97-b93d-4046-8753-c8dbde7f35f7.csv")
+    health_kit_workout=parse_healthkit_workout("/scratch/PI/euan/projects/mhc/data/synapseCache/309/4661309/data.csv-5dc42cce-eab6-40c2-bd97-f51b78bb069d2034482356528994271.tmp")
 
     pdb.set_trace() 
 

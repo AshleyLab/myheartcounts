@@ -198,18 +198,52 @@ def parse_healthkit_data_collector(table_path,synapseCacheDir,subjects):
                 subject_distance_vals[cur_subject]=merge_numentries_dict_healthkit(subject_distance_vals[cur_subject],health_kit_distance)
     return subject_distance_vals 
         
+def parse_healthkit_workout_collector(table_path,synapseCacheDir,subjects):
+    data_table=load_health_kit(table_path)
+    print("loaded healthkit data table") 
+    if subjects !="all":
+        subject_dict=dict()
+        subjects=open(subjects,'r').read().strip().split('\n')
+        for subject in subjects:
+            subject_dict[subject]=1
+    print(str(subject_dict))
+    subject_distance_vals=dict()
+    total_rows=len(data_table)
+    print(str(total_rows))
+    for row in range(total_rows):
+        cur_subject=data_table['healthCode'][row] 
+        if ((subjects!="all") and (cur_subject not in subject_dict)):
+            continue
+        else:
+            blob_name=data_table['data'][row]
+            if blob_name.endswith("NA"):
+                continue
+            if blob_name.endswith('None'): 
+                continue 
+            synapseCacheFile=get_synapse_cache_entry(synapseCacheDir,blob_name)
+            health_kit_distance=parse_healthkit_workout(synapseCacheFile)
+            if cur_subject not in subject_distance_vals:
+                subject_distance_vals[cur_subject]=health_kit_distance
+            else:
+                subject_distance_vals[cur_subject]=merge_numentries_dict_healthkit(subject_distance_vals[cur_subject],health_kit_distance)
+    return subject_distance_vals 
+        
 
 
 if __name__=="__main__":
     #TESTS 
     synapseCacheDir="/scratch/PI/euan/projects/mhc/data/synapseCache/"
-    subjects="subjects_for_test.txt"
+    subjects="/scratch/PI/euan/projects/mhc/data/tables/v2_data_subset/subjects/healthkit_workout/x1000"
     
-    table_path="/scratch/PI/euan/projects/mhc/data/tables/v2_data_subset/cardiovascular-motionActivityCollector-v1.tsv"
-    [subject_duration_vals,subject_fraction_vals,subject_numentries]=parse_motion_tracker(table_path,synapseCacheDir,subjects) 
+    #table_path="/scratch/PI/euan/projects/mhc/data/tables/v2_data_subset/cardiovascular-motionActivityCollector-v1.tsv"
+    #[subject_duration_vals,subject_fraction_vals,subject_numentries]=parse_motion_tracker(table_path,synapseCacheDir,subjects) 
 
     #table_path="/scratch/PI/euan/projects/mhc/data/tables/v2_data_subset/cardiovascular-HealthKitDataCollector-v1.tsv"
     #subject_health_kit_distance=parse_healthkit_data_collector(table_path,synapseCacheDir,subjects) 
+
+    table_path="/scratch/PI/euan/projects/mhc/data/tables/v2_data_subset/cardiovascular-HealthKitWorkoutCollector-v1.tsv"
+    subject_health_kit_distance=parse_healthkit_workout_collector(table_path,synapseCacheDir,subjects) 
+    
     pdb.set_trace()
     
 

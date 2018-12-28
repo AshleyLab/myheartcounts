@@ -7,10 +7,12 @@ import pickle
 import pdb 
 table_parser_choices={"motion_tracker":parse_motion_tracker,
                       "health_kit_data_collector":parse_healthkit_data_collector,
-                      "health_kit_sleep_collector":parse_healthkit_sleep_collector}
+                      "health_kit_sleep_collector":parse_healthkit_sleep_collector,
+                      "health_kit_workout_collector":parse_healthkit_workout_collector}
 aggregation_choices={"motion_tracker":aggregate_motion_tracker,
                      "health_kit_data_collector":aggregate_healthkit_data_collector,
-                     "health_kit_sleep_collector":aggregate_healthkit_data_collector}
+                     "health_kit_sleep_collector":aggregate_healthkit_data_collector,
+                     "health_kit_workout_collector":aggregate_healthkit_data_collector}
 
 def parse_args():
     parser=argparse.ArgumentParser(description="gets the activity fractions (number of entries for given activity)/total number of entries per day for app version 2")
@@ -18,7 +20,7 @@ def parse_args():
     parser.add_argument("--synapseCacheDir")
     parser.add_argument("--out_prefixes",nargs="+")
     parser.add_argument("--subjects",default="all")
-    parser.add_argument("--data_types",nargs="+",help="allowed values are \"motion_tracker\",\"health_kit_data_collector\", \"health_kit_sleep_collector\"")
+    parser.add_argument("--data_types",nargs="+",help="allowed values are \"motion_tracker\",\"health_kit_data_collector\", \"health_kit_sleep_collector\", \"health_kit_workout_collector\" ")
     parser.add_argument("--ab_test",default=None)
     parser.add_argument("--aws_files",default=None) 
     parser.add_argument("--map_aws_to_healthcodes",default=None)
