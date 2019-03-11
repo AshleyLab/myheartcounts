@@ -1,0 +1,75 @@
+---
+output:
+  pdf_document: default
+  html_document: default
+---
+```{r load_libraries, message=FALSE, warning=FALSE,echo=FALSE, message=FALSE}
+rm(list=ls())
+options(warn=-1)
+library(nlme)
+#library(car)
+library(multcomp)
+library(multcompView)
+library(lsmeans)
+#library(rcompanion)
+#library(sjPlot)
+library(tidyr)
+library(dplyr)
+
+```
+## Load HealthKit Step Count Data for Phones
+```{r load_and_filter_data, warning=FALSE,echo=FALSE,message=FALSE}
+healthkit_steps=data.frame(read.table(
+  "carryforward.mean.txt",
+  header=TRUE,sep='\t',stringsAsFactors = FALSE))
+
+#Remove any step counts greater than 20k  
+healthkit_steps=healthkit_steps[healthkit_steps$Value<20000,]
+
+#restrict analysis to person-days that fall into one of study phases
+phases=c("baseline","cluster","read_aha","stand","walk")
+healthkit_steps=healthkit_steps[healthkit_steps$ABTest %in% phases,]
+healthkit_steps$ABTest=factor(healthkit_steps$ABTest,levels=phases)
+
+#subjects are random effects, generate factor from string
+healthkit_steps$Subject=factor(healthkit_steps$Subject)
+```
+
+
+
+## 1) Analysis
+```{r all_phone}
+#mediataion analysis 
+
+model = lme(Value ~ ABTest , 
+            random = ~1|Subject,
+            data=healthkit_steps,
+            control=lmeControl(opt="optim"))
+marginal = lsmeans(model, ~ ABTest   )
+print(summary(model))
+print("marginal:")
+print(marginal)
+print("Tukey HSD:")
+summary(glht(model,linfct=mcp(ABTest="Tukey")))
+
+plot(cld(marginal,
+    alpha   = 0.05, 
+    Letters = letters,     ### Use lower-case letters for .group
+    adjust  = "tukey"),xlim=c(2000,5000))
+library(ggplot2)
+data=healthkit_steps
+data$ABTest=factor(data$ABTest,levels=c("baseline","read_aha","cluster","stand","walk"))
+ggplot(data, aes(data$ABTest,data$Value)) + 
+    stat_summary(fun.y = mean, geom = "point") + 
+    stat_summary(fun.data = mean_cl_normal, geom = "errorbar")+
+  xlab("Intervention")+
+  ylab("95% CI for Mean Daliy Step Count")
+
+
+ggplot(data, aes(data$ABTest,data$Value)) + 
+    stat_summary(fun.y = mean, geom = "point") + 
+    stat_summary(fun.data = mean_sdl, geom = "errorbar")+
+  xlab("Intervention")+
+  ylab("Mean Daily Step Count+/- 1 Standard Deviation")
+
+```
