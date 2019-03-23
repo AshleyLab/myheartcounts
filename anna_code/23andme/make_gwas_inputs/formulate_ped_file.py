@@ -12,10 +12,10 @@ def parse_args():
     parser.add_argument("--health_code_to_23andme_id",default="/scratch/PI/euan/projects/mhc/data/tables/cardiovascular-23andmeTask-v1.tsv")
     parser.add_argument("--phenotype_file",default="phenotypes.txt")
     parser.add_argument("--phenotype_prefix",default="/scratch/PI/euan/projects/mhc/data/tables/") 
-    parser.add_argument("--activity_rct",default="/scratch/PI/euan/projects/mhc/data/timeseries_v2/summary/within_subject_measures.phone.txt") 
-    parser.add_argument("--motion_tracker_file",default="/scratch/PI/euan/projects/mhc/data/timeseries_v2/summary/motion_tracker_combined.txt")
-    parser.add_argument("--health_kit_steps",default="/scratch/PI/euan/projects/mhc/data/timeseries_v2/summary/health_kit_combined.steps.txt") 
-    parser.add_argument("--health_kit_distance",default="/scratch/PI/euan/projects/mhc/data/timeseries_v2/summary/health_kit_combined.distance.txt") 
+    parser.add_argument("--activity_rct",default="/scratch/PI/euan/projects/mhc/data/timeseries_allversions/parsed_HealthKitData.0") 
+    parser.add_argument("--motion_tracker_file",default="/scratch/PI/euan/projects/mhc/data/timeseries_allversions/parsed_motionActivity.0")
+    parser.add_argument("--health_kit_steps",default="/scratch/PI/euan/projects/mhc/data/timeseries_allversions/parsed_HealthKitData.steps.0")
+    parser.add_argument("--health_kit_distance",default="/scratch/PI/euan/projects/mhc/data/timeseries_allversions/parsed_HealthKitData.distance.0")
     return parser.parse_args() 
 
 def get_biological_sex(demographics_table,sex_field_name,subject_dict): 
@@ -125,18 +125,21 @@ def get_activity_rct(phenotype_dict,activity_source,subject_dict):
     data=open(activity_source,'r').read().strip().split('\n')
     activity_fields=set([]) 
     activity_dict=dict() 
+    allowed_interventions=['baseline','walk','stand','cluster','read_aha']
     for line in data[1::]: 
         tokens=line.split('\t') 
+        intervention=tokens[4] 
+        if intervention not in allowed_interventions: 
+            continue 
         subject=tokens[0] 
         if subject not in subject_dict: 
             continue 
-        field =tokens[1] 
+        field =tokens[6] 
         if field not in ["HKQuantityTypeIdentifierStepCount","HKQuantityTypeIdentifierDistanceWalk"]: 
             continue 
-        intervention=tokens[2] 
-        if intervention!="Baseline": 
+        if intervention!="baseline": 
             activity_fields.add(field+"_"+intervention) 
-        value=tokens[3] 
+        value=tokens[7] 
         if subject not in activity_dict: 
             activity_dict[subject]=dict() 
         if field not in activity_dict[subject]: 
@@ -145,13 +148,13 @@ def get_activity_rct(phenotype_dict,activity_source,subject_dict):
             activity_dict[subject][field][intervention]=[float(value)] 
         else: 
             activity_dict[subject][field][intervention].append(value)
-    #get the mean delta from Baseline for each intervention 
+    #get the mean delta from baseline for each intervention 
     for subject in activity_dict: 
         for field in activity_dict[subject]: 
             try:
-                mean_baseline=sum(activity_dict[subject][field]['Baseline'])/len(activity_dict[subject][field]['Baseline'])
+                mean_baseline=sum(activity_dict[subject][field]['baseline'])/len(activity_dict[subject][field]['baseline'])
                 for intervention in activity_dict[subject][field]: 
-                    if intervention=="Baseline": 
+                    if intervention=="baseline": 
                         continue 
                     intervention_mean=sum(activity_dict[subject][field][intervention])/len(activity_dict[subject][field][intervention])
                     delta=(intervention_mean-mean_baseline)/mean_baseline 
@@ -173,10 +176,10 @@ def get_motiontracker(phenotype_dict,motion_tracker_file,subject_dict):
         subject=tokens[0] 
         if subject not in subject_dict: 
             continue 
-        field=tokens[4]
+        field=tokens[5]
         if field in ['stationary','walking','automotive','cycling','running']: 
-            minutes=float(tokens[5])
-            fraction=float(tokens[6]) 
+            minutes=float(tokens[6])
+            fraction=float(tokens[7]) 
             if subject not in motion_dict: 
                 motion_dict[subject]=dict() 
             f1=field+"_Mins" 

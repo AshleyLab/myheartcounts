@@ -53,7 +53,16 @@ def parse_table(blob_dir,output_dir,source_table,healthCode_index,resume_from):
              'HKQuantityTypeIdentifierHeartRate_fitness.walk.items',
              'accel_fitness_rest.json.items',
              'deviceMotion_fitness.rest.items',
-             'HKQuantityTypeIdentifierHeartRate_fitness.rest.items']
+             'HKQuantityTypeIdentifierHeartRate_fitness.rest.items',
+             'heartRate_fitness.walk.items',
+             'heartRate_fitness.rest.items',
+             'pedometer_fitness.walk',
+             'accel_fitness.walk.json',
+             'deviceMotion_fitness.walk',
+             'heartRate_fitness.walk',
+             'accel_fitness.rest.json',
+             'deviceMotion_fitness.rest',
+             'heartRate_fitness.rest']
     
     dirnames=['pedometer_walk_dir',
               'accel_walk_dir',
@@ -61,7 +70,17 @@ def parse_table(blob_dir,output_dir,source_table,healthCode_index,resume_from):
               'heart_rate_walk_dir',
               'accel_rest_dir',
               'device_motion_rest_dir',
-              'heart_rate_rest_dir']    
+              'heart_rate_rest_dir',
+              'heart_rate_walk_dir',
+              'heart_rate_rest_dir',
+              'pedometer_walk_dir',
+              'accel_walk_dir',
+              'device_motion_walk_dir',
+              'heart_rate_walk_dir',
+              'accel_rest_dir',
+              'device_motion_rest_dir',
+              'heart_rate_rest_dir'
+]
     indices=get_metric_indices(metrics,dirnames,output_dir,header)
     print(indices)
     lc=0
@@ -90,7 +109,7 @@ def parse_table(blob_dir,output_dir,source_table,healthCode_index,resume_from):
                         os.makedirs(full_output_dir)        
                     #get the last 3 digits of the blob:
                     blob_part1=blob[-3::].lstrip('0')
-                    full_source_file=blob_dir+'/'+blob_part1+'/'+blob+'/*.tmp'
+                    full_source_file=blob_dir+'/'+blob_part1+'/'+blob+'/*.*'
                     cur_blob_index=0 
                     for f in glob.glob(full_source_file):
                         output_file='.'.join([blob,str(cur_blob_index)])

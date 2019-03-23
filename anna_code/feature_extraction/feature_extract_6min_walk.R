@@ -19,8 +19,12 @@ features<-data.frame(cur_subject=character(),
 
 #############################################################################################
 #extract features for acceleration walk
-accel_walk_dir="/srv/gsfs0/projects/ashley/common/myheart/grouped_timeseries/6minute_walk/acceleration_walk/"
-accel_rest_dir="/srv/gsfs0/projects/ashley/common/myheart/grouped_timeseries/6minute_walk/acceleration_rest/"
+accel_walk_dir="/srv/scratch/PI/euan/projects/mhc/data/6mwt/accel_walk_dir"
+accel_rest_dir="/srv/scratch/PI/euan/projects/mhc/data/6mwt/accel_rest_dir"
+
+
+#accel_walk_dir="/srv/gsfs0/projects/ashley/common/myheart/grouped_timeseries/6minute_walk/acceleration_walk/"
+#accel_rest_dir="/srv/gsfs0/projects/ashley/common/myheart/grouped_timeseries/6minute_walk/acceleration_rest/"
 
 #accel_walk_dir="~/scg2/grouped_timeseries/6minute_walk/acceleration_walk/"
 #accel_rest_dir="~/scg2/grouped_timeseries/6minute_walk/acceleration_rest/"
