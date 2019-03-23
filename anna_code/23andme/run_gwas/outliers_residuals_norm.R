@@ -18,9 +18,9 @@ for(col in seq(3,ncol(data)))
   cur_upper_bound=upper_bound[col-2]
   cur_lower_bound=lower_bound[col-2]
   to_truncate_upper=which(data[,col]>cur_upper_bound)
-  data[to_truncate_upper,col]=cur_upper_bound 
+  data[to_truncate_upper,col]=NA 
   to_truncate_lower=which(data[,col]<cur_lower_bound) 
-  data[to_truncate_lower,col]=cur_lower_bound
+  data[to_truncate_lower,col]=NA
 }
 ##get residuals
 covar=data.frame(read.table('covariates.txt',header=TRUE,sep='\t'))
@@ -54,4 +54,4 @@ for(col in seq(3,ncol(residuals_continuous)))
 residuals_continuous[,col]=normalize.quantiles(as.matrix(residuals_continuous[,col]))
 }
 residuals_continuous[is.na(residuals_continuous)]=-1000
-write.table(residuals_continuous,file="continuous.phenotypes.formatted.tsv",sep='\t',quote=FALSE,row.names=FALSE,col.names=TRUE)
+write.table(residuals_continuous,file="continuous.phenotypes.formatted.csv",sep='\t',quote=FALSE,row.names=FALSE,col.names=TRUE)

@@ -26,15 +26,17 @@ def main():
     fields=open(args.fields,'r').read().strip().split('\n') 
     data=data.ix[:,['FID','IID']+fields]
     #set all missing values to -1000
-    data=data.fillna(-1000)
+    data=data.fillna("-1000")
     for field in case_control_dict: 
         #get controls 
         controls=data[field]==case_control_dict[field] 
         #get cases 
-        cases=(data[field]!=-1000) & (data[field]!=case_control_dict[field])
+        cases=data[field]!=case_control_dict[field] 
+        missing=data[field]=="-1000" 
         #updated data frame to 1 for control, 2 for case 
         data.loc[controls,field]=1
         data.loc[cases,field]=2
+        data.loc[missing,field]="-1000"
     #write the output case-control file
     data.to_csv(args.o,sep='\t',index=False)
 

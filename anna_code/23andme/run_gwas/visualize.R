@@ -4,10 +4,15 @@ args <- commandArgs(TRUE)
 fname=args[1]
 data=read.table(fname,header=TRUE,sep='\t',stringsAsFactors=FALSE)
 names(data)=c("CHR","BP","SNP","REF","ALT","TEST","OBS_CT","BETA","SE","T_STAT","P")
+data=data[data$TEST=="ADD",]
 data$P[data$P==0]=1e-100
+#we want to ignore any SNPs on chromosome 0 -- these are unplaced 
+data=data[data$CHR!="0",]
+
+
 data$CHR[data$CHR=="X"]=23
 data$CHR[data$CHR=="Y"]=24
-data$CHR[data$CHR=="MT"]=25
+data$CHR[data$CHR=="MT"]=26
 data$CHR=as.numeric(data$CHR)
 fieldname=strsplit(fname,'/')[[1]][2]
 data$FIELD=fieldname
@@ -23,5 +28,5 @@ png(qq_name)
 qq(data$P,main=fieldname)
 dev.off()
 #get the significant SNPs 
-sig_subset=data[data$P<5e-8,]
+sig_subset=data[data$P<5e-6,]
 write.table(sig_subset,file=paste(fieldname,"significant.csv",sep='.'),row.names = FALSE,col.names = TRUE,sep='\t',quote=FALSE)

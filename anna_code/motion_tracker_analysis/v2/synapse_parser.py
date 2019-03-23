@@ -6,7 +6,7 @@ from dateutil.parser import parse
 import pdb 
 sample_gap_thresh=timedelta(minutes=15) 
 min_allowed_time=date(2015,1,1)
-max_allowed_time=date(2018,5,5) 
+
 
 #perform qc on healthkit entries to ensure they fall into humanly feasible ranges 
 def qc_mt(data): 
@@ -14,7 +14,7 @@ def qc_mt(data):
     to_delete=[] 
     for row_index in range(num_rows): 
         cur_date=data[row_index]['startTime'].date()
-        if ((cur_date < min_allowed_time) or (cur_date > max_allowed_time)): 
+        if (cur_date < min_allowed_time):
             to_delete.append(row_index)
     print(str(to_delete))
     data=np.delete(data,to_delete)        
@@ -90,11 +90,13 @@ def parse_motion_activity(file_path):
         cur_time=data['startTime'][first_row]
         cur_day=data['startTime'][first_row].date() 
         cur_activity=data['activityType'][first_row]
-        while (cur_activity=="not available") and (first_row <(num_rows-1)):
+        cur_confidence=data['confidence'][first_row] 
+        while (cur_activity=="not available") and (first_row <(num_rows-1)) and (cur_confidence>0) :
             first_row+=1
             cur_time=data['startTime'][first_row]
             cur_day=data['startTime'][first_row].date() 
             cur_activity=data['activityType'][first_row]
+            cur_confidence=data['confidence'][first_row] 
     except:
         return[duration_dict,fraction_dict,numentries]
 
@@ -103,6 +105,9 @@ def parse_motion_activity(file_path):
             new_activity=data['activityType'][row]
             new_time=data['startTime'][row]
             new_day=data['startTime'][row].date()
+            new_confidence=data['confidence'][row] 
+            if (new_confidence < 1):
+                continue 
             if(new_time-cur_time)<=sample_gap_thresh:
                 if new_activity=="not available":
                     #carry forward from the previous activity 

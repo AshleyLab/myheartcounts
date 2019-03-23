@@ -1,0 +1,24 @@
+PLINK v2.00aLM 64-bit Intel (16 Oct 2017)
+Options in effect:
+  --bfile ../23andmeBinary
+  --glm
+  --input-missing-phenotype -1000
+  --out results/fish/fish
+  --pheno continuous.phenotypes.formatted.csv
+  --pheno-name fish
+
+Hostname: sh-113-15.int
+Working directory: /scratch/groups/euan/projects/mhc/code/anna_code/23andme/run_gwas
+Start time: Sat Jul 28 19:51:23 2018
+
+Random number seed: 1532832683
+128661 MB RAM detected; reserving 64330 MB for main workspace.
+Using up to 20 threads (change this with --threads).
+1290 samples (473 females, 802 males, 15 ambiguous; 1290 founders) loaded from
+../23andmeBinary.fam.
+1133211 variants loaded from ../23andmeBinary.bim.
+1 quantitative phenotype loaded (990 values).
+--glm linear regression on phenotype 'fish': done.
+Results written to results/fish/fish.fish.glm.linear .
+
+End time: Sat Jul 28 19:51:38 2018
