@@ -29,6 +29,8 @@ def main():
     #set all missing values to -1000
     data=data.fillna("-1000")
     binarized=dict() 
+    binarized['FID']=data['FID'] 
+    binarized['IID']=data['IID']
     for field in case_control_dict: 
         for case_val in case_control_dict[field][1].split(','): 
             field_subset=".".join([str(i) for i in [field,case_val]])
@@ -40,7 +42,6 @@ def main():
             binarized[field_subset].loc[controls]=1 
             binarized[field_subset].loc[cases]=2
             binarized[field_subset].loc[missing]='-1000'            
-
 
     #convert the case/control field dictionary into a pandas data frame 
     binarized_df=pd.DataFrame.from_dict(binarized) 
