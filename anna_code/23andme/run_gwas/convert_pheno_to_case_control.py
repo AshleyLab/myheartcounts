@@ -11,7 +11,6 @@ def parse_args():
 
 def main(): 
     args=parse_args()
-
     #read in the phenotype data 
     data=pd.read_csv(args.i,header=0,sep='\t') 
 
@@ -20,25 +19,33 @@ def main():
     case_control_dict=dict() 
     for line in case_control_map[1::]: 
         tokens=line.split('\t') 
-        case_control_dict[tokens[0]]=tokens[1] 
+        #field --> [control value, comma-separated list of case values]
+        print(str(tokens))
+        case_control_dict[tokens[0]]=[tokens[1],tokens[2]] 
 
     #subset to just the categorical fields 
     fields=open(args.fields,'r').read().strip().split('\n') 
     data=data.ix[:,['FID','IID']+fields]
     #set all missing values to -1000
     data=data.fillna("-1000")
+    binarized=dict() 
     for field in case_control_dict: 
-        #get controls 
-        controls=data[field]==case_control_dict[field] 
-        #get cases 
-        cases=data[field]!=case_control_dict[field] 
-        missing=data[field]=="-1000" 
-        #updated data frame to 1 for control, 2 for case 
-        data.loc[controls,field]=1
-        data.loc[cases,field]=2
-        data.loc[missing,field]="-1000"
+        for case_val in case_control_dict[field][1].split(','): 
+            field_subset=".".join([str(i) for i in [field,case_val]])
+            print("processing:"+str(field_subset))
+            binarized[field_subset]=data[field] 
+            cases=data[field]==case_val 
+            missing=data[field]=="-1000" 
+            controls=data[field]!=case_val 
+            binarized[field_subset].loc[controls]=1 
+            binarized[field_subset].loc[cases]=2
+            binarized[field_subset].loc[missing]='-1000'            
+
+
+    #convert the case/control field dictionary into a pandas data frame 
+    binarized_df=pd.DataFrame.from_dict(binarized) 
     #write the output case-control file
-    data.to_csv(args.o,sep='\t',index=False)
+    binarized_df.to_csv(args.o,sep='\t',index=False)
 
 
 if __name__=="__main__": 
