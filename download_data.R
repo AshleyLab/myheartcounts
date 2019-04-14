@@ -24,15 +24,15 @@ for(i in seq(1,length(tables)))
 	cur_table_name=cur_table$name 
 	print(paste0(cur_table_id,":",cur_table_name))
 	outfname=paste(data.path,cur_table_name,".tsv",sep='')
-	sq=synTableQuery(paste('select * from',cur_table_id,sep=' '),resultsAs="rowset")
+	sq=synTableQuery(paste('select * from',cur_table_id,sep=' '))
 	write.table(sq$asDataFrame(), file=outfname, quote=F,sep="\t",row.names=T)	    #check for any columns that are of type FILEHANDLEID 
 	cur_table_columns=as.list(synGetTableColumns(sq))
 	for(j in seq(1,length(cur_table_columns)))
         {
 	if(cur_table_columns[[j]]$columnType=="FILEHANDLEID")	
 	{
-        cur_table_column_id=cur_table_columns[j]$id
-        cur_table_column_name=cur_table_columns[j]$name
+        cur_table_column_id=cur_table_columns[[j]]$id
+        cur_table_column_name=cur_table_columns[[j]]$name
 	print(paste("Downloading column",cur_table_column_name,"from table",cur_table_id,sep=' '))
 	#get the column 
 	synDownloadTableColumns(sq,columns=list(cur_table_column_name))
