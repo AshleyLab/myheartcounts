@@ -1,82 +1,42 @@
 ### PREAMBLE ######################################################################################
+#install.packages("synapser", repos=c("http://ran.synapse.org", "http://cran.fhcrc.org"))
+#install.packages("RSQLite") 
+#note: modify ~/.synapseConfig to set [cache] to cache.path below 
+library("RSQLite")
+library("parallel")
+library("synapser")
 
-source("http://depot.sagebase.org/CRAN.R")
-pkgInstall("synapseClient")
 
-require(RSQLite)
-require(parallel)
-require(synapseClient)
+data.path <- "/scratch/PI/euan/projects/mhc/data/tables/"
+#note: synapser does not have functionality to change cache.path; do this by modifying the ~/.synapseConfig file
+cache.path <- "/scratch/PI/euan/projects/mhc/data/synapseCache/"
+projectId="syn3270436"
+synLogin() 
 
-
-data.path <- "/scratch/PI/euan/projects/mhc/data"
-cache.path <- "/scratch/PI/euan/projects/mhc/data/synapseCache"
-
-synapseCacheDir(cache.path)
-synapseLogin()
-
-### DATA ##########################################################################################
-
-### survey data
-
-sync.survey <- function() {
-  # query your project for all of the tables
-  projectId <- "syn3270436"
-  pq <- synQuery(paste("SELECT id, name FROM table WHERE parentId=='", projectId, "'", sep=""))
-  
-  # download survey function
-  download.survey <- function(i,pq) {
-    cat(paste0("* DOWNLOAD TABLE: ", pq[i,"table.name"],"\n"))
-    #sq <- synTableQuery(paste('SELECT * FROM ', pq[i,"table.id"]), filePath = file.path(paste0(data.path, "tables"),paste0(pq[i,'table.name'],".csv")))
-    sq <- synTableQuery(paste('SELECT * FROM ', pq[i,"table.id"]), filePath = file.path(tempdir(), paste0(i,".csv")))
-    write.table(sq@values, file.path(paste0(data.path, "tables"),paste0(pq[i,'table.name'],".tsv")), quote=F,sep="\t",row.names=T)
-  }
-  
-  # download all surveys
-  sq.all <- mclapply(as.list(1:nrow(pq)), download.survey, pq)
-  #sq.all <- lapply(as.list(1:nrow(pq)), download.survey)
+#get the tables 
+tables <- synGetChildren(projectId,includeTypes=c("table","file"))
+tables=as.list(tables) 
+#print(tables) 
+for(i in seq(1,length(tables)))
+{
+	cur_table=tables[[i]]
+	cur_table_id=cur_table$id 
+	cur_table_name=cur_table$name 
+	print(paste0(cur_table_id,":",cur_table_name))
+	outfname=paste(data.path,cur_table_name,".tsv",sep='')
+	sq=synTableQuery(paste('select * from',cur_table_id,sep=' '),resultsAs="rowset")
+	write.table(sq$asDataFrame(), file=outfname, quote=F,sep="\t",row.names=T)	    #check for any columns that are of type FILEHANDLEID 
+	cur_table_columns=as.list(synGetTableColumns(sq))
+	for(j in seq(1,length(cur_table_columns)))
+        {
+	if(cur_table_columns[[j]]$columnType=="FILEHANDLEID")	
+	{
+        cur_table_column_id=cur_table_columns[j]$id
+        cur_table_column_name=cur_table_columns[j]$name
+	print(paste("Downloading column",cur_table_column_name,"from table",cur_table_id,sep=' '))
+	#get the column 
+	synDownloadTableColumns(sq,columns=list(cur_table_column_name))
+	}	
+        }	
 }
-
-#sync.survey()
-
-### blob / accelerometer data
-
-sync.blob <- function(x) {
-  # check which columns are filehandle function
-  is.filehandle.col <- function(k,sc) {
-    if(sc[[k]]@columnType=="FILEHANDLEID"){
-      return(sc[[k]]@name)
-    } 
-    else{
-      return(NULL)
-    }
-  }
-  
-  #ORIGINAL SET OF TABLES:
-  #for (j in c('syn3458480','syn3420486','syn4214144','syn4214144','syn4095792','syn3560085')) {
-  #NEW TABLES FOR HealthKitWorkoutCollector, HealthKitSleepCollector, cardiovascular-motionActivityTracker
-  #for (j in c('syn4536838','syn3560095','syn3560086','syn3458480','syn3420486','syn4214144','syn4214144','syn4095792','syn3560085','syn4857044')) {
-  for (j in c('syn4095792','syn3560085')) {
-    cat(paste0("* DOWNLOAD TABLE: ", j,"\n"))
-    
-    # query table for column annotation
-    #tq <- synTableQuery(paste('SELECT * FROM ', j, ' limit 2'))
-    tq <- synTableQuery(paste('SELECT * FROM ', j), filePath = file.path(tempdir(), paste0(j,".csv")))
-    
-    # get column data from a particular survey
-    sc <- synapseClient:::synGetColumns(tq@schema)
-    
-    # check which columns are filehandles
-    theseCols <- sapply(as.list(1:length(sc)), is.filehandle.col,sc)
-    theseCols <- unlist(theseCols)
-    
-    # download
-    theseFiles <- list()
-    for (col in theseCols){
-      cat(paste0("* DOWNLOAD BLOB: ", col,"\n"))
-      tmpFiles <- synDownloadTableColumns(tq, col)
-      theseFiles <- c(theseFiles, tmpFiles)
-    }
-  }
-}
-
-sync.blob()
+print("Downloaded all tables ")
