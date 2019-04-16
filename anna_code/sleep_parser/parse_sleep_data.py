@@ -34,11 +34,19 @@ def main():
     #set up the metadata for parsing sleep 
     print("set up blob datatype and field name dictionary") 
     out_dict=dict() 
+    header=['startTime','type','categoryValue','value','unit','source','sourceIdentifier']
     out_dict['HKCategoryValueSleepAnalysisInBed']=open(args.out_prefix+'.HKCategoryValueSleepAnalysisInBed','w')
+    out_dict['HKCategoryValueSleepAnalysisInBed'].write('\t'.join(header)+'\n')
     out_dict['HKCategoryValueSleepAnalysisAsleep']=open(args.out_prefix+'.HKCategoryValueSleepAnalysisAsleep','w') 
+    out_dict['HKCategoryValueSleepAnalysisAsleep'].write('\t'.join(header)+'\n')
     print("created dictionary of output files") 
-
+    num_parsed=0
+    nrows=str(data.shape[0]) 
     for index,row in data.iterrows(): 
+        num_parsed+=1
+        if num_parsed%1000==0: 
+            print(str(num_parsed)+"/"+nrows)
+
         cur_healthCode=row['healthCode'] 
         if ((subjects!=None) and (cur_healthCode not in subject_dict)): 
             continue 
@@ -56,7 +64,7 @@ def main():
             file_path=join(blob_prefix,blob_file)
             try:
                 data=pd.read_csv(file_path,sep=',',dtype='str',engine='c')
-                print("loaded:"+str(file_path))
+                #print("loaded:"+str(file_path))
             except:
                 print("There was a problem importing:"+str(file_path))
                 continue 
@@ -70,7 +78,6 @@ def main():
                     out_dict[datatype].write('\t'.join([str(i) for i in row])+'\n')
             except:
                 print("There was a problem parsing:"+str(file_path))
-                
                 
 if __name__=="__main__": 
     main() 
