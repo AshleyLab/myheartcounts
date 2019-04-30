@@ -51,7 +51,7 @@ def main():
     args=parse_args()
     outf_subjects=open(args.outf_prefix+".subjects.txt",'w')
     outf_devices=open(args.outf_prefix+".devices.txt",'w') 
-    outf_apps=open(args.out_prefix+'.apps.txt','w')
+    outf_apps=open(args.outf_prefix+'.apps.txt','w')
     subject_header=['Subject','MeanTimeToBed','StdTimeToBed','MeanTimeAwake','StdTimeAwake','MeanSleepDuration','StdSleepDuration','MeanSleepQuality','StdSleepQuality','NDays','MeanSessionsPerDay','StdSessionsPerDay','SourceApps','SourceDevices']
     outf_subjects.write('\t'.join(subject_header)+'\n')
     device_header=['Device','Individuals','PersonDays']
@@ -103,7 +103,7 @@ def main():
                 waketime_hour.append(session_waketime_hour)
                 duration.append(session_duration)
                 sourceApps.append(session_sourceApp)
-                sourceDevices.append(session_sourceDevices)
+                sourceDevices.append(session_sourceDevice)
                 
                 #get the sleep quality metric for this session, if corresponding entry exists in the "InBed" dictionary
                 if subject in inbed_dict:
@@ -146,31 +146,30 @@ def main():
             else: 
                 sourceDevice_dict[sourceDevice]+=1 
             
-        for source in sources_dict: 
+        for source in sourceDevice_dict: 
             if source not in device_summary: 
                 device_summary[source]=dict() 
             if 'subject_days' not in device_summary[source]: 
-                device_summary[source]['subject_days']=sources_dict[source]
+                device_summary[source]['subject_days']=sourceDevice_dict[source]
             else: 
-                device_summary[source]['subject_days']+=sources_dict[source] 
+                device_summary[source]['subject_days']+=sourceDevice_dict[source] 
             if 'subjects' not in device_summary[source]: 
                 device_summary[source]['subjects']=1
             else: 
                 device_summary[source]['subjects']+=1 
-        for source in sources_dict: 
+        for source in sourceApp_dict: 
             if source not in app_summary: 
                 app_summary[source]=dict() 
             if 'subject_days' not in app_summary[source]: 
-                app_summary[source]['subject_days']=sources_dict[source]
+                app_summary[source]['subject_days']=sourceApp_dict[source]
             else: 
-                app_summary[source]['subject_days']+=sources_dict[source] 
+                app_summary[source]['subject_days']+=sourceApp_dict[source] 
             if 'subjects' not in app_summary[source]: 
                 app_summary[source]['subjects']=1
             else: 
                 app_summary[source]['subjects']+=1 
         #write outputs to summary file
-        subject_header=['Subject','MeanTimeToBed','StdTimeToBed','MeanTimeAwake','StdTimeAwake','MeanSleepDuration','StdSleepDuration','MeanSleepQuality','StdSleepQuality','NDays','MeanSessionsPerDay','StdSessionsPerDay','Sources']
-        out_line=[subject,mean_bedtime_hour,sd_bedtime_hour,mean_waketime_hour,sd_waketime_hour, mean_duration, sd_duration, mean_fraction_asleep, sd_fraction_asleep, num_days, mean_num_entries, sd_num_entries, ','.join(list(sources_dict.keys()))]        
+        out_line=[subject,mean_bedtime_hour,sd_bedtime_hour,mean_waketime_hour,sd_waketime_hour, mean_duration, sd_duration, mean_fraction_asleep, sd_fraction_asleep, num_days, mean_num_entries, sd_num_entries, ','.join(list(sourceApp_dict.keys())),','.join(list(sourceDevice_dict.keys()))]        
         out_line='\t'.join([str(i) for i in out_line])
         outf_subjects.write(out_line+'\n')
     #summarize device data     
