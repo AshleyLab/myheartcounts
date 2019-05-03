@@ -57,7 +57,7 @@ def main():
     device_header=['Device','Individuals','PersonDays']
     app_header=['App','Individuals','PersonDays']
     outf_devices.write('\t'.join(device_header)+'\n')
-    outf_devices.write('\t'.join(app_header)+'\n') 
+    outf_apps.write('\t'.join(app_header)+'\n') 
     #note: first column is healthCode
     sleep_data=pd.read_csv(args.hk_sleep_df,header=0,sep='\t',usecols=[0,1,2,3,4,5,6,7])
     bed_data=pd.read_csv(args.hk_inbed_df,header=0,sep='\t',usecols=[0,1,2,3,4,5,6,7])
