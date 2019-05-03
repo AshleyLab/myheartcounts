@@ -1,2 +1,2 @@
 #!/bin/bash
-Rscript visualize.R results/$1/$1.$1.glm.linear
+Rscript visualize.R results_filtered/$1
