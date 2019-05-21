@@ -6,16 +6,16 @@ import numpy as np
 
 def parse_args(): 
     parser=argparse.ArgumentParser(description="annotate GWAS hits with allele frequency ") 
-    parser.add_argument("--GWAS_hits_continuous",default="../significant/continuous.txt") 
-    parser.add_argument("--GWAS_hits_categorical",default="../significant/categorical.txt") 
-    parser.add_argument("--GWAS_freqs",default="../../plink.frq.counts") 
+    parser.add_argument("--GWAS_hits_continuous",default="../significant/gwas_hits_5e-6_imputed/all.linear") 
+    parser.add_argument("--GWAS_hits_categorical",default="../significant/gwas_hits_5e-6_imputed/all.hybrid") 
+    parser.add_argument("--GWAS_freqs",default="/scratch/PI/euan/projects/mhc/code/anna_code/23andme/impute/plink.frq.counts") 
     parser.add_argument("--categorical_pheno_file",default="../categorical.phenotypes.casecontrol") 
-    parser.add_argument("--out_prefix",default="significant.annotated")
+    parser.add_argument("--out_prefix",default="significant.5e-6.annotated")
     return parser.parse_args() 
     
 def main():  
     args=parse_args() 
-    freqs=pd.read_csv(args.GWAS_freqs,header=0,index_col=False,sep=' ')
+    freqs=pd.read_csv(args.GWAS_freqs,header=0,index_col=False, delim_whitespace=True)
     case_control_counts=pd.read_csv(args.categorical_pheno_file,header=0,index_col=False,sep='\t')
     hits_continuous=pd.read_csv(args.GWAS_hits_continuous,header=0,index_col=False,sep='\t')
     hits_categorical=pd.read_csv(args.GWAS_hits_categorical,header=0,index_col=False,sep='\t')
