@@ -113,5 +113,3 @@ if __name__ == "__main__":
                     h5_file.root.labels.append([healthCode]*temp_cycles.shape[0])
                 #earray.append(temp_cycles)
                 #labels.append([healthCode]*temp_cycles.shape[0])
-                
-                
