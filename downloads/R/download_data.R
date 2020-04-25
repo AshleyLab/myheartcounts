@@ -7,9 +7,9 @@ library("parallel")
 library("synapser")
 
 
-data.path <- "/scratch/PI/euan/projects/mhc/data/tables/"
+data.path <- "/oak/stanford/groups/euan/projects/mhc/data/tables/" #"/scratch/PI/euan/projects/mhc/data/tables/"
 #note: synapser does not have functionality to change cache.path; do this by modifying the ~/.synapseConfig file
-cache.path <- "/scratch/PI/euan/projects/mhc/data/synapseCache/"
+cache.path <- "/oak/stanford/groups/euan/projects/mhc/data/synapseCache/"  #"/scratch/PI/euan/projects/mhc/data/synapseCache/"
 projectId="syn3270436"
 synLogin() 
 
