@@ -2,7 +2,7 @@
 """
 Created on Mon Jun 24 18:08:32 2019
 
-Parses raw walk cycles into normalized cycles with LSE, and saves to numpy array
+Parses raw walk cycles into normalized cycles with LSE, and saves to hdf5 table
 
 See the Data Preprocessing Notebook for more information.
 
@@ -17,11 +17,11 @@ import json
 import numpy as np
 import tables
 
-#out_path = r"/scratch/PI/euan/projects/mhc/code/daniel_code"
-#data_dir = r"/scratch/PI/euan/projects/mhc/data/6mwt/accel_walk_dir"
+out_path = r"/scratch/PI/euan/projects/mhc/code/daniel_code"
+data_dir = r"/scratch/PI/euan/projects/mhc/data/6mwt/accel_walk_dir"
  
-out_path = r'C:\Users\dwubu\Desktop'
-data_dir = r'C:\Users\dwubu\Desktop\gender_6mwt_subset'
+#out_path = r'C:\Users\dwubu\Desktop'
+#data_dir = r'C:\Users\dwubu\Desktop\gender_6mwt_subset'
    
 def ls_extract(data):
     '''
@@ -88,29 +88,28 @@ if __name__ == "__main__":
                                     expectedrows = 5e7)
         #8126 healthcodes * 1 6mwt/healthcode * 600 steps/6mwt ~ 5e7
     
-        #Iterate through all the records in the directory
-        for dirpath, dirnames, filenames in os.walk(data_dir):
-            i = 0
-            for filename in filenames:
-        
-                #Only take one 6mwt per healthcode        
-                while (i < 1):
-                    i += 1
-             
-                    healthCode = dirpath.split(os.sep)[-1]
-                    print("Processing healthcode {}".format(healthCode))
-                    
-                    #Load in data and get ready for LSE
-                    with open(os.path.join(dirpath, filename), 'r') as file:
-                        data = json.load(file)
-                        
-                    #Extract
-                    temp_cycles = ls_extract(data)
-                    
-                    #Store in pytables
-                    #with tables.open_file(os.path.join(out_path, "cycles.hdf5"), mode='a', title = "cycles") as h5_file:
-                    #    h5_file.root.data.append(temp_cycles)
-                    earray.append(temp_cycles)
-                    labels.append([healthCode]*temp_cycles.shape[0])
+    #Iterate through all the records in the directory
+    for dirpath, dirnames, filenames in os.walk(data_dir):
+        i = 0
+        for filename in filenames:
+    
+            #Only take one 6mwt per healthcode        
+            while (i < 1):
+                i += 1
+         
+                healthCode = dirpath.split(os.sep)[-1]
+                print("Processing healthcode {}".format(healthCode), flush=True)
                 
+                #Load in data and get ready for LSE
+                with open(os.path.join(dirpath, filename), 'r') as file:
+                    data = json.load(file)
+                    
+                #Extract
+                temp_cycles = ls_extract(data)
                 
+                #Store in pytables
+                with tables.open_file(os.path.join(out_path, "cycles.hdf5"), mode='a', title = "cycles") as h5_file:
+                    h5_file.root.data.append(temp_cycles)
+                    h5_file.root.labels.append([healthCode]*temp_cycles.shape[0])
+                #earray.append(temp_cycles)
+                #labels.append([healthCode]*temp_cycles.shape[0])
