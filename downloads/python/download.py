@@ -28,7 +28,7 @@ def build_query(table_id,args):
             query=query+" AND createdOn <= '"+args.end_date+"'"
     if args.healthCodes is not None: 
         if query.endswith(table_id): 
-            query=query+ " WHERE healthCode in "+str(tuple(args.healthCodes))
+            query=query+ " WHERE healthCode in "+str(tuple([i.replace('\\','') for i in args.healthCodes]))
         else: 
             query=query+" AND  healthCode in "+str(tuple(args.healthCodes))
     print(query) 
