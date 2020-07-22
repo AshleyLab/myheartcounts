@@ -5,7 +5,6 @@ subjects=open("zip.23andme.subjects",'r').read().strip().split('\n')
 
 
 import sys
-#subjects=open(sys.argv[1],'r').read().strip().split('\n') 
 #load and format possible us & uk zip codes 
 us_zip=dict() 
 us_geo_data=open("geo-data.csv",'r').read().strip().split('\n') 
@@ -28,7 +27,7 @@ for line in uk_geo_data:
     uk_zip[zipcode]=county.lower() 
 print("generated UK zip dict") 
 
-#outf_us=open('rct.us.tally','w') 
+
 outf_us=open('23andme.us.tally','w') 
 outf_us.write('State\tUsers\n') 
 #outf_uk=open('rct.uk.tally','w') 
@@ -38,8 +37,7 @@ us_tally=dict()
 for state in states :
     us_tally[state]=0
 uk_tally=dict() 
-import pdb 
-#pdb.set_trace() 
+
 for line in subjects: 
     tokens=line.split('\t') 
     subject=tokens[0] 
