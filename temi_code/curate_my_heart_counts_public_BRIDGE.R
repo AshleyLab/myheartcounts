@@ -3,8 +3,8 @@ library(tidyverse)
 library(lubridate)
 library(zipcode)
 data(zipcode)
-# a comment
 
+#takes in table data and stores relevant columns
 read_syn_table <- function(syn_id) {
   q <- synTableQuery(paste('select "healthCode","recordId","createdOn",',
                            '"appVersion","phoneInfo"',
@@ -13,6 +13,7 @@ read_syn_table <- function(syn_id) {
   print(q$asDataFrame())
 }
 
+#creates a local dataframe for given table
 curate_table <- function(synId, activity_name) {
   df <- read_syn_table(synId) %>%
         select(-ROW_ID, -ROW_VERSION) %>%
@@ -21,88 +22,176 @@ curate_table <- function(synId, activity_name) {
 }
 
 curate_my_heart_counts <- function() {
-  day_one_survey <- curate_table("syn3420238", "day_one_survey")
-  print("ran curate_table on day_one_survey")
-  save(day_one_survey,file="day_one_survey.Rdata")
+  Six_Minute_Walk_Test_SchemaV4_v2 <- curate_table("syn11073669", "Six_Minute_Walk_Test_SchemaV4_v2")
+  Six_Minute_Walk_Test_SchemaV4_v6 <- curate_table("syn12182118", "Six_Minute_Walk_Test_SchemaV4_v6")
   
-  par_q_survey <- curate_table("syn3420257", "par_q_survey")
-  print("ran 2")
-  save(par_q_survey,file="par_q_survey.Rdata")
+  ActivitySleep_v2 <- curate_table("syn20259285", "ActivitySleep_v2")
   
-  daily_check_survey <- curate_table("syn7248938", "daily_check_survey")
-  print("ran 3")
-  save(daily_check_survey,file="daily_check_survey.Rdata")
-  
-  a_and_s_survey <- curate_table("syn3420264", "activity_and_sleep_survey")
-  print("ran 4")
-  save(a_and_s_survey,file="a_and_s_survey.Rdata")
-  
-  risk_factor_survey <- curate_table("syn3420385", "risk_factor_survey")
-  print("ran 5")
-  save(risk_factor_survey,file="risk_factor_survey.Rdata")
-  
-  cardio_diet_survey <- curate_table("syn3420518", "cardio_diet_survey")
-  print("ran 6")
-  save(cardio_diet_survey,file="cardio_diet_survey.Rdata")
-  
-  satisfied_survey <- curate_table("syn3420615", "satisfied_survey")
-  print("ran 7")
-  save(satisfied_survey,file="satisfied_survey.Rdata")
-  
-  aph_heart_age_survey <- curate_table("syn3458936", "aph_heart_age_survey")
-  print("ran 8")
-  save(aph_heart_age_survey,file="aph_heart_age_survey.Rdata")
-  
-  six_minute_walk <- curate_table("syn3458480", "six_minute_walk_activity")
-  print("ran 9")
-  save(six_minute_walk,file="six_minute_walk.Rdata")
+  Adequacy_of_activity_mindset_measure_v1 <- curate_table("syn18103106", "Adequacy_of_activity_mindset_measure_v1")
+  Adequacy_of_activity_mindset_measure_v2 <- curate_table("syn18143711", "Adequacy_of_activity_mindset_measure_v2")
 
+  Covid_19_recurrent_survey_v1 <- curate_table("syn21983892", "Covid_19_recurrent_survey_v1")
   
-  demographics1 <- curate_table("syn3786875", "demographics")
-  demographics2 <- curate_table("syn3917840", "demographics")
-  demographics3 <- curate_table("syn21455306", "demographics")
-  print("ran 10")
-  demographics=do.call("rbind", list(demographics1, demographics2, demographics3))
-  save(demographics,file="demographics.Rdata")
-  
-  health_kit_data <- curate_table("syn3560085", "health_kit_data")
-  print("ran 11")
-  save(health_kit_data,file="health_kit_data.Rdata")
-  
-  health_kit_sleep <- curate_table("syn3560086", "health_kit_sleep")
-  print("ran 12")
-  save(health_kit_sleep,file="health_kit_sleep.Rdata")
-  
-  health_kit_workout <- curate_table("syn3560095", "health_kit_workout")
-  print("ran 13")
-  save(health_kit_workout,file="health_kit_workout.Rdata")
-  
-  motion_tracker <- synTableQuery("select * from syn4536838")$asDataFrame() %>%
-    select(recordId, healthCode, createdOn) %>%
-    mutate(activity = "motion_tracker",
-           originalTableId = "syn4536838")
-  print("ran 14")
-  save(motion_tracker,file="motion_tracker.Rdata")
+  Covid_19_survey_v1 <- curate_table("syn21906135", "Covid_19_survey_v1")
+  Covid_19_survey_v2 <- curate_table("syn21983891", "Covid_19_survey_v2")
 
+  Default_Health_Data_Record_Table <- curate_table("syn20259187", "Default_Health_Data_Record_Table")
+  
+  Diet_survey_cardio_SchemaV2_v2 <- curate_table("syn21913727", "Diet_survey_cardio_SchemaV2_v2")
+  
+  Exercise_process_mindset_measure_v1 <- curate_table("syn18103105", "Exercise_process_mindset_measure_v1")
+  Exercise_process_mindset_measure_v2 <- curate_table("syn18143709", "Exercise_process_mindset_measure_v2")
+  
+  ExternalIdentifier_v1 <- curate_table("syn20999816", "ExternalIdentifier_v1")
+  
+  HealthKitClinicalDocumentsCollector_v1 <- curate_table("syn21998877", "HealthKitClinicalDocumentsCollector_v1")
+  
+  HealthKitClinicalRecordsCollector_v1 <- curate_table("syn21052093", "HealthKitClinicalRecordsCollector_v1")
+  
+  Heart_Rate_Recovery_v1 <- curate_table("syn20259194", "Heart_Rate_Recovery_v1")
+  
+  Heart_Rate_Training_v1 <- curate_table("syn20838398", "Heart_Rate_Training_v1")
+  
+  Illness_mindset_inventory_v1 <- curate_table("syn18103107", "Illness_mindset_inventory_v1")
+  Illness_mindset_inventory_v2 <- curate_table("syn18143712", "Illness_mindset_inventory_v2")
+  
+  NonIdentifiableDemographicsTask_v3 <- curate_table("syn21455306", "NonIdentifiableDemographicsTask_v3")
+  
+  Reconsent_v1 <- curate_table("syn21372278", "Reconsent_v1")
+  
+  Resting_Heart_Rate_v1 <- curate_table("syn21163687", "Resting_Heart_Rate_v1")
+  
+  Vaping_and_smoking_survey_v1 <- curate_table("syn18103108", "Vaping_and_smoking_survey_v1")
+  Vaping_and_smoking_survey_v2 <- curate_table("syn18143710", "Vaping_and_smoking_survey_v2")
+  Vaping_and_smoking_survey_v3 <- curate_table("syn21913717", "Vaping_and_smoking_survey_v3")
+  
+  cardiovascular_2_APHHeartAge_7259AC18_D711_47A6_ADBD_6CFCECDED1DF_v1 <- curate_table("syn3458936", "cardiovascular_2_APHHeartAge_7259AC18_D711_47A6_ADBD_6CFCECDED1DF_v1")
+  cardiovascular_2_APHHeartAge_7259AC18_D711_47A6_ADBD_6CFCECDED1DF_v2 <- curate_table("syn4586968", "cardiovascular_2_APHHeartAge_7259AC18_D711_47A6_ADBD_6CFCECDED1DF_v2")
+  
+  cardiovascular_23andmeTask_v1 <- curate_table("syn5814622", "cardiovascular_23andmeTask_v1")
+  
+  cardiovascular_6_Minute_Walk_Test_SchemaV4_v1 <- curate_table("syn4857044", "cardiovascular_6_Minute_Walk_Test_SchemaV4_v1")
+  
+  cardiovascular_6MWT_Displacement_Data_v1 <- curate_table("syn4214144", "cardiovascular_6MWT_Displacement_Data_v1")
+  
+  cardiovascular_6MinuteWalkTest_v2 <- curate_table("syn3458480", "cardiovascular_6MinuteWalkTest_v2")
+  
+  cardiovascular_ABTestResults_v1 <- curate_table("syn7188351", "cardiovascular_ABTestResults_v1")
+  
+  cardiovascular_ActivitySleep_v1 <- curate_table("syn3420264", "cardiovascular_ActivitySleep_v1")
+  
+  cardiovascular_AwsClientIdTask_v1 <- curate_table("syn5587024", "cardiovascular_AwsClientIdTask_v1")
+  
+  cardiovascular_Diet_survey_cardio_v1 <- curate_table("syn3420518", "cardiovascular_Diet_survey_cardio_v1")
+  
+  cardiovascular_Diet_survey_cardio_SchemaV2_v1 <- curate_table("syn4894971", "cardiovascular_Diet_survey_cardio_SchemaV2_v1")
+  
+  cardiovascular_HealthKitDataCollector_v1 <- curate_table("syn3560085", "cardiovascular_HealthKitDataCollector_v1")
+  
+  cardiovascular_HealthKitSleepCollector_v1 <- curate_table("syn3560086", "cardiovascular_HealthKitSleepCollector_v1")
+  
+  cardiovascular_HealthKitWorkoutCollector_v1 <- curate_table("syn3560095", "cardiovascular_HealthKitWorkoutCollector_v1")
+  
+  cardiovascular_NonIdentifiableDemographics_v1 <- curate_table("syn3786875", "cardiovascular_NonIdentifiableDemographics_v1")
+  
+  cardiovascular_NonIdentifiableDemographicsTask_v2 <- curate_table("syn3917840", "cardiovascular_NonIdentifiableDemographicsTask_v2")
+  
+  cardiovascular_appVersion <- curate_table("syn3420239", "cardiovascular_appVersion")
+  
+  cardiovascular_daily_check_v1 <- curate_table("syn3420261", "cardiovascular_daily_check_v1")
+  cardiovascular_daily_check_v2 <- curate_table("syn7248938", "cardiovascular_daily_check_v2")
+
+  cardiovascular_day_one_v1 <- curate_table("syn3420238", "cardiovascular_day_one_v1")
+  
+  cardiovascular_displacement_v1 <- curate_table("syn4095792", "cardiovascular_displacement_v1")
+  
+  cardiovascular_heart_risk_and_age_v1 <- curate_table("syn7248937", "cardiovascular_heart_risk_and_age_v1")
+  
+  cardiovascular_motionActivityCollector_v1 <- curate_table("syn4536838", "cardiovascular_motionActivityCollector_v1")
+  
+  cardiovascular_motionTracker_v1 <- curate_table("syn3420486", "cardiovascular_motionTracker_v1")
+  
+  cardiovascular_par_q_quiz_v1 <- curate_table("syn3420257", "cardiovascular_par_q_quiz_v1")
+  
+  cardiovascular_risk_factors_v1 <- curate_table("syn3420385", "cardiovascular_risk_factors_v1")
+  
+  cardiovascular_risk_factors_SchemaV2_v1 <- curate_table("syn4703171", "cardiovascular_risk_factors_SchemaV2_v1")
+  
+  cardiovascular_satisfied_v1 <- curate_table("syn3420615", "cardiovascular_satisfied_v1")
+  
+  cardiovascular_satisfied_SchemaV2_v1 <- curate_table("syn4857042", "cardiovascular_satisfied_SchemaV2_v1")
+  cardiovascular_satisfied_SchemaV3_v1 <- curate_table("syn4929530", "cardiovascular_satisfied_SchemaV3_v1")
+  
+  watchMotionActivityCollector_v1 <- curate_table("syn20563457", "watchMotionActivityCollector_v1")
+  
   my_heart_counts <- bind_rows(
-    day_one_survey, par_q_survey, daily_check_survey, a_and_s_survey,
-    risk_factor_survey, cardio_diet_survey, satisfied_survey,
-    aph_heart_age_survey, six_minute_walk, demographics, health_kit_data,
-    health_kit_sleep, health_kit_workout, motion_tracker) %>%
+    Six_Minute_Walk_Test_SchemaV4_v2, 
+    Six_Minute_Walk_Test_SchemaV4_v6,
+    ActivitySleep_v2, 
+    Adequacy_of_activity_mindset_measure_v1, 
+    Adequacy_of_activity_mindset_measure_v2,
+    Covid_19_recurrent_survey_v1, 
+    Covid_19_survey_v1,
+    Covid_19_survey_v2,
+    Default_Health_Data_Record_Table, 
+    Diet_survey_cardio_SchemaV2_v2, 
+    Exercise_process_mindset_measure_v1,
+    Exercise_process_mindset_measure_v2,
+    ExternalIdentifier_v1, 
+    HealthKitClinicalDocumentsCollector_v1, 
+    HealthKitClinicalRecordsCollector_v1, 
+    Heart_Rate_Recovery_v1, 
+    Heart_Rate_Training_v1, 
+    Illness_mindset_inventory_v1,
+    Illness_mindset_inventory_v2,
+    NonIdentifiableDemographicsTask_v3, 
+    Reconsent_v1, 
+    Resting_Heart_Rate_v1, 
+    Vaping_and_smoking_survey_v1,
+    Vaping_and_smoking_survey_v2,
+    Vaping_and_smoking_survey_v3,
+    cardiovascular_2_APHHeartAge_7259AC18_D711_47A6_ADBD_6CFCECDED1DF_v1,
+    cardiovascular_2_APHHeartAge_7259AC18_D711_47A6_ADBD_6CFCECDED1DF_v2,
+    cardiovascular_23andmeTask_v1, 
+    cardiovascular_6_Minute_Walk_Test_SchemaV4_v1, 
+    cardiovascular_6MWT_Displacement_Data_v1, 
+    cardiovascular_6MinuteWalkTest_v2, 
+    cardiovascular_ABTestResults_v1, 
+    cardiovascular_ActivitySleep_v1, 
+    cardiovascular_AwsClientIdTask_v1, 
+    cardiovascular_Diet_survey_cardio_v1, 
+    cardiovascular_Diet_survey_cardio_SchemaV2_v1, 
+    cardiovascular_HealthKitDataCollector_v1, 
+    cardiovascular_HealthKitSleepCollector_v1, 
+    cardiovascular_HealthKitWorkoutCollector_v1, 
+    cardiovascular_NonIdentifiableDemographics_v1,
+    cardiovascular_NonIdentifiableDemographicsTask_v2,
+    cardiovascular_appVersion, 
+    cardiovascular_daily_check_v1,
+    cardiovascular_daily_check_v2,
+    cardiovascular_day_one_v1, 
+    cardiovascular_displacement_v1, 
+    cardiovascular_heart_risk_and_age_v1, 
+    cardiovascular_motionActivityCollector_v1, 
+    cardiovascular_motionTracker_v1, 
+    cardiovascular_par_q_quiz_v1, 
+    cardiovascular_risk_factors_v1, 
+    cardiovascular_risk_factors_SchemaV2_v1, 
+    cardiovascular_satisfied_v1, 
+    cardiovascular_satisfied_SchemaV2_v1,
+    cardiovascular_satisfied_SchemaV3_v1,
+    watchMotionActivityCollector_v1) %>%
     as_tibble()
-  print("ran 15")
+  print("finished bind rows")
   return(my_heart_counts)
-  print(my_heart_counts)
 }
 
+#
 mutate_participant_week_day <- function(engagement) {
-  print("engagement")
   first_activity <- engagement %>%
     group_by(healthCode) %>%
-    summarise(first_activity_time = min(createdOn, na.rm=T))
-  print("first_activity")
-  engagement <- inner_join(engagement, first_activity)
-  print("inner join")
+    summarise(first_activity_time = min(createdOn, na.rm=T)) #groups healthcodes together and shows first activity time for each participant
+  engagement <- inner_join(engagement, first_activity) #joins concurrent rows between first_activity (which contains the minimum createdOn time) and mhc, leaving only the minimum time in mhc 
   engagement <- engagement %>%
     mutate(
       seconds_since_first_activity = createdOn - first_activity_time,
@@ -121,62 +210,62 @@ mutate_participant_week_day <- function(engagement) {
 mutate_task_type <- function(engagement_data) {
   engagement_data %>%
     mutate(taskType = case_when(
-      activity == "6-Minute Walk Test_SchemaV4-v2" ~ "active-sensor",
-      activity == "6-Minute Walk Test_SchemaV4-v6" ~ "active-sensor",
-      activity == "ActivitySleep-v2" ~ "survey",
-      activity == "Adequacy_of_activity_mindset_measure-v1" ~ "survey",
-      activity == "Adequacy_of_activity_mindset_measure-v2" ~ "survey",
-      activity == "Covid_19_recurrent_survey-v1" ~ "survey",
-      activity == "Covid_19_survey-v1" ~ "survey",
-      activity == "Covid_19_survey-v2" ~ "survey",
-      activity == "Default Health Data Record Table" ~ "passive-sensor",
-      activity == "Diet_survey_cardio_SchemaV2-v2" ~ "survey",
-      activity == "Exercise_process_mindset_measure-v1" ~ "survey", 
-      activity == "Exercise_process_mindset_measure-v2" ~ "survey", 
-      activity == "ExternalIdentifier-v1" ~ "survey", 
-      activity == "HealthKitClinicalDocumentsCollector-v1" ~ "passive-sensor", 
-      activity == "HealthKitClinicalRecordsCollector-v1" ~ "passive-sensor", 
-      activity == "Heart Rate Recovery-v1" ~ "active-sensor", 
-      activity == "Heart Rate Training-v1" ~ "active-sensor", 
-      activity == "Illness_mindset_inventory-v1" ~ "survey", 
-      activity == "Illness_mindset_inventory-v2" ~ "survey", 
-      activity == "NonIdentifiableDemographicsTask-v3" ~ "demographic", 
-      activity == "Reconsent-v1" ~ "Reconsent-v1", 
-      activity == "Resting Heart Rate-v1" ~ "active-sensor", 
-      activity == "Vaping_and_smoking_survey-v1" ~ "survey", 
-      activity == "Vaping_and_smoking_survey-v2" ~ "survey", 
-      activity == "Vaping_and_smoking_survey-v3" ~ "survey", 
-      activity == "cardiovascular-2-APHHeartAge-7259AC18-D711-47A6-ADBD-6CFCECDED1DF-v1" ~ "survey", 
-      activity == "cardiovascular-2-APHHeartAge-7259AC18-D711-47A6-ADBD-6CFCECDED1DF-v2" ~ "survey", 
-      activity == "cardiovascular-23andmeTask-v1" ~ "survey", 
-      activity == "cardiovascular-6-Minute Walk Test_SchemaV4-v1" ~ "active-sensor", 
-      activity == "cardiovascular-6MWT Displacement Data-v1" ~ "active-sensor", 
-      activity == "cardiovascular-6MinuteWalkTest-v2" ~ "active-sensor", 
-      activity == "cardiovascular-ABTestResults-v1" ~ "survey", 
-      activity == "cardiovascular-ActivitySleep-v1" ~ "survey", 
-      activity == "cardiovascular-AwsClientIdTask-v1" ~ "cardiovascular-AwsClientIdTask-v1", 
-      activity == "cardiovascular-Diet_survey_cardio-v1" ~ "survey", 
-      activity == "cardiovascular-Diet_survey_cardio_SchemaV2-v1" ~ "survey", 
-      activity == "cardiovascular-HealthKitDataCollector-v1" ~ "passive-sensor", 
-      activity == "cardiovascular-HealthKitSleepCollector-v1" ~ "passive-sensor", 
-      activity == "cardiovascular-HealthKitWorkoutCollector-v1" ~ "passive-sensor", 
-      activity == "cardiovascular-NonIdentifiableDemographics-v1" ~ "demographic", 
-      activity == "cardiovascular-NonIdentifiableDemographicsTask-v2" ~ "demographic", 
-      activity == "cardiovascular-appVersion" ~ "cardiovascular-appVersion", 
-      activity == "cardiovascular-daily_check-v1" ~ "survey", 
-      activity == "cardiovascular-daily_check-v2" ~ "survey", 
-      activity == "cardiovascular-day_one-v1" ~ "survey", 
-      activity == "cardiovascular-displacement-v1" ~ "passive-sensor", 
-      activity == "cardiovascular-heart_risk_and_age-v1" ~ "survey", 
-      activity == "cardiovascular-motionActivityCollector-v1" ~ "passive-sensor", 
-      activity == "cardiovascular-motionTracker-v1" ~ "passive-sensor", 
-      activity == "cardiovascular-par-q quiz-v1" ~ "survey", 
-      activity == "cardiovascular-risk_factors-v1" ~ "survey", 
-      activity == "cardiovascular-risk_factors_SchemaV2-v1" ~ "survey", 
-      activity == "cardiovascular-satisfied-v1" ~ "survey", 
-      activity == "cardiovascular-satisfied_SchemaV2-v1" ~ "survey", 
-      activity == "cardiovascular-satisfied_SchemaV3-v1" ~ "survey", 
-      activity == "watchMotionActivityCollector-v1" ~ "passive-sensor"))
+      activity == "Six_Minute_Walk_Test_SchemaV4_v2" ~ "active-sensor",
+      activity == "Six_Minute_Walk_Test_SchemaV4_v6" ~ "active-sensor",
+      activity == "ActivitySleep_v2" ~ "survey",
+      activity == "Adequacy_of_activity_mindset_measure_v1" ~ "survey",
+      activity == "Adequacy_of_activity_mindset_measure_v2" ~ "survey",
+      activity == "Covid_19_recurrent_survey_v1" ~ "survey",
+      activity == "Covid_19_survey_v1" ~ "survey",
+      activity == "Covid_19_survey_v2" ~ "survey",
+      activity == "Default_Health_Data_Record_Table" ~ "passive-sensor",
+      activity == "Diet_survey_cardio_SchemaV2_v2" ~ "survey",
+      activity == "Exercise_process_mindset_measure_v1" ~ "survey", 
+      activity == "Exercise_process_mindset_measure_v2" ~ "survey", 
+      activity == "ExternalIdentifier_v1" ~ "survey", 
+      activity == "HealthKitClinicalDocumentsCollector_v1" ~ "passive-sensor", 
+      activity == "HealthKitClinicalRecordsCollector_v1" ~ "passive-sensor", 
+      activity == "Heart_Rate_Recovery_v1" ~ "active-sensor", 
+      activity == "Heart_Rate_Training_v1" ~ "active-sensor", 
+      activity == "Illness_mindset_inventory_v1" ~ "survey", 
+      activity == "Illness_mindset_inventory_v2" ~ "survey", 
+      activity == "NonIdentifiableDemographicsTask_v3" ~ "demographic", 
+      activity == "Reconsent_v1" ~ "Reconsent-v1", 
+      activity == "Resting Heart Rate_v1" ~ "active-sensor", 
+      activity == "Vaping_and_smoking_survey_v1" ~ "survey", 
+      activity == "Vaping_and_smoking_survey_v2" ~ "survey", 
+      activity == "Vaping_and_smoking_survey_v3" ~ "survey", 
+      activity == "cardiovascular_2_APHHeartAge_7259AC18_D711_47A6_ADBD_6CFCECDED1DF_v1" ~ "survey", 
+      activity == "cardiovascular_2_APHHeartAge_7259AC18_D711_47A6_ADBD_6CFCECDED1DF_v2" ~ "survey", 
+      activity == "cardiovascular_23andmeTask_v2" ~ "survey", 
+      activity == "cardiovascular_6_Minute_Walk_Test_SchemaV4_v1" ~ "active-sensor", 
+      activity == "cardiovascular_6MWT_Displacement_Data_v1" ~ "active-sensor", 
+      activity == "cardiovascular_6MinuteWalkTest_v2" ~ "active-sensor", 
+      activity == "cardiovascular_ABTestResults_v1" ~ "survey", 
+      activity == "cardiovascular_ActivitySleep_v1" ~ "survey", 
+      activity == "cardiovascular_AwsClientIdTask_v1" ~ "cardiovascular_AwsClientIdTask_v1", 
+      activity == "cardiovascular_Diet_survey_cardio_v1" ~ "survey", 
+      activity == "cardiovascular_Diet_survey_cardio_SchemaV2_v1" ~ "survey", 
+      activity == "cardiovascular_HealthKitDataCollector_v1" ~ "passive-sensor", 
+      activity == "cardiovascular_HealthKitSleepCollector_v1" ~ "passive-sensor", 
+      activity == "cardiovascular_HealthKitWorkoutCollector_v1" ~ "passive-sensor", 
+      activity == "cardiovascular_NonIdentifiableDemographics_v1" ~ "demographic", 
+      activity == "cardiovascular_NonIdentifiableDemographicsTask_v2" ~ "demographic", 
+      activity == "cardiovascular_appVersion" ~ "cardiovascular-appVersion", 
+      activity == "cardiovascular_daily_check_v1" ~ "survey", 
+      activity == "cardiovascular_daily_check_v2" ~ "survey", 
+      activity == "cardiovascular_day_one_v1" ~ "survey", 
+      activity == "cardiovascular_displacement_v1" ~ "passive-sensor", 
+      activity == "cardiovascular_heart_risk_and_age_v1" ~ "survey", 
+      activity == "cardiovascular_motionActivityCollector_v1" ~ "passive-sensor", 
+      activity == "cardiovascular_motionTracker_v1" ~ "passive-sensor", 
+      activity == "cardiovascular_par_q_quiz_v1" ~ "survey", 
+      activity == "cardiovascular_risk_factors_v1" ~ "survey", 
+      activity == "cardiovascular_risk_factors_SchemaV2_v1" ~ "survey", 
+      activity == "cardiovascular_satisfied_v1" ~ "survey", 
+      activity == "cardiovascular_satisfied_SchemaV2_v1" ~ "survey", 
+      activity == "cardiovascular_satisfied_SchemaV3_v1" ~ "survey", 
+      activity == "watchMotionActivityCollector_v1" ~ "passive-sensor"))
 }
 
 mutate_task_frequency <- function(engagement_data) {
@@ -192,6 +281,7 @@ mutate_task_frequency <- function(engagement_data) {
 }
 
 demographics_tz_from_zip_prefix <- function(demographics_synId) {
+  #parsed from satisfied survey (quality of life)
   demographics <- synTableQuery(paste(
     "select healthCode, zip from", demographics_synId))
   demog_df=demographics$asDataFrame()
@@ -212,33 +302,31 @@ demographics_tz_from_zip_prefix <- function(demographics_synId) {
     group_by(zip3) %>%
     slice(which.max(n)) %>%
     select(zip3, state)
+  zip_state_uk <- 
+  
   timezones <- purrr::map2(
     app_zip$lat, app_zip$long, lutz::tz_lookup_coords, method = "fast") %>%
     unlist()
   app_zip <- app_zip %>% mutate(timezone = timezones)
-  demographics <- demographics %>% left_join(app_zip, by = "zip3")
+  demographics <- demographics %>% left_join(app_zip, by = "zip3") #adds zipcode data to demographics table
   demographics <- demographics %>% left_join(zip_state, by = "zip3")
-  travelers <- demographics %>%
+  travelers <- demographics %>% #checks if timezones ever switch
     group_by(healthCode) %>%
-    summarize(n_tz = n_distinct(timezone)) %>%
-    filter(n_tz > 1)
+    summarize(n_tz = n_distinct(timezone)) %>% #counts distinct timezones
+    filter(n_tz > 1) #check if >1
   demographics <- demographics %>%
-    filter(!(healthCode %in% travelers$healthCode))
+    filter(!(healthCode %in% travelers$healthCode)) #filters out travelers (ppl with 2+ timezones)
   head(demographics)
   return(demographics)
 }
 
 mutate_local_time <- function(engagement) {
-  print("will fail")
   demographics <- demographics_tz_from_zip_prefix("syn3420615")
-  print("won't fail")
   engagement <- engagement %>%
     left_join(demographics, by="healthCode")
-  print("left_join done")
   local_time <- purrr::map2(engagement$createdOn, engagement$timezone, with_tz) %>%
     purrr::map(as.character) %>%
     unlist()
-  print("local_time done")
   engagement <- engagement %>% dplyr::mutate(
     createdOnLocalTime = local_time,
     createdOnLocalTime = ifelse(is.na(timezone), NA, createdOnLocalTime)) %>%
@@ -248,10 +336,14 @@ mutate_local_time <- function(engagement) {
 }
 
 curate_my_heart_counts_metadata <- function(engagement) {
-
-  df <- synTableQuery("select * from syn3917840")$asDataFrame() %>%
-    dplyr::rename(age = NonIdentifiableDemographics.json.patientCurrentAge,
-                  gender = NonIdentifiableDemographics.json.patientBiologicalSex) %>%
+  demographics2 <- curate_table("syn3917840", "demographics")
+  demographics3 <- curate_table("syn21455306", "demographics")
+  demographics2 <- head(demographics2) #takes in only a portion of demographics data for efficiency
+  demographics3 <- head(demographics3)
+  demographics=do.call("rbind", list(demographics2, demographics3)) # combines demographics dataframes
+  df <- demographics %>%
+    dplyr::rename(age = NonIdentifiableDemographics.json.patientCurrentAge, #renames age and gender column headers
+                  gender = NonIdentifiableDemographics.json.patientBiologicalSex) %>% 
     dplyr::mutate( age_group = cut(age, breaks=c(17,29,39,49, 59, 120))) %>%
     arrange(desc(createdOn)) %>%
     distinct(healthCode, .keep_all = T) %>%
@@ -304,7 +396,7 @@ curate_my_heart_counts_metadata <- function(engagement) {
                      gender.fromHeartAgeSurvey = tmp_find_last_val(gender.fromHeartAgeSurvey),
                      age.fromHeartAgeSurvey = tmp_find_last_val(age.fromHeartAgeSurvey)) %>%
     dplyr::mutate(gender.fromHeartAgeSurvey = ifelse(gender.fromHeartAgeSurvey == 'NA', NA, gender.fromHeartAgeSurvey),
-                  age.fromHeartAgeSurvey = ifelse(age.fromHeartAgeSurvey == 'NA', NA, age.fromHeartAgeSurvey),)
+                  age.fromHeartAgeSurvey = ifelse(age.fromHeartAgeSurvey == 'NA', NA, age.fromHeartAgeSurvey))
 
   #Fix race col
   additionDemogData <- additionDemogData %>%
@@ -343,7 +435,7 @@ main <- function() {
   df <- readRDS("df.rds")
   my_heart_counts <- df %>%
     mutate_participant_week_day() %>%
-    mutate_local_time() %>% # adds state from demographics file
+    mutate_local_time() %>% # adds zipcodes from satisfied survey
     mutate_task_type()
   print("executed curate_my_heart_counts") 
   df_metadata=curate_my_heart_counts_metadata(my_heart_counts)
