@@ -3,7 +3,7 @@ library(tidyverse)
 library(lubridate)
 library(zipcode)
 data(zipcode)
-
+# a comment
 
 read_syn_table <- function(syn_id) {
   q <- synTableQuery(paste('select "healthCode","recordId","createdOn",',
