@@ -4,23 +4,23 @@ library(lubridate)
 library(zipcode)
 data(zipcode)
 
-#takes in table data and stores relevant columns
+#takes in table data from synapse and stores relevant columns
 read_syn_table <- function(syn_id) {
   q <- synTableQuery(paste('select "healthCode","recordId","createdOn",',
                            '"appVersion","phoneInfo"',
                            'from', syn_id))
-  return(q$asDataFrame())
-  print(q$asDataFrame())
+  return(q$asDataFrame()) #stores synapse table data as a dataframe within R
 }
 
-#creates a local dataframe for given table
+#takes in dataframe, adds two new columns (id, activity), excludes two existing columns (row_id, row_version)
 curate_table <- function(synId, activity_name) {
   df <- read_syn_table(synId) %>%
-        select(-ROW_ID, -ROW_VERSION) %>%
-        mutate(activity = activity_name,
+        select(-ROW_ID, -ROW_VERSION) %>% #excludes Row_id and Row_version from given dataframe 
+        mutate(activity = activity_name, #creates new columns in dataframe: one for name of the activity, the other for the table's ID number
                originalTableId = synId)
 }
 
+#applies curate_table to each dataframe then binds them on top of one another
 curate_my_heart_counts <- function() {
   Six_Minute_Walk_Test_SchemaV4_v2 <- curate_table("syn11073669", "Six_Minute_Walk_Test_SchemaV4_v2")
   Six_Minute_Walk_Test_SchemaV4_v6 <- curate_table("syn12182118", "Six_Minute_Walk_Test_SchemaV4_v6")
@@ -124,7 +124,7 @@ curate_my_heart_counts <- function() {
   
   watchMotionActivityCollector_v1 <- curate_table("syn20563457", "watchMotionActivityCollector_v1")
   
-  my_heart_counts <- bind_rows(
+  my_heart_counts <- bind_rows( #binds dataframes on top of one another, creating one HUGE dataframe
     Six_Minute_Walk_Test_SchemaV4_v2, 
     Six_Minute_Walk_Test_SchemaV4_v6,
     ActivitySleep_v2, 
@@ -181,33 +181,35 @@ curate_my_heart_counts <- function() {
     cardiovascular_satisfied_SchemaV2_v1,
     cardiovascular_satisfied_SchemaV3_v1,
     watchMotionActivityCollector_v1) %>%
-    as_tibble()
+    as_tibble() #changes dataframe into tibble format for cleaner look
   print("finished bind rows")
   return(my_heart_counts)
 }
 
-#
+#adds columns to mhc df which show length of engagement by Week and Day intervals
 mutate_participant_week_day <- function(engagement) {
+  print("mpwd running")
   first_activity <- engagement %>%
-    group_by(healthCode) %>%
-    summarise(first_activity_time = min(createdOn, na.rm=T)) #groups healthcodes together and shows first activity time for each participant
-  engagement <- inner_join(engagement, first_activity) #joins concurrent rows between first_activity (which contains the minimum createdOn time) and mhc, leaving only the minimum time in mhc 
-  engagement <- engagement %>%
+    group_by(healthCode) %>% #takes dataframe and arranges into grouped tables (by healthCode) which are then treated individually
+    summarise(first_activity_time = min(createdOn, na.rm=T)) #finds minimum createdOn time and adds it to table 
+  engagement <- inner_join(engagement, first_activity) #joins concurrent rows between first_activity and engagement, cutting out repeat healthCodes and leaving the one with the first (earliest) entry 
+  engagement <- engagement %>% #, by = "healthCode" ^
     mutate(
-      seconds_since_first_activity = createdOn - first_activity_time,
+      seconds_since_first_activity = createdOn - first_activity_time, #subtracts first activity time from createdOn to find how long user has been active then plugs into a variable
       participantWeek = as.integer(
           floor(as.numeric(
-            as.duration(seconds_since_first_activity), "weeks"))),
+            as.duration(seconds_since_first_activity), "weeks"))), #converts seconds to weeks as an integer
       participantDay = as.integer(
         floor(as.numeric(
-          as.duration(seconds_since_first_activity), "days"))) + 1
+          as.duration(seconds_since_first_activity), "days"))) + 1 #converts seconds to days as an integer (+1?)
     ) %>%
-    select(-first_activity_time, -seconds_since_first_activity)
+    select(-first_activity_time, -seconds_since_first_activity) #removes two intermediary columns from engagement df
   head(engagement)
-  return(engagement)
 }
 
+#adds a column indicating the type of task for each activity
 mutate_task_type <- function(engagement_data) {
+  print("mtt running")
   engagement_data %>%
     mutate(taskType = case_when(
       activity == "Six_Minute_Walk_Test_SchemaV4_v2" ~ "active-sensor",
@@ -269,6 +271,7 @@ mutate_task_type <- function(engagement_data) {
 }
 
 mutate_task_frequency <- function(engagement_data) {
+  print("mtf running")
   engagement_data %>%
     mutate(taskFrequency = case_when(
       activity %in% c("daily_check_survey", "six_minute_walk_activity") ~ "daily",
@@ -280,67 +283,84 @@ mutate_task_frequency <- function(engagement_data) {
       activity == "motion_tracker" ~ "continuous"))
 }
 
+#edits zipcode df to be used as a frame of reference for which zip3 values correspond to which state
 demographics_tz_from_zip_prefix <- function(demographics_synId) {
   #parsed from satisfied survey (quality of life)
   demographics <- synTableQuery(paste(
     "select healthCode, zip from", demographics_synId))
-  demog_df=demographics$asDataFrame()
-  demog_colnames=colnames(demog_df)
-  demog_colnames[demog_colnames=="zip"]="zip3"
-  colnames(demog_df)=demog_colnames
-  demographics <- demog_df %>%
-    as_tibble() %>%
-    select(-ROW_ID, -ROW_VERSION) %>%
-    distinct(healthCode, zip3) #match people with zipcodes
-  app_zip <- zipcode %>%
-    mutate(zip3 = as.integer(str_sub(zip, 1, 3))) %>%
-    group_by(zip3) %>%
-    summarize(lat = median(latitude), long = median(longitude))
-  zip_state <- zipcode %>%
-    mutate(zip3 = as.integer(str_sub(zip, 1, 3))) %>%
-    count(zip3, state) %>%
-    group_by(zip3) %>%
-    slice(which.max(n)) %>%
-    select(zip3, state)
-  zip_state_uk <- 
   
-  timezones <- purrr::map2(
-    app_zip$lat, app_zip$long, lutz::tz_lookup_coords, method = "fast") %>%
+  demog_df=demographics$asDataFrame() #saves demographics table as a dataframe
+  demog_colnames=colnames(demog_df) #stores column names in demog_colnames
+  demog_colnames[demog_colnames=="zip"]="zip3" #renames zip column as zip3
+  colnames(demog_df)=demog_colnames #resets column names back to demog_colnames after editing a column
+  
+  demographics <- demog_df %>%
+    as_tibble() %>% #express as tibble for cleanliness
+    select(-ROW_ID, -ROW_VERSION) %>% #remove ROW ID, VERSION columns
+    distinct(healthCode, zip3) #removes repeat zipcodes
+  
+  app_zip <- zipcode %>%
+    mutate(zip3 = as.integer(str_sub(zip, 1, 3))) %>% #creates new colum with first 3 numbers of zipcodes
+    group_by(zip3) %>% #rows with same zip3 value are stored together
+    summarise(lat = median(latitude), long = median(longitude)) #creates table with zip3s, median latitudes and longitudes
+  #print(head(app_zip))
+  
+  zip_state <- zipcode %>%
+    mutate(zip3 = as.integer(str_sub(zip, 1, 3))) %>% #creates new colum with first 3 numbers of zipcodes
+    count(zip3, state) %>% #keeps a count of amount of states stored for each uinque zip3, state combination
+    group_by(zip3) %>% 
+    slice(which.max(n)) %>% #state which has most instances of given zipcode is kept
+    select(zip3, state) #finalizes the table only keeping zipcodes and their corresponding state
+  print(head(zip_state))
+  
+  #zip_state_uk <- 
+  
+  timezones <- purrr::map2( 
+    app_zip$lat, app_zip$long, lutz::tz_lookup_coords, method = "fast") %>% #goes over corresponding lat/long then return timezone for given combination
     unlist()
-  app_zip <- app_zip %>% mutate(timezone = timezones)
-  demographics <- demographics %>% left_join(app_zip, by = "zip3") #adds zipcode data to demographics table
+  app_zip <- app_zip %>% mutate(timezone = timezones) #adds timezones to app_zip table (which has zips, lats and longs)
+  print(head(app_zip))
+  
+  demographics <- demographics %>% left_join(app_zip, by = "zip3") 
   demographics <- demographics %>% left_join(zip_state, by = "zip3")
+  #adds new tables containing states, lat/long, and timezone data to demographics table
+  
   travelers <- demographics %>% #checks if timezones ever switch
     group_by(healthCode) %>%
     summarize(n_tz = n_distinct(timezone)) %>% #counts distinct timezones
-    filter(n_tz > 1) #check if >1
+    filter(n_tz > 1) #return df with only information for people with 2+ timezones
   demographics <- demographics %>%
-    filter(!(healthCode %in% travelers$healthCode)) #filters out travelers (ppl with 2+ timezones)
+    filter(!(healthCode %in% travelers$healthCode)) #returns table with every row that does not meet traveler qualification
   head(demographics)
   return(demographics)
 }
 
+#
 mutate_local_time <- function(engagement) {
+  print("mll running")
   demographics <- demographics_tz_from_zip_prefix("syn3420615")
   engagement <- engagement %>%
-    left_join(demographics, by="healthCode")
-  local_time <- purrr::map2(engagement$createdOn, engagement$timezone, with_tz) %>%
+    left_join(demographics, by="healthCode") #adds data from demographics table to engagement (mhc) table
+  local_time <- purrr::map2(engagement$createdOn, engagement$timezone, with_tz) %>% 
     purrr::map(as.character) %>%
-    unlist()
+    unlist() 
+  print(head(local_time))
   engagement <- engagement %>% dplyr::mutate(
     createdOnLocalTime = local_time,
-    createdOnLocalTime = ifelse(is.na(timezone), NA, createdOnLocalTime)) %>%
-    select(-zip3, -lat, -long)
+    createdOnLocalTime = ifelse(is.na(timezone), NA, createdOnLocalTime)) %>% #if the timezone is NA, then put NA as the value in the column otherwise use the created variable
+    select(-zip3, -lat, -long) #excludes zip3, lat, and long columns
   print("engagement done")
   return(engagement)
 }
 
 curate_my_heart_counts_metadata <- function(engagement) {
-  demographics2 <- curate_table("syn3917840", "demographics")
-  demographics3 <- curate_table("syn21455306", "demographics")
+  demographics2 <- curate_table("syn3917840", "demographics2")
+  demographics3 <- curate_table("syn21455306", "demographics3")
   demographics2 <- head(demographics2) #takes in only a portion of demographics data for efficiency
   demographics3 <- head(demographics3)
+  
   demographics=do.call("rbind", list(demographics2, demographics3)) # combines demographics dataframes
+  print(head(demographics))
   df <- demographics %>%
     dplyr::rename(age = NonIdentifiableDemographics.json.patientCurrentAge, #renames age and gender column headers
                   gender = NonIdentifiableDemographics.json.patientBiologicalSex) %>% 
@@ -428,16 +448,25 @@ curate_my_heart_counts_metadata <- function(engagement) {
 }
 
 main <- function() {
-  synLogin()
+  synLogin() #logs you into synapse
   print("logged in") 
+  
   #df=curate_my_heart_counts()
   #saveRDS(df, "df.rds")
+  #create and saves curate_mhc dataframe and names it "df"
+  
   df <- readRDS("df.rds")
-  my_heart_counts <- df %>%
+  #loads df into R to avoid having to curate tables with each run (comment out prev 2 lines after running once)
+  
+  my_heart_counts <- df %>% #df gets piped into 3 functions to manipulate the dataframe
     mutate_participant_week_day() %>%
     mutate_local_time() %>% # adds zipcodes from satisfied survey
-    mutate_task_type()
+    mutate_task_type() #adds column showing type of task
+  
   print("executed curate_my_heart_counts") 
+  print(head(my_heart_counts))
+  
+  
   df_metadata=curate_my_heart_counts_metadata(my_heart_counts)
   saveRDS(df_metadata, "df_metadata.rds")
   df_metadata <- readRDS("df_metadata.rds")
@@ -446,12 +475,12 @@ main <- function() {
   my_heart_counts %>%
     mutate(study = "MyHeartCounts", hourOfDayUTC = lubridate::hour(createdOn)) %>%
     select(study, uid = healthCode, dayInStudy = participantDay,
-           hourOfDayUTC, taskType) %>%
+          hourOfDayUTC, taskType) %>%
     write_tsv("MyHeartCounts_engagement.tsv")
   print("wrote engagement info")
   my_heart_counts_metadata %>%
     select(study, uid = healthCode, age_group, gender, diseaseStatus = caseStatus,
-           state, race_ethnicity = race) %>%
+          state, race_ethnicity = race) %>%
     write_tsv("MyHeartCounts_metadata.tsv")
  print("wrote metadata") 
 }
