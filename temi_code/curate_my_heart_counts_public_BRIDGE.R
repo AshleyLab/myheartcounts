@@ -189,7 +189,7 @@ curate_my_heart_counts <- function() {
 
 #adds columns to mhc df which show length of engagement by Week and Day intervals
 mutate_participant_week_day <- function(engagement) {
-  print("mpwd running")
+  print("mutate_participant_week_day running")
   first_activity <- engagement %>%
     group_by(healthCode) %>% #takes dataframe and arranges into grouped tables (by healthCode) which are then treated individually
     summarise(first_activity_time = min(createdOn, na.rm=T)) #finds minimum createdOn time and adds it to table 
