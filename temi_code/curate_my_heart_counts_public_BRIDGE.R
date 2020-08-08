@@ -10,7 +10,7 @@ read_syn_table <- function(syn_id) {
   q <- synTableQuery(paste('select "healthCode","recordId","createdOn",',
                            '"appVersion","phoneInfo"',
                            'from', syn_id))
-  return(q$asDataFrame()) #stores synapse table data as a dataframe within R
+  return(q$asDataFrame()) #stores synapse table data as a dataframe
 }
 
 #takes in dataframe, adds two new columns (id, activity), excludes two existing columns (row_id, row_version)
