@@ -3,6 +3,7 @@ library(tidyverse)
 library(lubridate)
 library(zipcode)
 data(zipcode)
+uk_zipcodes <- read.csv('ukpostcodes.csv')
 
 #takes in table data from synapse and stores relevant columns
 read_syn_table <- function(syn_id) {
@@ -297,23 +298,30 @@ demographics_tz_from_zip_prefix <- function(demographics_synId) {
   demographics <- demog_df %>%
     as_tibble() %>% #express as tibble for cleanliness
     select(-ROW_ID, -ROW_VERSION) %>% #remove ROW ID, VERSION columns
-    distinct(healthCode, zip3) #removes repeat zipcodes
+    distinct(healthCode, zip3) %>% #removes repeat zipcodes
+    as.character(demog_df[["zip3"]])
   
   app_zip <- zipcode %>%
-    mutate(zip3 = as.integer(str_sub(zip, 1, 3))) %>% #creates new colum with first 3 numbers of zipcodes
+    mutate(zip3 = str_sub(zip, 1, 3)) %>% #creates new colum with first 3 numbers of zipcodes
     group_by(zip3) %>% #rows with same zip3 value are stored together
     summarise(lat = median(latitude), long = median(longitude)) #creates table with zip3s, median latitudes and longitudes
-  #print(head(app_zip))
+  print(head(app_zip))
   
   zip_state <- zipcode %>%
-    mutate(zip3 = as.integer(str_sub(zip, 1, 3))) %>% #creates new colum with first 3 numbers of zipcodes
+    mutate(zip3 = str_sub(zip, 1, 3)) %>% #creates new column with first 3 numbers of zipcodes
     count(zip3, state) %>% #keeps a count of amount of states stored for each uinque zip3, state combination
     group_by(zip3) %>% 
     slice(which.max(n)) %>% #state which has most instances of given zipcode is kept
     select(zip3, state) #finalizes the table only keeping zipcodes and their corresponding state
   print(head(zip_state))
   
-  #zip_state_uk <- 
+  zip_state_uk <- uk_zipcodes %>%
+    mutate(zip3 = str_sub(postcode, 1, 3)) %>%
+    select(-id, -postcode) %>%
+    group_by(zip3) %>%
+    summarise(lat = median(latitude), long = median(longitude)) %>%
+    mutate(state = 'UK')
+  print(head(zip_state_uk))
   
   timezones <- purrr::map2( 
     app_zip$lat, app_zip$long, lutz::tz_lookup_coords, method = "fast") %>% #goes over corresponding lat/long then return timezone for given combination
@@ -321,8 +329,15 @@ demographics_tz_from_zip_prefix <- function(demographics_synId) {
   app_zip <- app_zip %>% mutate(timezone = timezones) #adds timezones to app_zip table (which has zips, lats and longs)
   print(head(app_zip))
   
+  #timezones_uk <- purrr::map2( 
+    #zip_state_uk$lat, zip_state_uk$long, lutz::tz_lookup_coords, method = "fast") %>% #goes over corresponding lat/long then return timezone for given combination
+    #unlist()
+  #zip_state_uk <- zip_state_uk %>% mutate(timezone = timezones_uk)
+  #print(head(zip_state_uk)) #lat/long not recognized by lutz package
+  
   demographics <- demographics %>% left_join(app_zip, by = "zip3") 
   demographics <- demographics %>% left_join(zip_state, by = "zip3")
+  demographics <- demographics %>% left_join(zip_state_uk, by = "zip3") #unable to left join
   #adds new tables containing states, lat/long, and timezone data to demographics table
   
   travelers <- demographics %>% #checks if timezones ever switch
