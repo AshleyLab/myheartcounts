@@ -15,10 +15,24 @@ read_syn_table <- function(syn_id) {
 
 #takes in dataframe, adds two new columns (id, activity), excludes two existing columns (row_id, row_version)
 curate_table <- function(synId, activity_name) {
+  #excludes Row_id and Row_version from given dataframe
+  #creates new columns in dataframe: one for name of the activity, the other for the table's ID number
   df <- read_syn_table(synId) %>%
-        select(-ROW_ID, -ROW_VERSION) %>% #excludes Row_id and Row_version from given dataframe 
-        mutate(activity = activity_name, #creates new columns in dataframe: one for name of the activity, the other for the table's ID number
-               originalTableId = synId)
+    select(-ROW_ID, -ROW_VERSION) %>%  
+    mutate(activity = activity_name,
+           originalTableId = synId)
+}
+
+curate_demographics_table <- function(syn_id, activity_name) {
+  demographics_df <- synTableQuery(paste( 'select "NonIdentifiableDemographics.patientBiologicalSex",',
+                                          '"NonIdentifiableDemographics.json.patientBiologicalSex",',
+                                          '"NonIdentifiableDemographics.patientCurrentAge",',
+                                          '"NonIdentifiableDemographics.json.patientCurrentAge"',
+                                          'from', syn_id)) %>%
+    select(-ROW_ID, -ROW_VERSION) %>%  
+    mutate(activity = activity_name,
+           originalTableId = synId)
+  return(demographics_df)
 }
 
 #applies curate_table to each dataframe then binds them on top of one another
@@ -30,12 +44,12 @@ curate_my_heart_counts <- function() {
   
   Adequacy_of_activity_mindset_measure_v1 <- curate_table("syn18103106", "Adequacy_of_activity_mindset_measure_v1")
   Adequacy_of_activity_mindset_measure_v2 <- curate_table("syn18143711", "Adequacy_of_activity_mindset_measure_v2")
-
+  
   Covid_19_recurrent_survey_v1 <- curate_table("syn21983892", "Covid_19_recurrent_survey_v1")
   
   Covid_19_survey_v1 <- curate_table("syn21906135", "Covid_19_survey_v1")
   Covid_19_survey_v2 <- curate_table("syn21983891", "Covid_19_survey_v2")
-
+  
   Default_Health_Data_Record_Table <- curate_table("syn20259187", "Default_Health_Data_Record_Table")
   
   Diet_survey_cardio_SchemaV2_v2 <- curate_table("syn21913727", "Diet_survey_cardio_SchemaV2_v2")
@@ -56,7 +70,7 @@ curate_my_heart_counts <- function() {
   Illness_mindset_inventory_v1 <- curate_table("syn18103107", "Illness_mindset_inventory_v1")
   Illness_mindset_inventory_v2 <- curate_table("syn18143712", "Illness_mindset_inventory_v2")
   
-  NonIdentifiableDemographicsTask_v3 <- curate_table("syn21455306", "NonIdentifiableDemographicsTask_v3")
+  #NonIdentifiableDemographicsTask_v3 <- curate_table("syn21455306", "NonIdentifiableDemographicsTask_v3")
   
   Reconsent_v1 <- curate_table("syn21372278", "Reconsent_v1")
   
@@ -95,13 +109,13 @@ curate_my_heart_counts <- function() {
   
   cardiovascular_NonIdentifiableDemographics_v1 <- curate_table("syn3786875", "cardiovascular_NonIdentifiableDemographics_v1")
   
-  cardiovascular_NonIdentifiableDemographicsTask_v2 <- curate_table("syn3917840", "cardiovascular_NonIdentifiableDemographicsTask_v2")
+  #cardiovascular_NonIdentifiableDemographicsTask_v2 <- curate_table("syn3917840", "cardiovascular_NonIdentifiableDemographicsTask_v2")
   
   cardiovascular_appVersion <- curate_table("syn3420239", "cardiovascular_appVersion")
   
   cardiovascular_daily_check_v1 <- curate_table("syn3420261", "cardiovascular_daily_check_v1")
   cardiovascular_daily_check_v2 <- curate_table("syn7248938", "cardiovascular_daily_check_v2")
-
+  
   cardiovascular_day_one_v1 <- curate_table("syn3420238", "cardiovascular_day_one_v1")
   
   cardiovascular_displacement_v1 <- curate_table("syn4095792", "cardiovascular_displacement_v1")
@@ -125,7 +139,8 @@ curate_my_heart_counts <- function() {
   
   watchMotionActivityCollector_v1 <- curate_table("syn20563457", "watchMotionActivityCollector_v1")
   
-  my_heart_counts <- bind_rows( #binds dataframes on top of one another, creating one HUGE dataframe
+  #binds dataframes on top of one another, creating one HUGE dataframe
+  my_heart_counts <- bind_rows(
     Six_Minute_Walk_Test_SchemaV4_v2, 
     Six_Minute_Walk_Test_SchemaV4_v6,
     ActivitySleep_v2, 
@@ -182,7 +197,8 @@ curate_my_heart_counts <- function() {
     cardiovascular_satisfied_SchemaV2_v1,
     cardiovascular_satisfied_SchemaV3_v1,
     watchMotionActivityCollector_v1) %>%
-    as_tibble() #changes dataframe into tibble format for cleaner look
+    as_tibble() 
+  #changes dataframe into tibble format for cleaner look
   print("finished bind rows")
   return(my_heart_counts)
 }
@@ -194,12 +210,12 @@ mutate_participant_week_day <- function(engagement) {
     group_by(healthCode) %>% #takes dataframe and arranges into grouped tables (by healthCode) which are then treated individually
     summarise(first_activity_time = min(createdOn, na.rm=T)) #finds minimum createdOn time and adds it to table 
   engagement <- inner_join(engagement, first_activity) #joins concurrent rows between first_activity and engagement, cutting out repeat healthCodes and leaving the one with the first (earliest) entry 
-  engagement <- engagement %>% #, by = "healthCode" ^
+  engagement <- engagement %>%
     mutate(
       seconds_since_first_activity = createdOn - first_activity_time, #subtracts first activity time from createdOn to find how long user has been active then plugs into a variable
       participantWeek = as.integer(
-          floor(as.numeric(
-            as.duration(seconds_since_first_activity), "weeks"))), #converts seconds to weeks as an integer
+        floor(as.numeric(
+          as.duration(seconds_since_first_activity), "weeks"))), #converts seconds to weeks as an integer
       participantDay = as.integer(
         floor(as.numeric(
           as.duration(seconds_since_first_activity), "days"))) + 1 #converts seconds to days as an integer (+1?)
@@ -296,16 +312,13 @@ demographics_tz_from_zip_prefix <- function(demographics_synId) {
   colnames(demog_df)=demog_colnames #resets column names back to demog_colnames after editing a column
   
   demographics <- demog_df %>%
-    as_tibble() %>% #express as tibble for cleanliness
     select(-ROW_ID, -ROW_VERSION) %>% #remove ROW ID, VERSION columns
-    distinct(healthCode, zip3) %>% #removes repeat zipcodes
-    as.character(demog_df[["zip3"]])
+    distinct(healthCode, zip3)#removes repeat zipcodes
   
   app_zip <- zipcode %>%
     mutate(zip3 = str_sub(zip, 1, 3)) %>% #creates new colum with first 3 numbers of zipcodes
     group_by(zip3) %>% #rows with same zip3 value are stored together
     summarise(lat = median(latitude), long = median(longitude)) #creates table with zip3s, median latitudes and longitudes
-  print(head(app_zip))
   
   zip_state <- zipcode %>%
     mutate(zip3 = str_sub(zip, 1, 3)) %>% #creates new column with first 3 numbers of zipcodes
@@ -313,7 +326,6 @@ demographics_tz_from_zip_prefix <- function(demographics_synId) {
     group_by(zip3) %>% 
     slice(which.max(n)) %>% #state which has most instances of given zipcode is kept
     select(zip3, state) #finalizes the table only keeping zipcodes and their corresponding state
-  print(head(zip_state))
   
   zip_state_uk <- uk_zipcodes %>%
     mutate(zip3 = str_sub(postcode, 1, 3)) %>%
@@ -321,24 +333,24 @@ demographics_tz_from_zip_prefix <- function(demographics_synId) {
     group_by(zip3) %>%
     summarise(lat = median(latitude), long = median(longitude)) %>%
     mutate(state = 'UK')
-  print(head(zip_state_uk))
+  
+  zip_code_hk <- data.frame(
+    "zip3" = "hk", "lat" = 22, "long" = 114, "state" = "hk")
   
   timezones <- purrr::map2( 
     app_zip$lat, app_zip$long, lutz::tz_lookup_coords, method = "fast") %>% #goes over corresponding lat/long then return timezone for given combination
     unlist()
   app_zip <- app_zip %>% mutate(timezone = timezones) #adds timezones to app_zip table (which has zips, lats and longs)
-  print(head(app_zip))
   
-  #timezones_uk <- purrr::map2( 
-    #zip_state_uk$lat, zip_state_uk$long, lutz::tz_lookup_coords, method = "fast") %>% #goes over corresponding lat/long then return timezone for given combination
-    #unlist()
-  #zip_state_uk <- zip_state_uk %>% mutate(timezone = timezones_uk)
-  #print(head(zip_state_uk)) #lat/long not recognized by lutz package
+  demographics$zip3=as.character(demographics$zip3)
   
-  demographics <- demographics %>% left_join(app_zip, by = "zip3") 
-  demographics <- demographics %>% left_join(zip_state, by = "zip3")
-  demographics <- demographics %>% left_join(zip_state_uk, by = "zip3") #unable to left join
-  #adds new tables containing states, lat/long, and timezone data to demographics table
+  us_lat_long=merge(app_zip,zip_state,by='zip3')
+  
+  zip_state_uk$timezone="UK" 
+  zip_code_hk$timezone="HK"
+  zip_to_lat_long=rbind(zip_code_hk, us_lat_long, zip_state_uk)
+  
+  demographics <- demographics %>% merge(zip_to_lat_long, by='zip3', all.x = TRUE) 
   
   travelers <- demographics %>% #checks if timezones ever switch
     group_by(healthCode) %>%
@@ -350,7 +362,6 @@ demographics_tz_from_zip_prefix <- function(demographics_synId) {
   return(demographics)
 }
 
-#
 mutate_local_time <- function(engagement) {
   print("mll running")
   demographics <- demographics_tz_from_zip_prefix("syn3420615")
@@ -369,21 +380,32 @@ mutate_local_time <- function(engagement) {
 }
 
 curate_my_heart_counts_metadata <- function(engagement) {
-  demographics2 <- curate_table("syn3917840", "demographics2")
-  demographics3 <- curate_table("syn21455306", "demographics3")
+  demographics2 <- curate_demographics_table("syn3917840", "demographics2")
+  demographics3 <- curate_demographics_table("syn21455306", "demographics3")
   demographics2 <- head(demographics2) #takes in only a portion of demographics data for efficiency
   demographics3 <- head(demographics3)
   
-  demographics=do.call("rbind", list(demographics2, demographics3)) # combines demographics dataframes
+  demographics=do.call("rbind", list(demographics2, demographics3)) # combines demographics dataframes (one on top of the other)
+  print(head(demographics))
+  
+  # find row where column1 is NA and sets them as the corresponding rows in column2
+  na_fields_sex=which(is.na(demographics$NonIdentifiableDemographics.json.patientBiologicalSex))
+  demographics$NonIdentifiableDemographics.json.patientBiologicalSex[na_fields_sex]=demographics$NonIdentifiableDemographics.patientBiologicalSex[na_fields_sex]
+  demographics$NonIdentifiableDemographics.patientBiologicalSex= NULL
+  
+  na_fields_age=which(is.na(demographics$NonIdentifiableDemographics.json.patientCurrentAge))
+  demographics$NonIdentifiableDemographics.json.patientCurrentAge[na_fields_age]=demographics$NonIdentifiableDemographics.patientCurrentAge[na_fields_age]
+  demographics$NonIdentifiableDemographics.patientCurrentAge= NULL
+  
   print(head(demographics))
   df <- demographics %>%
-    dplyr::rename(age = NonIdentifiableDemographics.json.patientCurrentAge, #renames age and gender column headers
+    dplyr::rename(age = NonIdentifiableDemographics.json.patientCurrentAge, 
                   gender = NonIdentifiableDemographics.json.patientBiologicalSex) %>% 
-    dplyr::mutate( age_group = cut(age, breaks=c(17,29,39,49, 59, 120))) %>%
+    dplyr::mutate(age_group = cut(age, breaks=c(17,29,39,49, 59, 120))) %>%
     arrange(desc(createdOn)) %>%
     distinct(healthCode, .keep_all = T) %>%
     dplyr::select(healthCode, age,age_group, gender, phoneInfo)
-
+  
   #integrate the heartCondition
   #See - https://github.com/Sage-Bionetworks/mhealth-engagement-analysis/issues
   diseaseStatus <- synTableQuery("select * from syn3420257")$asDataFrame() %>%
@@ -393,7 +415,7 @@ curate_my_heart_counts_metadata <- function(engagement) {
     dplyr::select(healthCode, heartCondition) %>%
     dplyr::rename(caseStatus = heartCondition)
   df = merge(df, diseaseStatus, all=T)
-
+  
   ##Add state info
   state.metadata = data.frame(state.name = state.name,
                               state.abb = state.abb,
@@ -410,13 +432,13 @@ curate_my_heart_counts_metadata <- function(engagement) {
     mutate(state = stringr::str_to_title(state.name)) %>%
     select(-state.name)
   df <- merge(df, my_heart_counts_states, by="healthCode", all=T)
-
-
+  
+  
   tmp_find_last_val <- function(x){
     x <-  na.omit(as.character(x))
     ifelse(length(x) == 0, 'NA', x[length(x)])
   }
-
+  
   #race
   additionDemogData <- synTableQuery("select * from syn7248937")$asDataFrame() %>%
     dplyr::transmute(healthCode = healthCode,
@@ -432,7 +454,7 @@ curate_my_heart_counts_metadata <- function(engagement) {
                      age.fromHeartAgeSurvey = tmp_find_last_val(age.fromHeartAgeSurvey)) %>%
     dplyr::mutate(gender.fromHeartAgeSurvey = ifelse(gender.fromHeartAgeSurvey == 'NA', NA, gender.fromHeartAgeSurvey),
                   age.fromHeartAgeSurvey = ifelse(age.fromHeartAgeSurvey == 'NA', NA, age.fromHeartAgeSurvey))
-
+  
   #Fix race col
   additionDemogData <- additionDemogData %>%
     dplyr::mutate(race = case_when(
@@ -443,21 +465,21 @@ curate_my_heart_counts_metadata <- function(engagement) {
       race == 'I prefer not to indicate an ethnicity' ~ 'Prefer not to answer',
       race == 'Pacific Islander' ~ 'Hawaiian or other Pacific Islander',
       TRUE ~ race
-  ))
-
+    ))
+  
   #merge race and other engagement data
   df <- merge(df, additionDemogData, all.x=T)
-
+  
   #replace missing values from additionalDemogData
   to.replace <- is.na(df$gender)
   df$gender[to.replace] =  df$gender.fromHeartAgeSurvey[to.replace]
   df$gender.fromHeartAgeSurvey <- NULL
-
+  
   to.replace <- is.na(df$age)
   df$age[to.replace] <-  df$age.fromHeartAgeSurvey[to.replace]
   df$age.fromHeartAgeSurvey <- NULL
   df['study'] = 'MyHeartCounts'
-
+  
   return(as_tibble(df))
   print(as_tibble(df))
 }
@@ -466,11 +488,11 @@ main <- function() {
   synLogin() #logs you into synapse
   print("logged in") 
   
-  #df=curate_my_heart_counts()
-  #saveRDS(df, "df.rds")
+  df=curate_my_heart_counts()
+  saveRDS(df, "df.rds")
   #create and saves curate_mhc dataframe and names it "df"
   
-  df <- readRDS("df.rds")
+  #df <- readRDS("df.rds")
   #loads df into R to avoid having to curate tables with each run (comment out prev 2 lines after running once)
   
   my_heart_counts <- df %>% #df gets piped into 3 functions to manipulate the dataframe
@@ -487,17 +509,18 @@ main <- function() {
   df_metadata <- readRDS("df_metadata.rds")
   my_heart_counts_metadata <- curate_my_heart_counts_metadata(my_heart_counts)
   print("executed curate_my_heart_counts_metadata") 
+  
   my_heart_counts %>%
     mutate(study = "MyHeartCounts", hourOfDayUTC = lubridate::hour(createdOn)) %>%
     select(study, uid = healthCode, dayInStudy = participantDay,
-          hourOfDayUTC, taskType) %>%
+           hourOfDayUTC, taskType) %>%
     write_tsv("MyHeartCounts_engagement.tsv")
   print("wrote engagement info")
   my_heart_counts_metadata %>%
     select(study, uid = healthCode, age_group, gender, diseaseStatus = caseStatus,
-          state, race_ethnicity = race) %>%
+           state, race_ethnicity = race) %>%
     write_tsv("MyHeartCounts_metadata.tsv")
- print("wrote metadata") 
+  print("wrote metadata") 
 }
 
 main()
