@@ -10,7 +10,7 @@ read_syn_table <- function(syn_id) {
   q <- synTableQuery(paste('select "healthCode","recordId","createdOn",',
                            '"appVersion","phoneInfo"',
                            'from', syn_id))
-  return(q$asDataFrame()) #stores synapse table data as a dataframe
+  return(q$asDataFrame()) #stores synapse table data as a dataframe within R
 }
 
 #takes in dataframe, adds two new columns (id, activity), excludes two existing columns (row_id, row_version)
@@ -21,18 +21,6 @@ curate_table <- function(synId, activity_name) {
     select(-ROW_ID, -ROW_VERSION) %>%  
     mutate(activity = activity_name,
            originalTableId = synId)
-}
-
-curate_demographics_table <- function(syn_id, activity_name) {
-  demographics_df <- synTableQuery(paste( 'select "NonIdentifiableDemographics.patientBiologicalSex",',
-                                          '"NonIdentifiableDemographics.json.patientBiologicalSex",',
-                                          '"NonIdentifiableDemographics.patientCurrentAge",',
-                                          '"NonIdentifiableDemographics.json.patientCurrentAge"',
-                                          'from', syn_id)) %>%
-    select(-ROW_ID, -ROW_VERSION) %>%  
-    mutate(activity = activity_name,
-           originalTableId = synId)
-  return(demographics_df)
 }
 
 #applies curate_table to each dataframe then binds them on top of one another
@@ -70,7 +58,7 @@ curate_my_heart_counts <- function() {
   Illness_mindset_inventory_v1 <- curate_table("syn18103107", "Illness_mindset_inventory_v1")
   Illness_mindset_inventory_v2 <- curate_table("syn18143712", "Illness_mindset_inventory_v2")
   
-  #NonIdentifiableDemographicsTask_v3 <- curate_table("syn21455306", "NonIdentifiableDemographicsTask_v3")
+  NonIdentifiableDemographicsTask_v3 <- curate_table("syn21455306", "NonIdentifiableDemographicsTask_v3")
   
   Reconsent_v1 <- curate_table("syn21372278", "Reconsent_v1")
   
@@ -109,7 +97,7 @@ curate_my_heart_counts <- function() {
   
   cardiovascular_NonIdentifiableDemographics_v1 <- curate_table("syn3786875", "cardiovascular_NonIdentifiableDemographics_v1")
   
-  #cardiovascular_NonIdentifiableDemographicsTask_v2 <- curate_table("syn3917840", "cardiovascular_NonIdentifiableDemographicsTask_v2")
+  cardiovascular_NonIdentifiableDemographicsTask_v2 <- curate_table("syn3917840", "cardiovascular_NonIdentifiableDemographicsTask_v2")
   
   cardiovascular_appVersion <- curate_table("syn3420239", "cardiovascular_appVersion")
   
@@ -205,7 +193,7 @@ curate_my_heart_counts <- function() {
 
 #adds columns to mhc df which show length of engagement by Week and Day intervals
 mutate_participant_week_day <- function(engagement) {
-  print("mutate_participant_week_day running")
+  print("mpwd running")
   first_activity <- engagement %>%
     group_by(healthCode) %>% #takes dataframe and arranges into grouped tables (by healthCode) which are then treated individually
     summarise(first_activity_time = min(createdOn, na.rm=T)) #finds minimum createdOn time and adds it to table 
@@ -380,15 +368,21 @@ mutate_local_time <- function(engagement) {
 }
 
 curate_my_heart_counts_metadata <- function(engagement) {
-  demographics2 <- curate_demographics_table("syn3917840", "demographics2")
-  demographics3 <- curate_demographics_table("syn21455306", "demographics3")
-  demographics2 <- head(demographics2) #takes in only a portion of demographics data for efficiency
-  demographics3 <- head(demographics3)
+  demographics2 <- synTableQuery("select * from syn3917840")$asDataFrame() %>%
+    select(NonIdentifiableDemographics.json.patientCurrentAge, NonIdentifiableDemographics.patientCurrentAge,
+           NonIdentifiableDemographics.json.patientBiologicalSex, NonIdentifiableDemographics.patientBiologicalSex,
+           healthCode, phoneInfo, createdOn)
+  print(head(demographics2))
+  
+  demographics3 <- synTableQuery("select * from syn21455306")$asDataFrame() %>%
+    select(NonIdentifiableDemographics.json.patientCurrentAge, NonIdentifiableDemographics.patientCurrentAge,
+           NonIdentifiableDemographics.json.patientBiologicalSex, NonIdentifiableDemographics.patientBiologicalSex,
+           healthCode, phoneInfo, createdOn)
+  print(head(demographics3))
   
   demographics=do.call("rbind", list(demographics2, demographics3)) # combines demographics dataframes (one on top of the other)
   print(head(demographics))
   
-  # find row where column1 is NA and sets them as the corresponding rows in column2
   na_fields_sex=which(is.na(demographics$NonIdentifiableDemographics.json.patientBiologicalSex))
   demographics$NonIdentifiableDemographics.json.patientBiologicalSex[na_fields_sex]=demographics$NonIdentifiableDemographics.patientBiologicalSex[na_fields_sex]
   demographics$NonIdentifiableDemographics.patientBiologicalSex= NULL
@@ -397,23 +391,22 @@ curate_my_heart_counts_metadata <- function(engagement) {
   demographics$NonIdentifiableDemographics.json.patientCurrentAge[na_fields_age]=demographics$NonIdentifiableDemographics.patientCurrentAge[na_fields_age]
   demographics$NonIdentifiableDemographics.patientCurrentAge= NULL
   
-  print(head(demographics))
   df <- demographics %>%
     dplyr::rename(age = NonIdentifiableDemographics.json.patientCurrentAge, 
-                  gender = NonIdentifiableDemographics.json.patientBiologicalSex) %>% 
-    dplyr::mutate(age_group = cut(age, breaks=c(17,29,39,49, 59, 120))) %>%
-    arrange(desc(createdOn)) %>%
-    distinct(healthCode, .keep_all = T) %>%
-    dplyr::select(healthCode, age,age_group, gender, phoneInfo)
+                  gender = NonIdentifiableDemographics.json.patientBiologicalSex) %>% #renames age and gender tables
+    dplyr::mutate(age_group = cut(age, breaks=c(17,29,39,49, 59, 120))) %>% #makes grouping for age (i.e 45 -> 40-49)
+    arrange(desc(createdOn)) %>% #organize df by createdOn values in order
+    distinct(healthCode, .keep_all = T) %>% #finds first occurence of HC, keeps that row along will every other variable 
+    dplyr::select(healthCode, age,age_group, gender, phoneInfo) #keeps specified vars
   
   #integrate the heartCondition
   #See - https://github.com/Sage-Bionetworks/mhealth-engagement-analysis/issues
   diseaseStatus <- synTableQuery("select * from syn3420257")$asDataFrame() %>%
-    dplyr::mutate(createdOn = as.Date(lubridate::ymd_hms(createdOn))) %>%
-    arrange(desc(createdOn)) %>%
+    dplyr::mutate(createdOn = as.Date(lubridate::ymd_hms(createdOn))) %>% #creates createdOn column with organized y/m/s 
+    arrange(desc(createdOn)) %>% #orders from earliest date
     distinct(healthCode, .keep_all = T) %>%
-    dplyr::select(healthCode, heartCondition) %>%
-    dplyr::rename(caseStatus = heartCondition)
+    dplyr::select(healthCode, heartCondition) %>% #simple df with ordered, distinct HealthCode (by date) and heart condition
+    dplyr::rename(caseStatus = heartCondition) #renames heartcondition variable
   df = merge(df, diseaseStatus, all=T)
   
   ##Add state info
@@ -424,6 +417,7 @@ curate_my_heart_counts_metadata <- function(engagement) {
                   state.abb = as.character(state.abb),
                   state.region = as.character(state.region))
   state.metadata <- rbind(state.metadata, c('District of Columbia', 'DC', 'South'))
+  
   my_heart_counts_states <- engagement %>%
     group_by(healthCode) %>%
     arrange(createdOn) %>%
@@ -492,7 +486,7 @@ main <- function() {
   saveRDS(df, "df.rds")
   #create and saves curate_mhc dataframe and names it "df"
   
-  #df <- readRDS("df.rds")
+  df <- readRDS("df.rds")
   #loads df into R to avoid having to curate tables with each run (comment out prev 2 lines after running once)
   
   my_heart_counts <- df %>% #df gets piped into 3 functions to manipulate the dataframe
@@ -501,12 +495,12 @@ main <- function() {
     mutate_task_type() #adds column showing type of task
   
   print("executed curate_my_heart_counts") 
-  print(head(my_heart_counts))
-  
+  #print(head(my_heart_counts))
   
   df_metadata=curate_my_heart_counts_metadata(my_heart_counts)
   saveRDS(df_metadata, "df_metadata.rds")
   df_metadata <- readRDS("df_metadata.rds")
+  
   my_heart_counts_metadata <- curate_my_heart_counts_metadata(my_heart_counts)
   print("executed curate_my_heart_counts_metadata") 
   
