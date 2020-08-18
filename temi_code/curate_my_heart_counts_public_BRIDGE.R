@@ -193,6 +193,7 @@ curate_my_heart_counts <- function() {
 
 #adds columns to mhc df which show length of engagement by Week and Day intervals
 mutate_participant_week_day <- function(engagement) {
+  print(engagement)
   print("mpwd running")
   first_activity <- engagement %>%
     group_by(healthCode) %>% #takes dataframe and arranges into grouped tables (by healthCode) which are then treated individually
@@ -209,8 +210,8 @@ mutate_participant_week_day <- function(engagement) {
           as.duration(seconds_since_first_activity), "days"))) + 1 #converts seconds to days as an integer (+1?)
     ) %>%
     select(-first_activity_time, -seconds_since_first_activity) #removes two intermediary columns from engagement df
-  head(engagement)
-}
+  head(engagement, n=50000)
+  }
 
 #adds a column indicating the type of task for each activity
 mutate_task_type <- function(engagement_data) {
@@ -317,7 +318,7 @@ demographics_tz_from_zip_prefix <- function(demographics_synId) {
   
   zip_state_uk <- uk_zipcodes %>%
     mutate(zip3 = str_sub(postcode, 1, 3)) %>%
-    select(-id, -postcode) %>%
+    select(-id, postcode) %>%
     group_by(zip3) %>%
     summarise(lat = median(latitude), long = median(longitude)) %>%
     mutate(state = 'UK')
@@ -339,6 +340,7 @@ demographics_tz_from_zip_prefix <- function(demographics_synId) {
   zip_to_lat_long=rbind(zip_code_hk, us_lat_long, zip_state_uk)
   
   demographics <- demographics %>% merge(zip_to_lat_long, by='zip3', all.x = TRUE) 
+  print(head(demographics))
   
   travelers <- demographics %>% #checks if timezones ever switch
     group_by(healthCode) %>%
@@ -355,6 +357,7 @@ mutate_local_time <- function(engagement) {
   demographics <- demographics_tz_from_zip_prefix("syn3420615")
   engagement <- engagement %>%
     left_join(demographics, by="healthCode") #adds data from demographics table to engagement (mhc) table
+  print(head(engagement))
   local_time <- purrr::map2(engagement$createdOn, engagement$timezone, with_tz) %>% 
     purrr::map(as.character) %>%
     unlist() 
@@ -363,6 +366,7 @@ mutate_local_time <- function(engagement) {
     createdOnLocalTime = local_time,
     createdOnLocalTime = ifelse(is.na(timezone), NA, createdOnLocalTime)) %>% #if the timezone is NA, then put NA as the value in the column otherwise use the created variable
     select(-zip3, -lat, -long) #excludes zip3, lat, and long columns
+  print(head(engagement))
   print("engagement done")
   return(engagement)
 }
@@ -486,7 +490,7 @@ main <- function() {
   saveRDS(df, "df.rds")
   #create and saves curate_mhc dataframe and names it "df"
   
-  df <- readRDS("df.rds")
+  #df <- readRDS("df.rds")
   #loads df into R to avoid having to curate tables with each run (comment out prev 2 lines after running once)
   
   my_heart_counts <- df %>% #df gets piped into 3 functions to manipulate the dataframe
@@ -499,7 +503,7 @@ main <- function() {
   
   df_metadata=curate_my_heart_counts_metadata(my_heart_counts)
   saveRDS(df_metadata, "df_metadata.rds")
-  df_metadata <- readRDS("df_metadata.rds")
+  #df_metadata <- readRDS("df_metadata.rds")
   
   my_heart_counts_metadata <- curate_my_heart_counts_metadata(my_heart_counts)
   print("executed curate_my_heart_counts_metadata") 
