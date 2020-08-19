@@ -3,7 +3,7 @@ library(tidyverse)
 library(lubridate)
 library(zipcode)
 data(zipcode)
-uk_zipcodes <- read.csv('ukpostcodes.csv')
+uk_zipcodes <- read.csv('uk.postcodes')
 
 #takes in table data from synapse and stores relevant columns
 read_syn_table <- function(syn_id) {
@@ -290,24 +290,60 @@ mutate_task_frequency <- function(engagement_data) {
 }
 
 #edits zipcode df to be used as a frame of reference for which zip3 values correspond to which state
-demographics_tz_from_zip_prefix <- function(demographics_synId) {
+demographics_tz_from_zip_prefix <- function() {
   #parsed from satisfied survey (quality of life)
-  demographics <- synTableQuery(paste(
-    "select healthCode, zip from", demographics_synId))
+  demographics1 <- synTableQuery(paste(
+    "select healthCode, zip from", "syn3420615"))
   
-  demog_df=demographics$asDataFrame() #saves demographics table as a dataframe
-  demog_colnames=colnames(demog_df) #stores column names in demog_colnames
-  demog_colnames[demog_colnames=="zip"]="zip3" #renames zip column as zip3
-  colnames(demog_df)=demog_colnames #resets column names back to demog_colnames after editing a column
+  demog_df1=demographics1$asDataFrame() #saves demographics table as a dataframe
+  demog_colnames1=colnames(demog_df1) #stores column names in demog_colnames
+  demog_colnames1[demog_colnames1=="zip"]="zip3" #renames zip column as zip3
+  colnames(demog_df1)=demog_colnames1 #resets column names back to demog_colnames after editing a column
   
-  demographics <- demog_df %>%
+  demog_df1 <- demog_df1 %>%
+    mutate(zip3 = str_sub(zip3, 1, 3))
+  
+  demographics2 <- synTableQuery(paste(
+    "select healthCode, zip from", "syn4857042"))
+  
+  demog_df2=demographics2$asDataFrame() #saves demographics table as a dataframe
+  demog_colnames2=colnames(demog_df2) #stores column names in demog_colnames
+  demog_colnames2[demog_colnames2=="zip"]="zip3" #renames zip column as zip3
+  colnames(demog_df2)=demog_colnames2
+  
+  demog_df2 <- demog_df2 %>%
+    mutate(zip3 = str_sub(zip3, 1, 3))
+  
+  demographics3 <- synTableQuery(paste(
+    "select healthCode, zip, numericZip from", "syn4929530"))
+  
+  demog_df3=demographics3$asDataFrame() #saves demographics table as a dataframe
+  
+  demographics3_uk_zips_na=which(is.na(demog_df3$numericZip))
+  demog_df3$numericZip[demographics3_uk_zips_na]=demog_df3$zip[demographics3_uk_zips_na]
+  demog_df3$zip= NULL
+  
+  demog_colnames3=colnames(demog_df3) #stores column names in demog_colnames
+  demog_colnames3[demog_colnames3=="numericZip"]="zip3" #renames zip column as zip3
+  colnames(demog_df3)=demog_colnames3
+  
+  demog_df3 <- demog_df3 %>%
+    mutate(zip3 = str_sub(zip3, 1, 3))
+  
+  print(head(demog_df1))
+  print(head(demog_df2))
+  print(head(demog_df3))
+  demographics=rbind(demog_df1, demog_df2, demog_df3)
+  
+  demographics <- demographics %>%
     select(-ROW_ID, -ROW_VERSION) %>% #remove ROW ID, VERSION columns
-    distinct(healthCode, zip3)#removes repeat zipcodes
+    distinct(healthCode, zip3) #removes repeat zipcodes
   
   app_zip <- zipcode %>%
     mutate(zip3 = str_sub(zip, 1, 3)) %>% #creates new colum with first 3 numbers of zipcodes
     group_by(zip3) %>% #rows with same zip3 value are stored together
     summarise(lat = median(latitude), long = median(longitude)) #creates table with zip3s, median latitudes and longitudes
+  print(head(app_zip))
   
   zip_state <- zipcode %>%
     mutate(zip3 = str_sub(zip, 1, 3)) %>% #creates new column with first 3 numbers of zipcodes
@@ -315,16 +351,20 @@ demographics_tz_from_zip_prefix <- function(demographics_synId) {
     group_by(zip3) %>% 
     slice(which.max(n)) %>% #state which has most instances of given zipcode is kept
     select(zip3, state) #finalizes the table only keeping zipcodes and their corresponding state
+  print(head(zip_state))
   
   zip_state_uk <- uk_zipcodes %>%
-    mutate(zip3 = str_sub(postcode, 1, 3)) %>%
-    select(-id, postcode) %>%
-    group_by(zip3) %>%
-    summarise(lat = median(latitude), long = median(longitude)) %>%
-    mutate(state = 'UK')
+    mutate(zip3 = str_sub(Postcode, 1, 3)) %>%
+    mutate(state = County) %>%
+    mutate(lat = 53, long = 2) %>%
+    select(zip3, state, lat, long) %>%
+    distinct(zip3, .keep_all = TRUE)
+    #group_by(zip3) %>%
+  print(head(zip_state_uk))
   
   zip_code_hk <- data.frame(
-    "zip3" = "hk", "lat" = 22, "long" = 114, "state" = "hk")
+    zip3 = "hk", lat = 22, long = 114, state = "hk")
+  print(head(zip_code_hk))
   
   timezones <- purrr::map2( 
     app_zip$lat, app_zip$long, lutz::tz_lookup_coords, method = "fast") %>% #goes over corresponding lat/long then return timezone for given combination
@@ -348,13 +388,13 @@ demographics_tz_from_zip_prefix <- function(demographics_synId) {
     filter(n_tz > 1) #return df with only information for people with 2+ timezones
   demographics <- demographics %>%
     filter(!(healthCode %in% travelers$healthCode)) #returns table with every row that does not meet traveler qualification
-  head(demographics)
-  return(demographics)
+  print(head(demographics, n=100))
+  #return(demographics)
 }
 
 mutate_local_time <- function(engagement) {
-  print("mll running")
-  demographics <- demographics_tz_from_zip_prefix("syn3420615")
+  print("mlt running")
+  demographics <- demographics_tz_from_zip_prefix()
   engagement <- engagement %>%
     left_join(demographics, by="healthCode") #adds data from demographics table to engagement (mhc) table
   print(head(engagement))
@@ -486,11 +526,11 @@ main <- function() {
   synLogin() #logs you into synapse
   print("logged in") 
   
-  df=curate_my_heart_counts()
-  saveRDS(df, "df.rds")
+  #df=curate_my_heart_counts()
+  #saveRDS(df, "df.rds")
   #create and saves curate_mhc dataframe and names it "df"
   
-  #df <- readRDS("df.rds")
+  df <- readRDS("df.rds")
   #loads df into R to avoid having to curate tables with each run (comment out prev 2 lines after running once)
   
   my_heart_counts <- df %>% #df gets piped into 3 functions to manipulate the dataframe
@@ -501,9 +541,9 @@ main <- function() {
   print("executed curate_my_heart_counts") 
   #print(head(my_heart_counts))
   
-  df_metadata=curate_my_heart_counts_metadata(my_heart_counts)
-  saveRDS(df_metadata, "df_metadata.rds")
-  #df_metadata <- readRDS("df_metadata.rds")
+  #df_metadata=curate_my_heart_counts_metadata(my_heart_counts)
+  #saveRDS(df_metadata, "df_metadata.rds")
+  df_metadata <- readRDS("df_metadata.rds")
   
   my_heart_counts_metadata <- curate_my_heart_counts_metadata(my_heart_counts)
   print("executed curate_my_heart_counts_metadata") 
