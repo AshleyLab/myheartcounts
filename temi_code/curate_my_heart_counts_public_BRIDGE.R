@@ -210,7 +210,6 @@ mutate_participant_week_day <- function(engagement) {
           as.duration(seconds_since_first_activity), "days"))) + 1 #converts seconds to days as an integer (+1?)
     ) %>%
     select(-first_activity_time, -seconds_since_first_activity) #removes two intermediary columns from engagement df
-  head(engagement, n=50000)
   }
 
 #adds a column indicating the type of task for each activity
@@ -380,14 +379,14 @@ demographics_tz_from_zip_prefix <- function() {
   demographics <- demographics %>% merge(zip_to_lat_long, by='zip3', all.x = TRUE) 
   #print(head(demographics))
   
+  occurences <- table(unlist(demographics$state))
+  
   travelers <- demographics %>% #checks if timezones ever switch
     group_by(healthCode) %>%
     summarize(n_tz = n_distinct(timezone)) %>% #counts distinct timezones
     filter(n_tz > 1) #return df with only information for people with 2+ timezones
   demographics <- demographics %>%
     filter(!(healthCode %in% travelers$healthCode)) #returns table with every row that does not meet traveler qualification
-  #print(head(demographics, n=100))
-  #return(demographics)
 }
 
 mutate_local_time <- function(engagement) {
@@ -457,7 +456,9 @@ curate_my_heart_counts_metadata <- function(engagement) {
                   state.abb = as.character(state.abb),
                   state.region = as.character(state.region))
   state.metadata <- rbind(state.metadata, c('District of Columbia', 'DC', 'South'), 
-                          c('United Kingdom', 'UK', 'Europe'), c('Hong Kong', 'hk', 'Asia'))
+                          c('United Kingdom', 'UK', 'Europe'), c('Hong Kong', 'hk', 'Asia'), 
+                          c('United States', 'AA', 'Territory'), c('United States', 'AP', 'Territory'), 
+                          c('United States', 'GU', 'Territory'), c('United States', 'PR', 'Territory'))
   
   my_heart_counts_states <- engagement %>%
     group_by(healthCode) %>%
@@ -523,11 +524,11 @@ main <- function() {
   synLogin() #logs you into synapse
   print("logged in") 
   
-  #df=curate_my_heart_counts()
-  #saveRDS(df, "df.rds")
+  df=curate_my_heart_counts()
+  saveRDS(df, "df.rds")
   #create and saves curate_mhc dataframe and names it "df"
   
-  df <- readRDS("df.rds")
+  #df <- readRDS("df.rds")
   #loads df into R to avoid having to curate tables with each run (comment out prev 2 lines after running once)
   
   my_heart_counts <- df %>% #df gets piped into 3 functions to manipulate the dataframe
