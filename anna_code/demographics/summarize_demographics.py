@@ -65,7 +65,7 @@ def main():
 
             
             sex=list(set([row[ind] for ind in sex_index]))
-            print(sex)
+            
             while np.nan in sex: 
                 sex.remove(np.nan)
             if 'NA' in sex:
