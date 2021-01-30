@@ -74,7 +74,6 @@ def main():
             if args.blobs_only is False:
                 # move table to appropriate location
                 cur_table_path = "/".join([args.table_dir, table_name + ".tsv"])
-                shutil.move(response.filepath, cur_table_path)
                 response=syn.tableQuery(query,resultsAs='csv',separator='\t', downloadLocation=cur_table_path)
             else:
                 response=syn.tableQuery(query,resultsAs='csv',separator='\t')
