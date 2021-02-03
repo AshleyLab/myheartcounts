@@ -20,17 +20,20 @@ def parse_args():
 def build_query(table_id,args): 
     query="SELECT * from "+table_id
     if args.start_date is not None: 
-        query=query+" WHERE createdOn >= '"+args.start_date+"'"
+        query=query+" WHERE uploadDate >= '"+args.start_date+"'"
     if args.end_date is not None: 
         if query.endswith(table_id): 
-            query=query+" WHERE createdOn <= '"+args.end_date+"'"
+            query=query+" WHERE uploadDate <= '"+args.end_date+"'"
         else: 
-            query=query+" AND createdOn <= '"+args.end_date+"'"
+            query=query+" AND uploadDate <= '"+args.end_date+"'"
     if args.healthCodes is not None: 
+        healthcode_string=str(tuple([i.replace('\\','') for i in args.healthCodes]))
+        if healthcode_string.endswith(',)'): 
+            healthcode_string=healthcode_string.replace(",)",")")
         if query.endswith(table_id): 
-            query=query+ " WHERE healthCode in "+str(tuple([i.replace('\\','') for i in args.healthCodes]))
+            query=query+ " WHERE healthCode in "+healthcode_string
         else: 
-            query=query+" AND  healthCode in "+str(tuple(args.healthCodes))
+            query=query+" AND  healthCode in "+healthcode_string
     print(query) 
     return query 
 
