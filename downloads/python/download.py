@@ -1,7 +1,6 @@
 import synapseclient 
 import argparse 
 import shutil 
-import pdb 
 
 def parse_args(): 
     parser=argparse.ArgumentParser(description="Arguments for data download") 
@@ -75,7 +74,12 @@ def main():
 
         #perform query 
         try:
-            response=syn.tableQuery(query,resultsAs='csv',separator='\t')
+            if args.blobs_only is False:
+                # move table to appropriate location
+                cur_table_path = "/".join([args.table_dir, table_name + ".tsv"])
+                response=syn.tableQuery(query,resultsAs='csv',separator='\t', downloadLocation=cur_table_path)
+            else:
+                response=syn.tableQuery(query,resultsAs='csv',separator='\t')
             print("downloaded table:"+table_name)
         except Exception as e: 
             print(e) 
@@ -92,12 +96,6 @@ def main():
             #download table FILEHANDLEID columns 
             print("downloading columns:"+str(columns_to_download))
             files=syn.downloadTableColumns(response,columns_to_download)
-        
-        if args.blobs_only is False: 
-            #move table to appropriate location 
-            cur_table_path="/".join([args.table_dir,table_name+".tsv"])
-            shutil.move(response.filepath,cur_table_path)
-
     
 if __name__=="__main__": 
     main() 
