@@ -1,0 +1,17 @@
+#  --recode vcf-iid --out new_vcf   #changes from bfile format to vcf format 
+#  --mac 1 --> filter MHC SNPs to have at least 1 minor allele count. This is needed for conform-gt not to crash. 
+#  --output-chr M --> changes chrom 23 --> X, 24 --> Y, 25--> PAR, 26 -->MT 
+
+bgzip the vcf 
+tabix the vcf 
+run conform-gt to align alleles in MHC dataset and reference panel 
+run beagle to impute by chromosome 
+
+
+
+#OLD!
+#Use UK Biobank dataset for imputation 
+
+Joint Problems: chr3, 12,000,000 - 13,000,000
+
+Chest Pain: chr2, 21,000,000 - 22,000,000
